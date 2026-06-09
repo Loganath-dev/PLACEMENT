@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import * as React from "react"
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
@@ -10,8 +10,8 @@ function ThemeProvider({
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="light"
+      enableSystem={false}
       disableTransitionOnChange
       {...props}
     >
@@ -47,7 +47,7 @@ function ThemeHotkey() {
         return
       }
 
-      if (event.key.toLowerCase() !== "d") {
+      if (typeof event.key !== "string" || event.key.toLowerCase() !== "d") {
         return
       }
 
@@ -69,3 +69,5 @@ function ThemeHotkey() {
 }
 
 export { ThemeProvider }
+
+

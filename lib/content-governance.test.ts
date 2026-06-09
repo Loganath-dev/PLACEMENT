@@ -1,0 +1,169 @@
+import { describe, expect, it } from "vitest"
+import { COMPANIES } from "@/lib/data/companies"
+import { ALL_CODING_PROBLEMS, codingProblemsForCompany } from "@/lib/data/coding-problems"
+import { CHAPTER_PRACTICE_TARGET, chapterPracticeQuestions, getSections } from "@/lib/data/content"
+import { INTERVIEW_QUESTIONS } from "@/lib/data/interview"
+import { MOCK_TESTS, buildMockQuestions } from "@/lib/data/mocks"
+import { ALL_PYQS, PYQS, pyqsForCompany } from "@/lib/data/pyqs"
+import { SOURCES, sourceById } from "@/lib/data/sources"
+import type { Question } from "@/lib/types"
+
+const APPROVED_SOURCE_KINDS = ["official", "book", "reference", "youtube"] as const
+
+function expectKnownSource(id: string | undefined, context: string) {
+  expect(id, `${context} is missing sourceId`).toBeTruthy()
+  expect(sourceById(id), `${context} has unknown sourceId: ${id}`).toBeTruthy()
+}
+
+function expectGovernedQuestion(q: Question, context: string) {
+  expectKnownSource(q.sourceId, `${context} (${q.id})`)
+  expect(q.prompt.trim().length, `${context} (${q.id}) prompt is empty`).toBeGreaterThan(0)
+  expect(q.explanation.trim().length, `${context} (${q.id}) explanation is empty`).toBeGreaterThan(0)
+}
+
+function expectUniqueIds(ids: string[], context: string) {
+  expect(new Set(ids).size, `${context} contains duplicate IDs`).toBe(ids.length)
+}
+
+describe("content source governance", () => {
+  it("registers only approved source kinds and links official sources", () => {
+    for (const source of Object.values(SOURCES)) {
+      expect(source.id.trim().length).toBeGreaterThan(0)
+      expect(source.publisher.trim().length).toBeGreaterThan(0)
+      expect(source.note.trim().length).toBeGreaterThan(0)
+      expect(APPROVED_SOURCE_KINDS).toContain(source.kind)
+
+      if (source.kind === "official") {
+        expect(source.url, `${source.id} official source must have a citation URL`).toMatch(/^https:\/\//)
+      }
+    }
+  })
+
+  it("keeps company eligibility cards tied to official sources", () => {
+    for (const company of COMPANIES) {
+      if (!company.eligibility) continue
+
+      const source = sourceById(company.eligibility.sourceId)
+      expect(source, `${company.id} eligibility has unknown source`).toBeTruthy()
+      expect(source?.kind, `${company.id} eligibility must cite an official source`).toBe("official")
+      expect(company.eligibility.lastVerified).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    }
+  })
+
+  it("keeps IDs unique across scalable content banks", () => {
+    expectUniqueIds(ALL_PYQS.map((q) => q.id), "ALL_PYQS")
+    expectUniqueIds(INTERVIEW_QUESTIONS.map((q) => q.id), "INTERVIEW_QUESTIONS")
+    expectUniqueIds(ALL_CODING_PROBLEMS.map((p) => p.id), "CODING_PROBLEMS")
+    expectUniqueIds(MOCK_TESTS.map((m) => m.id), "MOCK_TESTS")
+  })
+
+  it("sources every seeded lesson and chapter quiz question", () => {
+    for (const company of COMPANIES) {
+      for (const section of getSections(company.id)) {
+        for (const chapter of section.chapters) {
+          const quizMin = 100
+          expect(chapter.quiz.length, `${company.id}/${chapter.id} needs a larger quiz`).toBeGreaterThanOrEqual(quizMin)
+          for (const difficulty of ["easy", "medium", "hard"] as const) {
+            expect(
+              chapter.quiz.filter((question) => question.difficulty === difficulty).length,
+              `${company.id}/${chapter.id} needs enough ${difficulty} questions for lesson-wise practice`,
+            ).toBeGreaterThanOrEqual(chapter.lessons.length)
+          }
+          expectUniqueIds(chapter.quiz.map((question) => question.id), `${company.id}/${chapter.id} quiz IDs`)
+          expect(
+            new Set(chapter.quiz.map((question) => question.prompt.trim().toLowerCase())).size,
+            `${company.id}/${chapter.id} contains duplicate quiz prompts`,
+          ).toBe(chapter.quiz.length)
+          for (const lesson of chapter.lessons) {
+            expect(lesson.sourceIds?.length, `${lesson.id} is missing sourceIds`).toBeGreaterThan(0)
+            for (const sourceId of lesson.sourceIds ?? []) {
+              expectKnownSource(sourceId, `lesson ${lesson.id}`)
+            }
+          }
+
+          for (const question of chapter.quiz) {
+            expectGovernedQuestion(question, `chapter quiz ${chapter.id}`)
+          }
+        }
+      }
+    }
+  }, 30_000)
+
+  it("sources every PYQ reconstruction and interview question", () => {
+    for (const pyq of ALL_PYQS) {
+      expectGovernedQuestion(pyq, `pyq ${pyq.company}`)
+    }
+
+    for (const question of INTERVIEW_QUESTIONS) {
+      expectKnownSource(question.sourceId, `interview question ${question.id}`)
+      expect(question.guidance.trim().length, `${question.id} guidance is empty`).toBeGreaterThan(0)
+    }
+  }, 30000)
+
+  it("keeps every company PYQ bank at serious starter scale", () => {
+    for (const company of COMPANIES) {
+      const min = company.id === "general" ? 220 : 200
+      expect(pyqsForCompany(company.id).length, `${company.id} needs more PYQs`).toBeGreaterThanOrEqual(min)
+    }
+    expect(PYQS.length, "curated PYQ starter bank should remain present").toBeGreaterThan(100)
+  })
+
+  it("validates full-scale coding and mock content", () => {
+    for (const problem of ALL_CODING_PROBLEMS) {
+      expectKnownSource(problem.sourceId, `coding problem ${problem.id}`)
+      expect(problem.prompt.trim().length).toBeGreaterThan(0)
+      expect(problem.editorial.trim().length).toBeGreaterThan(0)
+      expect(problem.testCases.length, `${problem.id} needs visible and hidden tests`).toBeGreaterThanOrEqual(4)
+      expect(problem.testCases.some((tc) => !tc.hidden), `${problem.id} needs visible tests`).toBe(true)
+      expect(problem.testCases.some((tc) => tc.hidden), `${problem.id} needs hidden tests`).toBe(true)
+      expect(problem.estimatedMinutes).toBeGreaterThan(0)
+      expect(problem.status).toMatch(/^(draft|reviewed|live|needs_revision)$/)
+    }
+
+    for (const mock of MOCK_TESTS) {
+      expectKnownSource(mock.sourceId, `mock ${mock.id}`)
+      expect(mock.sections.length).toBeGreaterThan(0)
+      expect(mock.cutoffPercent).toBeGreaterThan(0)
+      const expectedCount = mock.sections.reduce((sum, section) => sum + section.questionCount, 0)
+      expect(buildMockQuestions(mock).length, `${mock.id} did not build expected question count`).toBe(expectedCount)
+    }
+
+    for (const company of COMPANIES) {
+      const mocks = MOCK_TESTS.filter((mock) => mock.companyId === company.id)
+      expect(mocks.length, `${company.id} should have 10 mock tests`).toBe(10)
+      expect(new Set(mocks.map((mock) => mock.id)).size, `${company.id} mock IDs should be unique`).toBe(10)
+    }
+  })
+
+  it("keeps company coding and interview banks at recruiter-useful scale", () => {
+    for (const company of COMPANIES) {
+      const codingMin = company.id === "zoho" ? 70 : company.id === "general" ? 25 : 40
+      expect(codingProblemsForCompany(company.id).length, `${company.id} needs more coding practice`).toBeGreaterThanOrEqual(codingMin)
+
+      const commPyqs = pyqsForCompany(company.id).filter((q) => q.section === "comm-interview")
+      expect(commPyqs.length, `${company.id} needs communication/interview PYQs`).toBeGreaterThanOrEqual(40)
+
+      const interviewQuestions = INTERVIEW_QUESTIONS.filter((q) => q.company === company.id)
+      const interviewMin = company.id === "zoho" || company.id === "general" ? 100 : 90
+      expect(interviewQuestions.length, `${company.id} needs more interview questions`).toBeGreaterThanOrEqual(interviewMin)
+      expect(new Set(interviewQuestions.map((q) => q.category)).size, `${company.id} should cover all interview categories`).toBeGreaterThanOrEqual(5)
+    }
+  })
+
+  it("builds a unique 300-question practice bank for every foundation chapter", () => {
+    for (const section of getSections("general")) {
+      for (const chapter of section.chapters) {
+        const questions = chapterPracticeQuestions("general", section.id, chapter.id)
+        expect(
+          questions.length,
+          `general/${chapter.id} needs ${CHAPTER_PRACTICE_TARGET} chapter practice questions`,
+        ).toBe(CHAPTER_PRACTICE_TARGET)
+        expectUniqueIds(questions.map((q) => q.id), `general/${chapter.id} practice IDs`)
+        expect(
+          new Set(questions.map((q) => q.prompt.trim().toLowerCase())).size,
+          `general/${chapter.id} practice contains duplicate prompts`,
+        ).toBe(questions.length)
+      }
+    }
+  }, 30000)
+})
