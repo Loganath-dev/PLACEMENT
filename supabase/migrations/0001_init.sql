@@ -1,4 +1,4 @@
--- PlaceReady — initial schema + Row Level Security.
+-- StudyBench — initial schema + Row Level Security.
 --
 -- This migration is the version-controlled source of truth for the database
 -- that lib/supabase/db.ts reads and writes. Every table is owned by exactly one

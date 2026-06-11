@@ -102,7 +102,7 @@ export interface Company {
 
 export interface ChapterProgress {
   bestScore: number // 0-100, best chapter-quiz score
-  passed: boolean // >= 60%
+  passed: boolean // >= 70%
   skipped: boolean
   attempts: number
 }

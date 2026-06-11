@@ -42,6 +42,7 @@ export function LandingPage() {
       <SiteHeader startHref={startHref} signedUp={signedUp} />
       <Hero startHref={startHref} />
       <ScopeBand />
+      <PlacementDisclaimer />
       <HowItWorks />
       <FeatureBento />
       <HonestSignal />
@@ -218,6 +219,27 @@ function ScopeBand() {
           <span className="text-sm text-muted-foreground">
             Company tracks plus core skill practice
           </span>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PlacementDisclaimer() {
+  return (
+    <section className="border-b border-border/70 bg-background">
+      <div className="mx-auto flex max-w-6xl items-start gap-3 px-4 py-5 md:px-6">
+        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-warning/15 text-warning-foreground">
+          <Icon name="Info" className="size-4" />
+        </span>
+        <div>
+          <p className="font-heading text-sm font-semibold">Placement learning disclaimer</p>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            StudyBench is a placement learning and preparation app. We provide lessons, PYQs,
+            mock tests, practice tools and readiness estimates, but we do not assure or
+            guarantee any job, interview call, placement result, score or selection by any
+            company.
+          </p>
         </div>
       </div>
     </section>

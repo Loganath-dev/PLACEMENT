@@ -18,10 +18,9 @@ import {
   computePRI,
   EMPTY_PROGRESS,
   overallReadiness,
-  placementProbability,
   priBand,
-  probabilityBand,
-  PROBABILITY_DISCLAIMER,
+  readinessBand,
+  READINESS_DISCLAIMER,
   sectionMastery,
 } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
@@ -93,7 +92,6 @@ export default function ReadinessPage() {
               </div>
               {companies.map((id) => {
                 const pri = computePRI(id, state.progress[id] ?? EMPTY_PROGRESS)
-                const prob = placementProbability(id, pri)
                 const progress = state.progress[id] ?? EMPTY_PROGRESS
                 return (
                   <Link
@@ -123,9 +121,9 @@ export default function ReadinessPage() {
                     </span>
                     <span className="text-right text-sm tabular-nums text-muted-foreground">
                       <span
-                        title={`Estimate inputs: PRI ${pri}/100, target ${getCompany(id).cutoffPRI}, mock average from ${progress.mockScores.length} saved mock(s).`}
+                        title={`Readiness from your in-app practice: PRI ${pri}/100 (${progress.mockScores.length} saved mock(s)). Not a guarantee of selection.`}
                       >
-                        ~{prob}%
+                        {readinessBand(pri).label}
                       </span>
                     </span>
                   </Link>
@@ -139,7 +137,6 @@ export default function ReadinessPage() {
             {companies.map((id) => {
               const progress = state.progress[id] ?? EMPTY_PROGRESS
               const pri = computePRI(id, progress)
-              const prob = placementProbability(id, pri)
               const sections = getSections(id)
               const weakest = [...sections]
                 .map((s) => ({ s, m: sectionMastery(id, s.id, progress) }))
@@ -165,7 +162,7 @@ export default function ReadinessPage() {
                     <div className="flex items-center gap-5">
                       <PriRing value={pri} tone={priBand(pri).tone} size={96} stroke={9} />
                       <div className="space-y-1">
-                        <ProbabilityStat value={prob} band={probabilityBand(prob)} compact />
+                        <ProbabilityStat pri={pri} compact />
                         <ToneBadge band={priBand(pri)} />
                       </div>
                     </div>
@@ -198,7 +195,7 @@ export default function ReadinessPage() {
             })}
           </div>
 
-          <p className="text-center text-xs text-muted-foreground">{PROBABILITY_DISCLAIMER}</p>
+          <p className="text-center text-xs text-muted-foreground">{READINESS_DISCLAIMER}</p>
         </>
       )}
     </div>

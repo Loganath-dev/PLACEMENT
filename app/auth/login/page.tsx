@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -10,7 +10,6 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { Icon } from "@/components/app/icon"
 import { AuthShell, GoogleButton, OrDivider } from "@/components/app/auth-shared"
 import { createClient } from "@/lib/supabase/client"
-import { loadUserState } from "@/lib/supabase/db"
 
 function LoginForm() {
   const router = useRouter()
@@ -44,15 +43,11 @@ function LoginForm() {
       }
       return
     }
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    const remote = user ? await loadUserState(user.id) : null
-    // Continue to the requested app route once the user is onboarded.
+    // Continue to the requested app route; the store checks onboarding on hydration.
     const next = searchParams.get("next")
     const safeNext =
       next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
-    router.replace(remote?.onboarded ? safeNext : "/onboarding")
+    router.replace(safeNext)
     router.refresh()
   }
 

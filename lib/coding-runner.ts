@@ -3,6 +3,10 @@ export function normalizeCodingOutput(value: unknown) {
   return String(value == null ? "" : value).trim().replace(/\s+/g, " ")
 }
 
+export type CodingExecutionResult =
+  | { ok: true; output: string }
+  | { ok: false; error: string }
+
 export function parseCodingInput(input: string, arity: number): unknown[] {
   const trimmed = String(input).trim()
   if (trimmed.length === 0) return arity === 0 ? [] : [""]
@@ -36,4 +40,35 @@ export function parseCodingInput(input: string, arity: number): unknown[] {
   if (tokens.length === 1) return [allNums ? nums[0] : tokens[0]]
   if (allNums) return [nums]
   return [trimmed]
+}
+
+export function executeCodingSubmission(code: string, input: string): CodingExecutionResult {
+  const logs: string[] = []
+  const studentConsole = {
+    log: (...parts: unknown[]) => {
+      logs.push(parts.map((part) => normalizeCodingOutput(part)).join(" "))
+    },
+    __output: () => logs.join("\n"),
+  }
+
+  try {
+    const runner = new Function(
+      "input",
+      "parseCodingInput",
+      "normalizeCodingOutput",
+      "console",
+      `${code}
+if (typeof solve !== 'function') throw new Error('Define function solve(...) first.');
+const args = parseCodingInput(input, solve.length);
+const value = solve.apply(null, args);
+return value === undefined ? console.__output() : value;`,
+    )
+    const value = runner(input, parseCodingInput, normalizeCodingOutput, studentConsole)
+    return { ok: true, output: normalizeCodingOutput(value) }
+  } catch (error) {
+    return {
+      ok: false,
+      error: String(error && error instanceof Error ? error.message : error),
+    }
+  }
 }

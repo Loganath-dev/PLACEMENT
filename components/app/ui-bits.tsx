@@ -14,7 +14,8 @@ import {
   computePRI,
   mockMastery,
   PRI_WEIGHTS,
-  PROBABILITY_DISCLAIMER,
+  READINESS_DISCLAIMER,
+  readinessBand,
   sectionMastery,
 } from "@/lib/scoring"
 import type { CompanyId, CompanyProgress } from "@/lib/types"
@@ -69,36 +70,37 @@ export function ToneBadge({ band, className }: { band: Band; className?: string 
   )
 }
 
-/** Readiness estimate with the mandatory "estimate, not a guarantee" note. */
-export function ProbabilityStat(props: {
-  value: number
-  band: Band
-  compact?: boolean
-}) {
-  const { value, compact = false } = props
+/**
+ * Readiness band (Beginner -> Highly Ready) derived from the PRI. We show a band,
+ * not a numeric "chance of getting hired", to keep the signal honest and avoid
+ * implying a guaranteed outcome.
+ */
+export function ProbabilityStat({ pri, compact = false }: { pri: number; compact?: boolean }) {
+  const band = readinessBand(pri)
   return (
     <div className="flex items-center gap-1.5">
       <span
         className={cn(
-          "font-heading font-bold tabular-nums",
-          compact ? "text-base" : "text-2xl",
+          "rounded-md border font-heading font-semibold",
+          TONE_CLASS[band.tone],
+          compact ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-sm",
         )}
       >
-        {value}%
+        {band.label}
       </span>
-      <span className="text-xs text-muted-foreground">readiness estimate</span>
+      <span className="text-xs text-muted-foreground">readiness</span>
       <Tooltip>
         <TooltipTrigger asChild>
           <button
             type="button"
             className="text-muted-foreground/70 hover:text-foreground"
-            aria-label="About this estimate"
+            aria-label="About this readiness band"
           >
             <Icon name="CircleHelp" className="size-3.5" />
           </button>
         </TooltipTrigger>
         <TooltipContent className="max-w-56 text-center">
-          {PROBABILITY_DISCLAIMER}
+          {READINESS_DISCLAIMER}
         </TooltipContent>
       </Tooltip>
     </div>

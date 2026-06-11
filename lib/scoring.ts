@@ -138,6 +138,21 @@ export function probabilityBand(p: number): Band {
   return { label: "Very low", tone: "danger" }
 }
 
+/**
+ * Readiness band derived directly from the PRI (a study signal, not a hiring
+ * prediction). Preferred over a numeric "chance of getting placed", which is a
+ * legal risk. Bands map to the same thresholds as priBand.
+ */
+export function readinessBand(pri: number): Band {
+  if (pri >= 75) return { label: "Highly Ready", tone: "success" }
+  if (pri >= 55) return { label: "Ready", tone: "info" }
+  if (pri >= 30) return { label: "Developing", tone: "warning" }
+  return { label: "Beginner", tone: "danger" }
+}
+
+export const READINESS_DISCLAIMER =
+  "A readiness signal from your in-app practice. It is not a prediction or guarantee of selection."
+
 export const XP = {
   correctFirst: 10,
   correctRetry: 4,

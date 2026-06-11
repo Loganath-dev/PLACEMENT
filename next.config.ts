@@ -27,11 +27,11 @@ const csp = [
   "frame-ancestors 'none'",
   "img-src 'self' data: blob:",
   "font-src 'self' data:",
-  `script-src 'self' 'unsafe-inline'${isProd ? "" : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://checkout.razorpay.com${isProd ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
-  `connect-src 'self' ${supabaseOrigin} ${supabaseWs}`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseWs} https://api.razorpay.com`,
   "form-action 'self'",
-  "frame-src 'self'",
+  "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
   ...(isProd ? ["upgrade-insecure-requests"] : []),
 ].join("; ")
 

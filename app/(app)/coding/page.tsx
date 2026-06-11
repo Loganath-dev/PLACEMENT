@@ -10,7 +10,11 @@ import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { CompanyPicker } from "@/components/app/company-picker"
 import { FREE_CODING_PROBLEM_LIMIT, lockedCount, visibleForPlan } from "@/lib/access"
-import { normalizeCodingOutput, parseCodingInput } from "@/lib/coding-runner"
+import {
+  executeCodingSubmission,
+  normalizeCodingOutput,
+  parseCodingInput,
+} from "@/lib/coding-runner"
 import { getCompany } from "@/lib/data/companies"
 import { codingProblemsForCompany } from "@/lib/data/coding-problems"
 import {
@@ -187,6 +191,23 @@ function ProblemCard({
             <p className="mt-1 text-muted-foreground">{studentHint(problem)}</p>
             <p className="mt-2 font-mono text-xs text-primary">{solveSignature(problem)}</p>
           </div>
+          <div className="grid gap-2 rounded-xl border border-border p-3 text-sm md:grid-cols-3">
+            <StepHint
+              icon="ScanLine"
+              title="1. Read"
+              text="Match the sample input to the function arguments."
+            />
+            <StepHint
+              icon="Code2"
+              title="2. Return"
+              text="Return the answer from solve, or print it with console.log."
+            />
+            <StepHint
+              icon="Play"
+              title="3. Run"
+              text="Pass visible samples, then check one edge case yourself."
+            />
+          </div>
           <div>
             <p className="text-sm font-medium">Constraints</p>
             <ul className="mt-1 space-y-1 text-sm text-muted-foreground">
@@ -289,19 +310,30 @@ function BrowserJsRunner({
     else toast.error(`${passed}/${next.length} samples passed`)
   }
 
+  function resetCode() {
+    setCode(problem.starterCode)
+    setResults([])
+  }
+
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/50 px-3 py-2">
         <div>
-          <p className="text-sm font-medium">Browser code editor</p>
+          <p className="text-sm font-medium">MVP coding judge</p>
           <p className="text-xs text-muted-foreground">
-            Write JavaScript in the solve function and run the visible sample tests.
+            JavaScript only. Visible samples run in your browser.
           </p>
         </div>
-        <Button size="sm" onClick={runSamples} disabled={running || tests.length === 0}>
-          <Icon name="Play" className="size-3.5" />
-          {running ? "Running..." : "Run samples"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={resetCode} disabled={running}>
+            <Icon name="RotateCcw" className="size-3.5" />
+            Reset
+          </Button>
+          <Button size="sm" onClick={runSamples} disabled={running || tests.length === 0}>
+            <Icon name="Play" className="size-3.5" />
+            {running ? "Running..." : "Run samples"}
+          </Button>
+        </div>
       </div>
       <textarea
         value={code}
@@ -326,13 +358,18 @@ function BrowserJsRunner({
                       : "font-semibold text-destructive"
                   }
                 >
-                  {result.status}
+                  {result.status === "passed" ? "passed" : "needs fix"}
                 </span>
               </div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                <pre className="overflow-x-auto rounded-md bg-muted p-2">Expected: {result.expected}</pre>
-                <pre className="overflow-x-auto rounded-md bg-muted p-2">
-                  {result.error ? `Error: ${result.error}` : `Actual: ${result.actual ?? ""}`}
+              <div className="mt-2 grid gap-2">
+                <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-2">
+                  Input: {result.input}
+                </pre>
+                <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-2">
+                  Expected: {result.expected}
+                </pre>
+                <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-2">
+                  {result.error ? `Error: ${result.error}` : `Your output: ${result.actual ?? ""}`}
                 </pre>
               </div>
             </div>
@@ -346,17 +383,12 @@ function BrowserJsRunner({
 function runOneTest(code: string, test: CodingTestCase, index: number): Promise<RunResult> {
   return new Promise((resolve) => {
     const workerCode = `
-      const normalize = ${normalizeCodingOutput.toString()};
-      const parseInput = ${parseCodingInput.toString()};
+      const normalizeCodingOutput = ${normalizeCodingOutput.toString()};
+      const parseCodingInput = ${parseCodingInput.toString()};
+      const executeSubmission = ${executeCodingSubmission.toString()};
       self.onmessage = function(event) {
         const payload = event.data;
-        try {
-          const runner = new Function("input", "parseInput", payload.code + "\\n;if (typeof solve !== 'function') throw new Error('Define function solve(...) first.'); const args = parseInput(input, solve.length); return solve.apply(null, args);");
-          const value = runner(payload.input, parseInput);
-          self.postMessage({ ok: true, output: normalize(value) });
-        } catch (error) {
-          self.postMessage({ ok: false, error: String(error && error.message ? error.message : error) });
-        }
+        self.postMessage(executeSubmission(payload.code, payload.input));
       };
     `
     const blob = new Blob([workerCode], { type: "text/javascript" })
@@ -420,6 +452,20 @@ function InfoBlock({ title, text }: { title: string; text: string }) {
     <div className="rounded-xl border border-border p-3">
       <p className="text-sm font-medium">{title}</p>
       <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+    </div>
+  )
+}
+
+function StepHint({ icon, title, text }: { icon: string; title: string; text: string }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-muted text-primary">
+        <Icon name={icon} className="size-3.5" />
+      </span>
+      <div>
+        <p className="font-medium">{title}</p>
+        <p className="mt-0.5 text-muted-foreground">{text}</p>
+      </div>
     </div>
   )
 }

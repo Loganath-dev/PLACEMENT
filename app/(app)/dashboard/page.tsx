@@ -20,9 +20,8 @@ import {
   computePRI,
   EMPTY_PROGRESS,
   expectedPriGain,
-  placementProbability,
   priBand,
-  probabilityBand,
+  readinessBand,
   sectionMastery,
   weakestTopics,
 } from "@/lib/scoring"
@@ -47,7 +46,6 @@ export default function DashboardPage() {
   const company = getCompany(primary)
   const progress = state.progress[primary] ?? EMPTY_PROGRESS
   const pri = computePRI(primary, progress)
-  const prob = placementProbability(primary, pri)
   const next = nextChapter(primary, progress)
   const weakest = weakestTopics(state, 1)[0]
   const nextMinutes = next
@@ -93,7 +91,7 @@ export default function DashboardPage() {
               </span>
             </div>
             <PriRing value={pri} tone={priBand(pri).tone} />
-            <ProbabilityStat value={prob} band={probabilityBand(prob)} />
+            <ProbabilityStat pri={pri} />
             <ToneBadge band={priBand(pri)} />
             <ProbabilityInputs companyId={primary} progress={progress} compact />
           </div>
@@ -196,7 +194,6 @@ export default function DashboardPage() {
               others.map((id) => {
                 const p = state.progress[id] ?? EMPTY_PROGRESS
                 const cp = computePRI(id, p)
-                const pr = placementProbability(id, cp)
                 return (
                   <button
                     key={id}
@@ -221,9 +218,9 @@ export default function DashboardPage() {
                       <p className="font-heading font-bold tabular-nums">{cp}</p>
                       <p
                         className="text-xs text-muted-foreground"
-                        title={`Estimate inputs: PRI ${cp}/100, target ${getCompany(id).cutoffPRI}, mock average based on saved mocks only.`}
+                        title={`Readiness from your in-app practice: PRI ${cp}/100. Not a guarantee of selection.`}
                       >
-                        ~{pr}% est.
+                        {readinessBand(cp).label}
                       </p>
                     </div>
                   </button>

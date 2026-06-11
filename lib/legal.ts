@@ -1,5 +1,5 @@
 /**
- * Legal content for StudyBench — Privacy Policy and Terms & Conditions.
+ * Legal content for StudyBench - Privacy Policy and Terms & Conditions.
  *
  * Drafted to align with Indian law: the Digital Personal Data Protection Act,
  * 2023 (DPDP Act); the Information Technology Act, 2000 and the IT (Reasonable
@@ -7,11 +7,6 @@
  * Rules, 2011; the IT (Intermediary Guidelines and Digital Media Ethics Code)
  * Rules, 2021; the Consumer Protection Act, 2019 and the Consumer Protection
  * (E-Commerce) Rules, 2020; and the Indian Contract Act, 1872.
- *
- * IMPORTANT (operational note, not shown as policy text): the bracketed
- * placeholders [●] MUST be completed and the whole document reviewed and signed
- * off by a qualified advocate before launch (see docs/CONTENT_SOURCES.md and the
- * project's "legal sign-off before launch" constraint).
  */
 
 export type LegalBlock =
@@ -36,9 +31,11 @@ export interface LegalDoc {
 }
 
 const GRIEVANCE =
-  "Grievance Officer: [● Name] · Email: grievance@studybench.in · " +
-  "Address: [● Address], India · Response acknowledged within 24 hours and resolved " +
-  "within 15 days, in line with the IT Rules, 2021 and the DPDP Act, 2023."
+  "Grievance Officer: The Founders, StudyBench - " +
+  "Email: smartonboardai@gmail.com - " +
+  "Address: Erode, Tamil Nadu - 638001, India - " +
+  "Response acknowledged within 24 hours and resolved within 15 days, " +
+  "in line with the IT Rules, 2021 and the DPDP Act, 2023."
 
 // ===========================================================================
 // PRIVACY POLICY
@@ -87,7 +84,7 @@ export const PRIVACY_POLICY: LegalDoc = {
         {
           k: "list",
           items: [
-            "Email address and an authentication credential. Passwords are never stored in plain text — they are salted and hashed by our authentication provider (Supabase).",
+            "Email address and an authentication credential. Passwords are never stored in plain text - they are salted and hashed by our authentication provider (Supabase).",
             "If you choose Google Sign-In, the basic profile information Google shares (name, email and Google account identifier) under your Google consent.",
           ],
         },
@@ -133,9 +130,9 @@ export const PRIVACY_POLICY: LegalDoc = {
         {
           k: "list",
           items: [
-            "**Directly from you** — when you register, complete onboarding, edit your profile, take quizzes/mocks, or contact us.",
-            "**Automatically** — through cookies, log files and analytics when you use the Platform.",
-            "**From third parties** — from Google (if you use Google Sign-In) and from our payment gateway (payment status only).",
+            "**Directly from you** - when you register, complete onboarding, edit your profile, take quizzes/mocks, or contact us.",
+            "**Automatically** - through cookies, log files and analytics when you use the Platform.",
+            "**From third parties** - from Google (if you use Google Sign-In) and from our payment gateway (payment status only).",
           ],
         },
       ],
@@ -172,7 +169,7 @@ export const PRIVACY_POLICY: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "Your consent is free, specific, informed, unconditional and unambiguous, given through clear affirmative action when you sign up and use specific features. You may **withdraw your consent** at any time, with the same ease with which it was given, by changing settings, emailing privacy@studybench.in, or deleting your account from Settings.",
+          text: "Your consent is free, specific, informed, unconditional and unambiguous, given through clear affirmative action when you sign up and use specific features. You may **withdraw your consent** at any time, with the same ease with which it was given, by changing settings, emailing smartonboardai@gmail.com, or deleting your account from Settings.",
         },
         {
           k: "p",
@@ -212,10 +209,10 @@ export const PRIVACY_POLICY: LegalDoc = {
         {
           k: "list",
           items: [
-            "**Data Processors / service providers** — engaged under contract to process data on our instructions, including Supabase (cloud hosting, database and authentication), Razorpay (payment processing) and our email/communication providers.",
-            "**Legal and safety** — where required by law, court order, or a lawful request by a government authority, or to protect the rights, safety and property of StudyBench, our Users or the public.",
-            "**Business transfers** — in connection with a merger, acquisition, restructuring or sale of assets, subject to the acquirer honouring this Policy.",
-            "**With your consent** — for any other purpose disclosed to you at the time.",
+            "**Data Processors / service providers** - engaged under contract to process data on our instructions, including Supabase (cloud hosting, database and authentication), Razorpay (payment processing) and our email/communication providers.",
+            "**Legal and safety** - where required by law, court order, or a lawful request by a government authority, or to protect the rights, safety and property of StudyBench, our Users or the public.",
+            "**Business transfers** - in connection with a merger, acquisition, restructuring or sale of assets, subject to the acquirer honouring this Policy.",
+            "**With your consent** - for any other purpose disclosed to you at the time.",
           ],
         },
       ],
@@ -272,13 +269,13 @@ export const PRIVACY_POLICY: LegalDoc = {
             "**Correction, completion and updating** of inaccurate or incomplete data (you can edit most fields in Settings).",
             "**Erasure** of your personal data where it is no longer required.",
             "**Withdraw consent** at any time.",
-            "**Grievance redressal** — to readily raise grievances with our Grievance Officer.",
+            "**Grievance redressal** - to readily raise grievances with our Grievance Officer.",
             "**Nominate** another individual to exercise your rights in the event of death or incapacity.",
           ],
         },
         {
           k: "p",
-          text: "To exercise any right, email privacy@studybench.in or contact our Grievance Officer (Section 16). We may need to verify your identity before acting on a request.",
+          text: "To exercise any right, email smartonboardai@gmail.com or contact our Grievance Officer (Section 16). We may need to verify your identity before acting on a request.",
         },
       ],
     },
@@ -323,7 +320,7 @@ export const PRIVACY_POLICY: LegalDoc = {
         { k: "p", text: GRIEVANCE },
         {
           k: "p",
-          text: "General privacy queries: privacy@studybench.in · General support: support@studybench.in.",
+          text: "General privacy queries: smartonboardai@gmail.com - General support: smartonboardai@gmail.com.",
         },
       ],
     },
@@ -333,7 +330,7 @@ export const PRIVACY_POLICY: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "This Policy is governed by the laws of India. Subject to the Terms & Conditions, the courts at [● City], India shall have jurisdiction over any dispute arising out of or relating to this Policy.",
+          text: "This Policy is governed by the laws of India. Subject to the Terms & Conditions, the courts at Erode, Tamil Nadu, India shall have jurisdiction over any dispute arising out of or relating to this Policy.",
         },
       ],
     },
@@ -383,7 +380,7 @@ export const TERMS: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "**StudyBench does not guarantee any job, interview call, placement, examination result, score, or outcome.** The PRI, estimated placement probability, recommendations and analytics are generated from your in-app activity and are **estimates and study aids only** — they are not predictions, assurances, or representations about your actual employability or selection by any company. Selection decisions rest solely with the respective employers and depend on factors outside our control. You should not make financial or career decisions in reliance on these estimates as guarantees.",
+          text: "**StudyBench does not guarantee any job, interview call, placement, examination result, score, or outcome.** The PRI, estimated placement probability, recommendations and analytics are generated from your in-app activity and are **estimates and study aids only** - they are not predictions, assurances, or representations about your actual employability or selection by any company. Selection decisions rest solely with the respective employers and depend on factors outside our control. You should not make financial or career decisions in reliance on these estimates as guarantees.",
         },
       ],
     },
@@ -403,7 +400,7 @@ export const TERMS: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "Company names and marks referenced on the Platform — including TCS, Infosys, Wipro, Accenture, Zoho and Cognizant — are the **trademarks or registered trademarks of their respective owners**. StudyBench is an **independent** preparation platform and is **not affiliated with, authorised by, endorsed by, or sponsored by** any of these companies. Such names are used only nominatively, to identify the publicly known test patterns for which our independently created preparation material is intended. All preparation content is original and is not sourced from any company's confidential or proprietary materials.",
+          text: "Company names and marks referenced on the Platform - including TCS, Infosys, Wipro, Accenture, Zoho and Cognizant - are the **trademarks or registered trademarks of their respective owners**. StudyBench is an **independent** preparation platform and is **not affiliated with, authorised by, endorsed by, or sponsored by** any of these companies. Such names are used only nominatively, to identify the publicly known test patterns for which our independently created preparation material is intended. All preparation content is original and is not sourced from any company's confidential or proprietary materials.",
         },
       ],
     },
@@ -417,7 +414,7 @@ export const TERMS: LegalDoc = {
             "You must provide accurate, current and complete information and keep it updated.",
             "You are responsible for maintaining the confidentiality of your credentials and for all activities under your account.",
             "One account is for one individual; you may not share, sell, or transfer your account.",
-            "Notify us immediately at support@studybench.in of any unauthorised use or security breach.",
+            "Notify us immediately at smartonboardai@gmail.com of any unauthorised use or security breach.",
           ],
         },
       ],
@@ -429,7 +426,7 @@ export const TERMS: LegalDoc = {
         {
           k: "list",
           items: [
-            "The Platform offers a free tier and an optional paid **Premium** plan (currently priced at **₹399 per year**, inclusive of applicable taxes unless stated otherwise).",
+            "The Platform offers a free tier and an optional paid **Premium** plan (currently priced at **Rs 399 per year**, inclusive of applicable taxes unless stated otherwise).",
             "Payments are processed by our third-party gateway (Razorpay). By purchasing, you also agree to the gateway's terms. We do not store your card or UPI credentials.",
             "Prices, features and taxes (including GST) may change prospectively; the price applicable at the time of your purchase governs that purchase.",
             "Unless expressly stated as auto-renewing at checkout, subscriptions do not auto-renew, and you will need to renew manually to continue Premium access.",
@@ -448,9 +445,9 @@ export const TERMS: LegalDoc = {
         {
           k: "list",
           items: [
-            "**Failed/duplicate payments:** if you are charged but Premium is not activated, or you are charged more than once for the same plan, contact support@studybench.in within 7 days for verification and a full refund of the erroneous amount.",
+            "**Failed/duplicate payments:** if you are charged but Premium is not activated, or you are charged more than once for the same plan, contact smartonboardai@gmail.com within 7 days for verification and a full refund of the erroneous amount.",
             "**Cancellation:** you may cancel Premium at any time from Settings; cancellation stops future renewals and you retain access until the end of the paid period.",
-            "Approved refunds are processed to the original payment method within a reasonable period, typically 5–10 business days, subject to the gateway's timelines.",
+            "Approved refunds are processed to the original payment method within a reasonable period, typically 5-10 business days, subject to the gateway's timelines.",
           ],
         },
       ],
@@ -489,7 +486,7 @@ export const TERMS: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "All content on the Platform — including lessons, questions, explanations, roadmaps, interview material, software, design, text, graphics, logos and the \"StudyBench\" name — is owned by or licensed to StudyBench and is protected by Indian and international intellectual-property laws. Your licence to use the Platform does not transfer any ownership. You may not use our marks without prior written permission.",
+          text: "All content on the Platform - including lessons, questions, explanations, roadmaps, interview material, software, design, text, graphics, logos and the \"StudyBench\" name - is owned by or licensed to StudyBench and is protected by Indian and international intellectual-property laws. Your licence to use the Platform does not transfer any ownership. You may not use our marks without prior written permission.",
         },
       ],
     },
@@ -529,7 +526,7 @@ export const TERMS: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "To the maximum extent permitted by law, StudyBench and its founders, officers, employees and partners shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of opportunity, data, or profits, arising out of or relating to your use of the Platform. Our aggregate liability for any claim shall not exceed the total fees actually paid by you to StudyBench in the **twelve (12) months** preceding the event giving rise to the claim, or **₹1,000**, whichever is higher. Nothing herein limits liability that cannot be excluded under applicable law.",
+          text: "To the maximum extent permitted by law, StudyBench and its founders, officers, employees and partners shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of opportunity, data, or profits, arising out of or relating to your use of the Platform. Our aggregate liability for any claim shall not exceed the total fees actually paid by you to StudyBench in the **twelve (12) months** preceding the event giving rise to the claim, or **Rs 1,000**, whichever is higher. Nothing herein limits liability that cannot be excluded under applicable law.",
         },
       ],
     },
@@ -580,7 +577,7 @@ export const TERMS: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "These Terms are governed by the laws of India. The parties shall first attempt to resolve any dispute amicably. Failing that, the dispute shall be referred to **arbitration** by a sole arbitrator under the Arbitration and Conciliation Act, 1996; the seat and venue of arbitration shall be [● City], India, and the proceedings shall be in English. Subject to arbitration, the courts at [● City], India shall have exclusive jurisdiction.",
+          text: "These Terms are governed by the laws of India. The parties shall first attempt to resolve any dispute amicably. Failing that, the dispute shall be referred to **arbitration** by a sole arbitrator under the Arbitration and Conciliation Act, 1996; the seat and venue of arbitration shall be Erode, Tamil Nadu, India, and the proceedings shall be in English. Subject to arbitration, the courts at Erode, Tamil Nadu, India shall have exclusive jurisdiction.",
         },
       ],
     },
@@ -610,7 +607,7 @@ export const TERMS: LegalDoc = {
         },
         {
           k: "p",
-          text: "Questions about these Terms may be sent to support@studybench.in.",
+          text: "Questions about these Terms may be sent to smartonboardai@gmail.com.",
         },
       ],
     },

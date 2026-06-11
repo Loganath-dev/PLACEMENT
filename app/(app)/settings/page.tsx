@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
@@ -57,7 +57,6 @@ type RazorpaySuccessResponse = {
   razorpay_signature: string
 }
 
-const PREMIUM_UNTIL_KEY = "studybench.premiumUntil"
 
 export default function SettingsPage() {
   const {
@@ -73,11 +72,7 @@ export default function SettingsPage() {
 
   const available = SELECTABLE_COMPANIES.filter((c) => !state.interested.includes(c.id))
   const [checkingOut, setCheckingOut] = React.useState(false)
-  const [premiumUntil, setPremiumUntil] = React.useState<string | null>(() => {
-    if (typeof window === "undefined") return null
-    return localStorage.getItem(PREMIUM_UNTIL_KEY)
-  })
-  const activeUntil = premiumUntil ?? state.premiumUntil ?? null
+  const activeUntil = state.premiumUntil ?? null
 
   function tryAdd(id: CompanyId) {
     if (!state.premium && state.interested.length >= FREE_COMPANY_CAP) {
@@ -121,8 +116,6 @@ export default function SettingsPage() {
             return
           }
           setPremium(true, verified.premiumUntil)
-          setPremiumUntil(verified.premiumUntil)
-          localStorage.setItem(PREMIUM_UNTIL_KEY, verified.premiumUntil)
           toast.success("Premium activated", {
             description: "Payment verified and your plan is active for one year.",
           })
@@ -167,8 +160,6 @@ export default function SettingsPage() {
                 variant="outline"
                 onClick={() => {
                   setPremium(false)
-                  setPremiumUntil(null)
-                  localStorage.removeItem(PREMIUM_UNTIL_KEY)
                   toast("Premium access removed on this device")
                 }}
               >
@@ -198,10 +189,7 @@ export default function SettingsPage() {
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Premium access should be treated as active only after Razorpay payment verification.
-            In production, expiry should also be stored in the database and checked on login.
-          </p>
+
         </CardContent>
       </Card>
 

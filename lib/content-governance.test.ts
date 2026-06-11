@@ -61,7 +61,7 @@ describe("content source governance", () => {
     for (const company of COMPANIES) {
       for (const section of getSections(company.id)) {
         for (const chapter of section.chapters) {
-          const quizMin = 100
+          const quizMin = 150
           expect(chapter.quiz.length, `${company.id}/${chapter.id} needs a larger quiz`).toBeGreaterThanOrEqual(quizMin)
           for (const difficulty of ["easy", "medium", "hard"] as const) {
             expect(
@@ -102,8 +102,12 @@ describe("content source governance", () => {
 
   it("keeps every company PYQ bank at serious starter scale", () => {
     for (const company of COMPANIES) {
-      const min = company.id === "general" ? 220 : 200
+      const min = company.id === "zoho" ? 560 : company.id === "general" ? 580 : 450
       expect(pyqsForCompany(company.id).length, `${company.id} needs more PYQs`).toBeGreaterThanOrEqual(min)
+      expect(
+        pyqsForCompany(company.id).filter((question) => question.difficulty === "hard").length,
+        `${company.id} needs a meaningful hard-question layer`,
+      ).toBeGreaterThanOrEqual(company.id === "zoho" ? 90 : 60)
     }
     expect(PYQS.length, "curated PYQ starter bank should remain present").toBeGreaterThan(100)
   })
@@ -140,8 +144,12 @@ describe("content source governance", () => {
       const codingMin = company.id === "zoho" ? 70 : company.id === "general" ? 25 : 40
       expect(codingProblemsForCompany(company.id).length, `${company.id} needs more coding practice`).toBeGreaterThanOrEqual(codingMin)
 
-      const commPyqs = pyqsForCompany(company.id).filter((q) => q.section === "comm-interview")
-      expect(commPyqs.length, `${company.id} needs communication/interview PYQs`).toBeGreaterThanOrEqual(40)
+        const commPyqs = pyqsForCompany(company.id).filter((q) => q.section === "comm-interview")
+        expect(commPyqs.length, `${company.id} needs communication/interview PYQs`).toBeGreaterThanOrEqual(70)
+        expect(
+          commPyqs.filter((q) => q.difficulty === "hard").length,
+          `${company.id} needs harder communication/interview scenarios`,
+        ).toBeGreaterThanOrEqual(10)
 
       const interviewQuestions = INTERVIEW_QUESTIONS.filter((q) => q.company === company.id)
       const interviewMin = company.id === "zoho" || company.id === "general" ? 100 : 90

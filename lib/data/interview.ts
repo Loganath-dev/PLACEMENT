@@ -1,7 +1,7 @@
 import type { CompanyId, InterviewCategory, InterviewQuestion } from "@/lib/types"
 
 /**
- * Interview question bank — for the 6 companies only (NOT general; general is a
+ * Interview question bank - for the 6 companies only (NOT general; general is a
  * communication-only track). Each entry is an ORIGINAL question with senior-
  * trainer guidance on HOW to answer (approach, not a memorised script), and a
  * sourceId for provenance.
@@ -32,7 +32,7 @@ function iq(
 const BASE_INTERVIEW_QUESTIONS: InterviewQuestion[] = [
   // ===================== TCS =====================
   iq("tcs", "hr", "Tell me about yourself.",
-    "Use a 60-second arc: name → college/branch → 2 strengths or projects relevant to an IT services role → why TCS → close on enthusiasm. Don't recite your resume; pick highlights that lead the panel toward what you want to discuss.",
+    "Use a 60-second arc: name -> college/branch -> 2 strengths or projects relevant to an IT services role -> why TCS -> close on enthusiasm. Don't recite your resume; pick highlights that lead the panel toward what you want to discuss.",
     "easy", ["self-intro", "communication"], "studybench-curriculum"),
   iq("tcs", "technical", "What is the difference between a primary key and a unique key?",
     "A primary key is unique, NOT NULL, and there's one per table. A unique key enforces uniqueness but allows one NULL and you can have several per table. Mentioning that the primary key often becomes the clustered index earns bonus points.",
@@ -41,16 +41,16 @@ const BASE_INTERVIEW_QUESTIONS: InterviewQuestion[] = [
     "Encapsulation (private fields + getters), Abstraction (interface hides implementation), Inheritance (a Car extends Vehicle), Polymorphism (one draw() behaves per shape). Give a relatable example for each rather than just definitions.",
     "medium", ["OOP"], "gfg-cs-core"),
   iq("tcs", "coding", "How would you check whether a number is prime?",
-    "Handle n < 2 as not prime, then test divisibility from 2 up to √n. State the complexity (O(√n)) and why you stop at the square root — factors pair up around it.",
+    "Handle n < 2 as not prime, then test divisibility from 2 up to sqrtn. State the complexity (O(sqrtn)) and why you stop at the square root - factors pair up around it.",
     "medium", ["math", "loops"], "gfg-dsa"),
   iq("tcs", "technical", "What happens when you type a URL and press Enter?",
     "Walk the layers: DNS resolves the domain to an IP, a TCP (and TLS for HTTPS) connection is set up, the browser sends an HTTP request, the server responds, and the browser renders the page. Even a high-level version shows systems thinking.",
     "medium", ["networks"], "gfg-cs-core"),
   iq("tcs", "domain", "Why do you want to join TCS?",
-    "Tie specifics to your goals: scale and exposure (India's largest IT recruiter), structured training (TCS iON / Ignite), and breadth of domains. Avoid generic 'good company' — name what genuinely attracts you.",
+    "Tie specifics to your goals: scale and exposure (India's largest IT recruiter), structured training (TCS iON / Ignite), and breadth of domains. Avoid generic 'good company' - name what genuinely attracts you.",
     "easy", ["why-company"], "tcs-nqt-official"),
   iq("tcs", "managerial", "Are you willing to relocate and work in any shift?",
-    "TCS deploys across India and global clients. If you're flexible, say so clearly and positively. If you have a real constraint, state it honestly but show willingness to adapt — evasiveness reads worse than an honest boundary.",
+    "TCS deploys across India and global clients. If you're flexible, say so clearly and positively. If you have a real constraint, state it honestly but show willingness to adapt - evasiveness reads worse than an honest boundary.",
     "easy", ["flexibility"], "studybench-curriculum"),
   iq("tcs", "hr", "Do you have any questions for us?",
     "Always ask one. Good options: what the first 6 months of training look like, which technologies a fresher typically starts on, or how performance is reviewed. It signals genuine interest.",
@@ -58,62 +58,62 @@ const BASE_INTERVIEW_QUESTIONS: InterviewQuestion[] = [
 
   // ===================== Infosys =====================
   iq("infosys", "technical", "What is the difference between a stack and a queue?",
-    "Stack is LIFO (push/pop one end) — used for undo, recursion, expression evaluation. Queue is FIFO (enqueue rear, dequeue front) — used for scheduling and BFS. Mention a real use case for each.",
+    "Stack is LIFO (push/pop one end) - used for undo, recursion, expression evaluation. Queue is FIFO (enqueue rear, dequeue front) - used for scheduling and BFS. Mention a real use case for each.",
     "easy", ["DSA"], "gfg-dsa"),
   iq("infosys", "technical", "What is normalization and why do we aim for 3NF?",
     "Normalization organises tables to remove redundancy and update anomalies: 1NF (atomic), 2NF (no partial dependency), 3NF (no transitive dependency). 3NF balances integrity with reasonable query complexity for most apps.",
     "medium", ["DBMS"], "gfg-cs-core"),
   iq("infosys", "coding", "How would you reverse a singly linked list?",
-    "Iterate with three pointers (prev, curr, next), flipping each node's link, returning prev at the end — O(n) time, O(1) space. Be ready to compare with the recursive version and its stack cost.",
+    "Iterate with three pointers (prev, curr, next), flipping each node's link, returning prev at the end - O(n) time, O(1) space. Be ready to compare with the recursive version and its stack cost.",
     "medium", ["linked-list"], "gfg-dsa"),
-  iq("infosys", "technical", "Abstraction vs encapsulation — what's the difference?",
-    "Abstraction hides complexity and exposes only WHAT something does (design level — interfaces, abstract classes). Encapsulation bundles data with methods and restricts access to HOW it works (implementation level — private fields). They complement each other.",
+  iq("infosys", "technical", "Abstraction vs encapsulation - what's the difference?",
+    "Abstraction hides complexity and exposes only WHAT something does (design level - interfaces, abstract classes). Encapsulation bundles data with methods and restricts access to HOW it works (implementation level - private fields). They complement each other.",
     "medium", ["OOP"], "gfg-cs-core"),
   iq("infosys", "domain", "What do you know about Infosys and InfyTQ?",
     "Infosys is a global IT services and consulting firm; InfyTQ is its learning/certification platform many freshers use. Mention its focus on digital transformation and that you've engaged with its learning content if true.",
     "easy", ["why-company"], "infosys-careers"),
   iq("infosys", "hr", "What are your strengths and weaknesses?",
-    "Give one strength with a quick proof (a project or result) and one genuine weakness with the concrete action you're taking to improve. Avoid the cliché 'I'm a perfectionist' — panels hear it constantly.",
+    "Give one strength with a quick proof (a project or result) and one genuine weakness with the concrete action you're taking to improve. Avoid the cliche 'I'm a perfectionist' - panels hear it constantly.",
     "easy", ["self-awareness"], "studybench-curriculum"),
   iq("infosys", "managerial", "How do you keep your technical skills up to date?",
     "Name your actual routine: courses, hands-on projects, InfyTQ/competitive coding, following docs. Concrete habits beat vague 'I love learning'.",
     "easy", ["learning"], "studybench-curriculum"),
   iq("infosys", "hr", "Where do you see yourself in five years?",
-    "Show realistic growth and commitment: become strong in a stack, take ownership of modules, grow toward a lead/specialist path — aligned with what the role can offer. Avoid naming an unrelated career.",
+    "Show realistic growth and commitment: become strong in a stack, take ownership of modules, grow toward a lead/specialist path - aligned with what the role can offer. Avoid naming an unrelated career.",
     "easy", ["goals"], "studybench-curriculum"),
 
   // ===================== Wipro =====================
   iq("wipro", "technical", "Explain INNER JOIN vs LEFT JOIN with an example.",
     "INNER JOIN returns only matching rows in both tables; LEFT JOIN returns all left-table rows plus matches (NULLs where none). Sketch two small tables (Students, Marks) and show how an unmatched student appears in LEFT but not INNER.",
     "medium", ["DBMS", "SQL"], "gfg-cs-core"),
-  iq("wipro", "coding", "Recursion vs iteration for factorial/Fibonacci — which and why?",
+  iq("wipro", "coding", "Recursion vs iteration for factorial/Fibonacci - which and why?",
     "Both work; recursion is cleaner but uses the call stack (risk of overflow / repeated work for naive Fibonacci). Iteration (or memoised recursion) is more efficient. Always state the base case first.",
     "medium", ["recursion"], "gfg-dsa"),
   iq("wipro", "technical", "What is a database index and its trade-off?",
     "An index speeds up reads/lookups (like a book's index) but costs extra storage and slows writes, since the index must be updated. You index columns used often in WHERE/JOIN, not every column.",
     "medium", ["DBMS"], "gfg-cs-core"),
   iq("wipro", "domain", "Why Wipro, and what does the 'Spirit of Wipro' mean to you?",
-    "Connect to its values-led culture and sustainability focus, plus the scale of client exposure. Personalise it — one specific value or program that resonates beats a memorised slogan.",
+    "Connect to its values-led culture and sustainability focus, plus the scale of client exposure. Personalise it - one specific value or program that resonates beats a memorised slogan.",
     "easy", ["why-company"], "wipro-careers"),
   iq("wipro", "hr", "How do you handle criticism or negative feedback?",
     "Frame it as fuel: listen without defending, clarify, act on it. Give a short STAR example where feedback changed your approach and improved the outcome.",
     "easy", ["behavioural"], "studybench-curriculum"),
   iq("wipro", "hr", "Describe a conflict in a team and how you resolved it.",
-    "Use STAR (Situation, Task, Action, Result). Focus on what YOU did to de-escalate and find common ground, and end with the positive result — not on blaming a teammate.",
+    "Use STAR (Situation, Task, Action, Result). Focus on what YOU did to de-escalate and find common ground, and end with the positive result - not on blaming a teammate.",
     "medium", ["teamwork"], "studybench-curriculum"),
   iq("wipro", "managerial", "Are you comfortable signing a service agreement/bond?",
     "Answer with maturity: if you're committed to growing at the company, say so calmly and ask clarifying questions about terms rather than reacting negatively. Honesty plus professionalism is what's assessed.",
     "easy", ["commitment"], "wipro-careers"),
 
   // ===================== Accenture =====================
-  iq("accenture", "technical", "TCP vs UDP — when would you use each?",
+  iq("accenture", "technical", "TCP vs UDP - when would you use each?",
     "TCP is connection-oriented and reliable (web, email, file transfer); UDP is connectionless and fast but lossy (live video, gaming, DNS queries). Pick based on whether you need reliability or low latency.",
     "easy", ["networks"], "gfg-cs-core"),
   iq("accenture", "technical", "Explain IaaS, PaaS and SaaS.",
-    "Cloud service tiers by how much you manage: IaaS (you manage OS/apps on rented infra — e.g., EC2), PaaS (you deploy code, platform handles infra — e.g., App Engine), SaaS (you just use the app — e.g., Gmail). Relevant since Accenture is consulting + cloud heavy.",
+    "Cloud service tiers by how much you manage: IaaS (you manage OS/apps on rented infra - e.g., EC2), PaaS (you deploy code, platform handles infra - e.g., App Engine), SaaS (you just use the app - e.g., Gmail). Relevant since Accenture is consulting + cloud heavy.",
     "medium", ["cloud"], "gfg-cs-core"),
   iq("accenture", "coding", "Swap two numbers without using a temporary variable.",
-    "Show the arithmetic trick (a=a+b; b=a−b; a=a−b) or XOR swap, then note the safer real-world choice is usually a temp variable or language tuple-swap. Mentioning overflow risk on the arithmetic version is a plus.",
+    "Show the arithmetic trick (a=a+b; b=a-b; a=a-b) or XOR swap, then note the safer real-world choice is usually a temp variable or language tuple-swap. Mentioning overflow risk on the arithmetic version is a plus.",
     "easy", ["logic"], "gfg-dsa"),
   iq("accenture", "domain", "What does Accenture do, and why Accenture?",
     "Accenture spans Strategy & Consulting, Technology, Operations and Song across many industries. Mention the breadth of projects and learning, and connect to a track you're excited about (e.g., cloud or data).",
@@ -127,19 +127,19 @@ const BASE_INTERVIEW_QUESTIONS: InterviewQuestion[] = [
 
   // ===================== Zoho =====================
   iq("zoho", "coding", "Find the second largest element in an array in one pass.",
-    "Track the largest and second-largest as you scan once (O(n), O(1)). Handle duplicates and arrays with fewer than two distinct values. Avoid the lazy 'sort then pick' — Zoho rewards efficiency.",
+    "Track the largest and second-largest as you scan once (O(n), O(1)). Handle duplicates and arrays with fewer than two distinct values. Avoid the lazy 'sort then pick' - Zoho rewards efficiency.",
     "medium", ["arrays"], "gfg-dsa"),
   iq("zoho", "coding", "Detect a loop (cycle) in a linked list.",
-    "Floyd's cycle detection: slow and fast pointers; if they meet, there's a loop — O(n) time, O(1) space. Be ready to extend to finding the loop's starting node.",
+    "Floyd's cycle detection: slow and fast pointers; if they meet, there's a loop - O(n) time, O(1) space. Be ready to extend to finding the loop's starting node.",
     "hard", ["linked-list"], "gfg-dsa"),
-  iq("zoho", "coding", "Reverse the words in a sentence (\"I love code\" → \"code love I\").",
-    "Split on spaces, reverse the word order, rejoin — or do it in place for bonus. Talk through edge cases: multiple spaces, leading/trailing spaces, empty string.",
+  iq("zoho", "coding", "Reverse the words in a sentence (\"I love code\" -> \"code love I\").",
+    "Split on spaces, reverse the word order, rejoin - or do it in place for bonus. Talk through edge cases: multiple spaces, leading/trailing spaces, empty string.",
     "medium", ["strings"], "gfg-dsa"),
   iq("zoho", "coding", "Check whether two strings are anagrams.",
     "Either sort both and compare (O(n log n)) or count character frequencies (O(n)). Mention case/space handling. Lead with the frequency-count approach to show you think about complexity.",
     "easy", ["strings", "hashing"], "gfg-dsa"),
   iq("zoho", "coding", "Print a matrix in spiral order.",
-    "Maintain four boundaries (top, bottom, left, right) and shrink them as you traverse each layer. Dry-run a 3×3 to prove correctness before coding — this is a classic Zoho machine-round problem.",
+    "Maintain four boundaries (top, bottom, left, right) and shrink them as you traverse each layer. Dry-run a 3x3 to prove correctness before coding - this is a classic Zoho machine-round problem.",
     "hard", ["matrix"], "gfg-dsa"),
   iq("zoho", "technical", "What is the time and space complexity of your solution? Can you optimise it?",
     "Zoho interviewers always probe complexity. State Big-O for time and space up front, then discuss a trade-off (hashing for speed at memory cost, two-pointer to drop a loop). Showing you can optimise matters more than the first answer.",
@@ -155,7 +155,7 @@ const BASE_INTERVIEW_QUESTIONS: InterviewQuestion[] = [
   iq("cognizant", "technical", "What is a deadlock and what conditions cause it?",
     "A deadlock is when processes wait on each other forever. It needs four conditions together: mutual exclusion, hold-and-wait, no preemption, circular wait. Breaking any one prevents it.",
     "medium", ["OS"], "gfg-cs-core"),
-  iq("cognizant", "coding", "Automata-Fix style: a loop summing an array returns a wrong total — how do you find the bug?",
+  iq("cognizant", "coding", "Automata-Fix style: a loop summing an array returns a wrong total - how do you find the bug?",
     "Check the loop bounds first (i <= n overruns a size-n array), then the accumulator initialisation (sum must start at 0) and that the function returns sum. Reproduce with a small input and trace one iteration.",
     "medium", ["debugging"], "gfg-dsa"),
   iq("cognizant", "technical", "Difference between GET and POST.",
@@ -175,7 +175,7 @@ const BASE_INTERVIEW_QUESTIONS: InterviewQuestion[] = [
     "medium", ["behavioural"], "studybench-curriculum"),
 ]
 
-/** Interview questions for one company (general has none — it's communication-only). */
+/** Interview questions for one company (general has none - it's communication-only). */
 const COMPANY_RECRUITER_SIGNALS: Record<CompanyId, {
   process: string
   stack: string[]
@@ -568,7 +568,12 @@ function generatedInterviewQuestion(
 
   if (bucket === 0) {
     const [fallbackPrompt, tag, sourceId] = TECHNICAL_PROMPTS[index % TECHNICAL_PROMPTS.length]
-    const prompt = COMPANY_CATEGORY_PROMPTS[company].technical[index % COMPANY_CATEGORY_PROMPTS[company].technical.length] ?? fallbackPrompt
+    const prompt = interviewPromptVariant(
+      COMPANY_CATEGORY_PROMPTS[company].technical[index % COMPANY_CATEGORY_PROMPTS[company].technical.length] ?? fallbackPrompt,
+      company,
+      "technical",
+      index,
+    )
     const stackItem = signal.stack[index % signal.stack.length]
     return iq(
       company,
@@ -583,7 +588,12 @@ function generatedInterviewQuestion(
 
   if (bucket === 1) {
     const [fallbackPrompt, tag] = CODING_PROMPTS[index % CODING_PROMPTS.length]
-    const prompt = COMPANY_CATEGORY_PROMPTS[company].coding[index % COMPANY_CATEGORY_PROMPTS[company].coding.length] ?? fallbackPrompt
+    const prompt = interviewPromptVariant(
+      COMPANY_CATEGORY_PROMPTS[company].coding[index % COMPANY_CATEGORY_PROMPTS[company].coding.length] ?? fallbackPrompt,
+      company,
+      "coding",
+      index,
+    )
     return iq(
       company,
       "coding",
@@ -596,7 +606,12 @@ function generatedInterviewQuestion(
   }
 
   if (bucket === 2) {
-    const prompt = COMPANY_CATEGORY_PROMPTS[company].domain[index % COMPANY_CATEGORY_PROMPTS[company].domain.length]
+    const prompt = interviewPromptVariant(
+      COMPANY_CATEGORY_PROMPTS[company].domain[index % COMPANY_CATEGORY_PROMPTS[company].domain.length],
+      company,
+      "domain",
+      index,
+    )
     return iq(
       company,
       "domain",
@@ -610,7 +625,12 @@ function generatedInterviewQuestion(
 
   if (bucket === 3) {
     const [fallbackPrompt, tag] = HR_PROMPTS[index % HR_PROMPTS.length]
-    const prompt = COMPANY_CATEGORY_PROMPTS[company].hr[index % COMPANY_CATEGORY_PROMPTS[company].hr.length] ?? fallbackPrompt
+    const prompt = interviewPromptVariant(
+      COMPANY_CATEGORY_PROMPTS[company].hr[index % COMPANY_CATEGORY_PROMPTS[company].hr.length] ?? fallbackPrompt,
+      company,
+      "hr",
+      index,
+    )
     return iq(
       company,
       "hr",
@@ -623,7 +643,12 @@ function generatedInterviewQuestion(
   }
 
   const [fallbackPrompt, tag] = MANAGERIAL_PROMPTS[index % MANAGERIAL_PROMPTS.length]
-  const prompt = COMPANY_CATEGORY_PROMPTS[company].managerial[index % COMPANY_CATEGORY_PROMPTS[company].managerial.length] ?? fallbackPrompt
+  const prompt = interviewPromptVariant(
+    COMPANY_CATEGORY_PROMPTS[company].managerial[index % COMPANY_CATEGORY_PROMPTS[company].managerial.length] ?? fallbackPrompt,
+    company,
+    "managerial",
+    index,
+  )
   return iq(
     company,
     "managerial",
@@ -679,6 +704,55 @@ function withHumanGuidance(question: InterviewQuestion): InterviewQuestion {
   }
 }
 
+function interviewPromptVariant(prompt: string, company: CompanyId, category: InterviewCategory, index: number) {
+  const focusByCategory: Record<InterviewCategory, string[]> = {
+    technical: [
+      "definition and one project example",
+      "trade-off and common mistake",
+      "interview follow-up explanation",
+      "real-world use case",
+      "short answer first, then depth",
+      "freshers-level clarity",
+    ],
+    coding: [
+      "brute force to optimized approach",
+      "edge cases and hidden tests",
+      "time complexity explanation",
+      "dry run on sample input",
+      "debugging thought process",
+      "clean code structure",
+    ],
+    domain: [
+      "company process awareness",
+      "first-role learning mindset",
+      "service or product fit",
+      "training readiness",
+      "client or user impact",
+      "personal preparation link",
+    ],
+    hr: [
+      "honest example",
+      "measurable improvement",
+      "teamwork evidence",
+      "pressure handling",
+      "learning from failure",
+      "career clarity",
+    ],
+    managerial: [
+      "ownership under ambiguity",
+      "status communication",
+      "quality under deadline",
+      "conflict handling",
+      "prioritization",
+      "first 60 days",
+    ],
+  }
+  const focus = focusByCategory[category][Math.floor(index / 5) % focusByCategory[category].length]
+  const cycle = Math.floor(index / (5 * focusByCategory[category].length)) + 1
+  const companyLabel = company === "general" ? "core placement" : company.toUpperCase()
+  return `${prompt} Focus on ${focus}. (${companyLabel} set ${cycle})`
+}
+
 function humanTrainerGuidance(q: InterviewQuestion): string {
   const company = COMPANY_RECRUITER_SIGNALS[q.company]
   const companyName = q.company === "general" ? "this role" : q.company.toUpperCase()
@@ -718,6 +792,4 @@ function humanTrainerGuidance(q: InterviewQuestion): string {
 
   return "I would answer like a fresher who is dependable. First I would clarify what needs to be done, then break it into steps, communicate early if I am stuck, and take ownership until the task is closed. I would support it with one real example from a project, internship, club work or college assignment."
 }
-
-
 

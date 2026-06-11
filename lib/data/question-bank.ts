@@ -267,6 +267,35 @@ const gWeightedAverageHard: Gen = (r) => {
   )
 }
 
+const gMixtureHard: Gen = (r) => {
+  const milk = pick(r, [24, 30, 36, 42])
+  const water = pick(r, [6, 10, 12, 14])
+  const remove = pick(r, [5, 6, 8])
+  const total = milk + water
+  const waterRemoved = (water * remove) / total
+  const correct = Number((water - waterRemoved).toFixed(2))
+  return make(
+    "Mixtures",
+    "hard",
+    `A vessel has ${milk} L milk and ${water} L water. If ${remove} L mixture is removed, how much water remains?`,
+    `Water fraction = ${water}/${total}. Water removed = ${remove} x ${water}/${total} = ${waterRemoved}. Remaining water = ${correct} L.`,
+    numChoices(r, correct, [water, correct + 1, Math.max(0, correct - 1)], (n) => `${n} L`),
+  )
+}
+
+const gPermutationHard: Gen = (r) => {
+  const n = pick(r, [5, 6, 7])
+  const selected = pick(r, [2, 3])
+  const correct = Array.from({ length: selected }, (_, i) => n - i).reduce((a, b) => a * b, 1)
+  return make(
+    "Permutation",
+    "hard",
+    `How many ordered arrangements can be made by selecting ${selected} students from ${n} students?`,
+    `Order matters, so use nPr = ${n}!/(${n}-${selected})! = ${correct}.`,
+    numChoices(r, correct, [Math.round(correct / selected), correct + n, correct - n]),
+  )
+}
+
 // ============================================================================
 // REASONING generators
 // ============================================================================
@@ -378,6 +407,41 @@ const gDataSufficiencyHard: Gen = (r) => {
   )
 }
 
+const gSeatingArrangementHard: Gen = (r) => {
+  const people = pick(r, [
+    ["A", "B", "C", "D"],
+    ["P", "Q", "R", "S"],
+    ["L", "M", "N", "O"],
+  ] as const)
+  const [a, b, c, d] = people
+  return make(
+    "Seating Arrangement",
+    "hard",
+    `${a}, ${b}, ${c}, ${d} sit in a row. ${b} is immediately right of ${a}. ${d} is immediately left of ${c}. If ${a} is not at an end, who sits second from the left?`,
+    `The only row satisfying both pairs with ${a} not at an end is ${d} ${c} ${a} ${b}, so ${c} is second from the left.`,
+    strChoices(r, c, [a, b, d]),
+  )
+}
+
+const gSyllogismHard: Gen = (r) => {
+  const item = pick(r, [
+    ["All coders are learners. Some learners are designers.", "Some coders are designers", "Does not follow"],
+    ["No interns are managers. Some managers are mentors.", "Some mentors are not interns", "Follows"],
+    ["All tests are assessments. No assessment is casual.", "No test is casual", "Follows"],
+  ] as const)
+  return make(
+    "Syllogism",
+    "hard",
+    `${item[0]} Conclusion: ${item[1]}.`,
+    `The correct judgement is: ${item[2]}. Translate each statement into sets before deciding.`,
+    strChoices(r, item[2], [
+      item[2] === "Follows" ? "Does not follow" : "Follows",
+      "Both conclusions follow",
+      "Only statement I is sufficient",
+    ]),
+  )
+}
+
 // ============================================================================
 // VERBAL generators (curated original word lists)
 // ============================================================================
@@ -473,6 +537,36 @@ const gParaJumbleHard: Gen = (r) => {
       "This is why mock tests matter.",
       "However, many students ignore revision.",
     ]),
+  )
+}
+
+const gSentenceCorrectionHard: Gen = (r) => {
+  const item = pick(r, [
+    ["Neither the interviewer nor the panelists ___ satisfied.", "were", ["was", "is", "has"]],
+    ["The number of applicants ___ increased this year.", "has", ["have", "are", "were"]],
+    ["She is senior ___ me in the project team.", "to", ["than", "from", "over"]],
+  ] as const)
+  return make(
+    "Sentence Correction",
+    "hard",
+    `Choose the correct word: ${item[0]}`,
+    `The correct usage is '${item[1]}' in this sentence.`,
+    strChoices(r, item[1], [...item[2]]),
+  )
+}
+
+const gCriticalReasoningHard: Gen = (r) => {
+  const item = pick(r, [
+    ["A student improved mock scores only after reviewing mistakes daily.", "Mistake review can improve test performance."],
+    ["A team delivered late because requirements changed twice without written confirmation.", "Written confirmation can reduce delivery confusion."],
+    ["Candidates who practised timed coding solved fewer questions incorrectly under pressure.", "Timed practice can improve accuracy in coding rounds."],
+  ] as const)
+  return make(
+    "Critical Reasoning",
+    "hard",
+    `Statement: ${item[0]} Best supported conclusion:`,
+    `The conclusion must stay within the evidence. The supported answer is: ${item[1]}`,
+    strChoices(r, item[1], ["The opposite is definitely true.", "There is no useful conclusion.", "Only luck determines results."]),
   )
 }
 
@@ -590,6 +684,33 @@ const gOptimizationHard: Gen = (r) => {
   )
 }
 
+const gTraceRecursionHard: Gen = (r) => {
+  const n = int(r, 3, 6)
+  const correct = (n * (n + 1)) / 2
+  return make(
+    "Recursion",
+    "hard",
+    `If f(0)=0 and f(n)=n+f(n-1), what is f(${n})?`,
+    `This sums 1 through ${n}: ${n} x ${n + 1} / 2 = ${correct}.`,
+    numChoices(r, correct, [correct - n, correct + n, n * n]),
+  )
+}
+
+const gSlidingWindowHard: Gen = (r) => {
+  const item = pick(r, [
+    [[2, 1, 5, 1, 3, 2], 3, 9],
+    [[1, 9, 2, 4, 6], 2, 11],
+    [[4, 2, 1, 7, 8, 1], 3, 16],
+  ] as const)
+  return make(
+    "Sliding Window",
+    "hard",
+    `For array [${item[0].join(", ")}], what is the maximum sum of any ${item[1]} consecutive elements?`,
+    `Check each fixed-size window; the maximum window sum is ${item[2]}.`,
+    numChoices(r, item[2], [item[2] - 1, item[2] + 2, item[1]]),
+  )
+}
+
 // ============================================================================
 // CS-CORE generators (curated facts)
 // ============================================================================
@@ -630,16 +751,77 @@ const gSecurityCloudHard: Gen = (r) => {
   return make("Security & Cloud", "hard", fact[0], `The correct answer is ${fact[1]}.`, strChoices(r, fact[1], [...fact[2]]))
 }
 
+const gDbmsHard: Gen = (r) => {
+  const fact = pick(r, [
+    ["A table has repeated customer address data causing update anomalies. Which normalization idea helps?", "Move repeated data into a separate related table"],
+    ["Which SQL clause should filter aggregated groups such as COUNT(*) > 5?", "HAVING"],
+    ["A transaction should leave the database valid even after failure. Which ACID property is involved?", "Consistency"],
+  ] as const)
+  return make(
+    "DBMS",
+    "hard",
+    fact[0],
+    `The correct answer is ${fact[1]}.`,
+    strChoices(r, fact[1], ["Use random ordering", "Store everything in one text field", "Ignore keys"]),
+  )
+}
+
+const gOsNetworksHard: Gen = (r) => {
+  const fact = pick(r, [
+    ["Which page replacement policy removes the page not used for the longest time?", "LRU"],
+    ["Which condition means two processes wait forever for each other's resource?", "Deadlock"],
+    ["TCP uses which mechanism to start a connection?", "Three-way handshake"],
+  ] as const)
+  return make(
+    "OS & Networks",
+    "hard",
+    fact[0],
+    `The correct answer is ${fact[1]}.`,
+    strChoices(r, fact[1], ["Round-robin only", "DNS lookup", "Garbage collection"]),
+  )
+}
+
+const gInterviewScenario: Gen = (r) => {
+  const item = pick(r, [
+    ["The interviewer asks why your CGPA dipped in one semester.", "Briefly accept it, explain the corrective action and show later improvement."],
+    ["A GD participant interrupts you repeatedly.", "Pause, acknowledge them, then re-enter with a concise evidence-backed point."],
+    ["You do not know the answer to a technical question.", "Admit it honestly, share what you do know, and ask to reason from basics."],
+    ["The HR asks why you should be hired over others.", "Connect your skills, project ownership and learning attitude to the role."],
+  ] as const)
+  return make(
+    "Interview Scenarios",
+    "hard",
+    `${item[0]} What is the strongest response?`,
+    `The best response is professional, honest and evidence-based: ${item[1]}`,
+    strChoices(r, item[1], ["Blame someone else.", "Give a memorised unrelated answer.", "Avoid answering and change the topic."]),
+  )
+}
+
+const gCommunicationClarity: Gen = (r) => {
+  const item = pick(r, [
+    ["Which GD opening is strongest?", "I would like to define the issue first, then compare the benefits and risks."],
+    ["Which project explanation line is strongest?", "I built the authentication flow, handled validation, and reduced failed logins."],
+    ["Which closing question to an interviewer is strongest?", "What skills should a fresher strengthen to contribute faster in this role?"],
+  ] as const)
+  return make(
+    "Communication",
+    "medium",
+    item[0],
+    "The correct option is specific, professional and role-aware.",
+    strChoices(r, item[1], ["I do not have anything to say.", "Whatever is fine for me.", "Please select me quickly."]),
+  )
+}
+
 // ============================================================================
 // Registry & public API
 // ============================================================================
 const GEN_BY_SECTION: Record<SectionId, Gen[]> = {
-  quant: [gPercentOf, gProfit, gSI, gRatio, gAverage, gSpeed, gWork, gUnitDigit, gPercentChangeHard, gWeightedAverageHard],
-  reasoning: [gSeriesArith, gSeriesGeo, gDirection, gCodingShift, gOddOneOut, gSeatingGapHard, gDataSufficiencyHard],
-  verbal: [gSynonym, gAntonym, gRcInferenceHard, gParaJumbleHard],
-  coding: [gMod, gIntDiv, gBitwise, gLoopCount, gPower, gComplexity, gEdgeCaseHard, gOptimizationHard],
-  "cs-core": [gCsFact, gSecurityCloudHard],
-  "comm-interview": [], // communication is practised via lessons, not auto-MCQs
+  quant: [gPercentOf, gProfit, gSI, gRatio, gAverage, gSpeed, gWork, gUnitDigit, gPercentChangeHard, gWeightedAverageHard, gMixtureHard, gPermutationHard],
+  reasoning: [gSeriesArith, gSeriesGeo, gDirection, gCodingShift, gOddOneOut, gSeatingGapHard, gDataSufficiencyHard, gSeatingArrangementHard, gSyllogismHard],
+  verbal: [gSynonym, gAntonym, gRcInferenceHard, gParaJumbleHard, gSentenceCorrectionHard, gCriticalReasoningHard],
+  coding: [gMod, gIntDiv, gBitwise, gLoopCount, gPower, gComplexity, gEdgeCaseHard, gOptimizationHard, gTraceRecursionHard, gSlidingWindowHard],
+  "cs-core": [gCsFact, gSecurityCloudHard, gDbmsHard, gOsNetworksHard],
+  "comm-interview": [gInterviewScenario, gCommunicationClarity],
 }
 
 const ALL_GENS: Gen[] = Object.values(GEN_BY_SECTION).flat()
@@ -653,6 +835,7 @@ export const DRILL_SECTIONS: { id: DrillSection; label: string }[] = [
   { id: "verbal", label: "Verbal" },
   { id: "coding", label: "Coding" },
   { id: "cs-core", label: "CS Core" },
+  { id: "comm-interview", label: "Communication & Interview" },
 ]
 
 /**
@@ -694,6 +877,44 @@ export function generateDrills(
       explanation: next.explanation,
     })
   }
+  return out
+}
+
+export function generateDrillsByDifficulty(
+  section: DrillSection,
+  count: number,
+  difficulty: Question["difficulty"],
+  seed: number = Date.now(),
+): Question[] {
+  const r = mulberry32(seed)
+  const gens = section === "mixed" ? ALL_GENS : GEN_BY_SECTION[section]
+  if (!gens || gens.length === 0) return []
+
+  const out: Question[] = []
+  const usedPrompts = new Set<string>()
+  let attempts = 0
+  while (out.length < count && attempts < count * 160) {
+    attempts += 1
+    const g = gens[Math.floor(r() * gens.length)]
+    const next = g(r)
+    if (next.difficulty !== difficulty) continue
+    const promptKey = next.prompt.trim().toLowerCase()
+    if (usedPrompts.has(promptKey)) continue
+    usedPrompts.add(promptKey)
+    out.push({ ...next, id: `gen-${section}-${difficulty}-${seed}-${out.length}` })
+  }
+
+  while (out.length < count) {
+    const batch = generateDrills(section, count * 2, seed + out.length + 1)
+    const match = batch.find((question) => {
+      const key = question.prompt.trim().toLowerCase()
+      return question.difficulty === difficulty && !usedPrompts.has(key)
+    })
+    if (!match) break
+    usedPrompts.add(match.prompt.trim().toLowerCase())
+    out.push({ ...match, id: `gen-${section}-${difficulty}-${seed}-fill-${out.length}` })
+  }
+
   return out
 }
 

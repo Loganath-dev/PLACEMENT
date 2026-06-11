@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { generateDrills, DRILL_SECTIONS } from "@/lib/data/question-bank"
+import { generateDrills, generateDrillsByDifficulty, DRILL_SECTIONS } from "@/lib/data/question-bank"
 
 describe("question generator", () => {
   it("produces structurally valid questions for every section", () => {
@@ -29,6 +29,23 @@ describe("question generator", () => {
     const b = generateDrills("quant", 10, 12345)
     expect(a.map((q) => q.prompt)).toEqual(b.map((q) => q.prompt))
     expect(a.map((q) => q.answer)).toEqual(b.map((q) => q.answer))
+  })
+
+  it("can intentionally generate easy, medium and hard drills without repeated prompts", () => {
+    for (const { id } of DRILL_SECTIONS) {
+      for (const difficulty of ["easy", "medium", "hard"] as const) {
+        const qs = generateDrillsByDifficulty(id, 5, difficulty, 9001)
+        if (qs.length === 0) continue
+        expect(qs.every((q) => q.difficulty === difficulty)).toBe(true)
+        expect(new Set(qs.map((q) => q.prompt.trim().toLowerCase())).size).toBe(qs.length)
+        for (const q of qs) {
+          expect(q.options.length).toBe(4)
+          expect(new Set(q.options).size).toBe(4)
+          expect(q.answer).toBeGreaterThanOrEqual(0)
+          expect(q.answer).toBeLessThan(4)
+        }
+      }
+    }
   })
 
   it("builds five stable daily questions that rotate by date", async () => {

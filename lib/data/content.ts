@@ -1446,8 +1446,8 @@ const EXTRA_CHAPTERS: Partial<Record<SectionId, Chapter[]>> = {
   ],
 }
 
-const CHAPTER_QUIZ_TARGET = 100
-export const CHAPTER_PRACTICE_TARGET = 300
+const CHAPTER_QUIZ_TARGET = 150
+export const CHAPTER_PRACTICE_TARGET = 400
 
 function stableSeed(input: string): number {
   let hash = 2166136261

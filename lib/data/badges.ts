@@ -20,7 +20,7 @@ export const BADGES: Badge[] = [
   {
     id: "first-pass",
     label: "First Pass",
-    description: "Passed your first chapter quiz (≥60%).",
+    description: "Passed your first chapter quiz (>=60%).",
     icon: "CircleCheckBig",
     earned: (s) =>
       Object.values(s.progress).some((p) =>

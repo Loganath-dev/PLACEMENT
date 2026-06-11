@@ -235,13 +235,15 @@ export function buildMockQuestions(mock: MockTest, seed = 20260607): Question[] 
     } as Record<SectionId, Question[]>,
   )
   const out: Question[] = []
-  const used = new Set<string>()
+  const usedIds = new Set<string>()
+  const usedPrompts = new Set<string>()
 
   function add(q: Question) {
-    if (!used.has(q.id)) {
-      used.add(q.id)
-      out.push(q)
-    }
+    const promptKey = q.prompt.trim().toLowerCase().replace(/\s+/g, " ")
+    if (usedIds.has(q.id) || usedPrompts.has(promptKey)) return
+    usedIds.add(q.id)
+    usedPrompts.add(promptKey)
+    out.push(q)
   }
 
   let expectedTotal = 0

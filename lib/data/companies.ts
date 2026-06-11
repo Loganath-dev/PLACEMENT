@@ -13,7 +13,7 @@ export const COMPANIES: Company[] = [
     short: "TCS",
     accent: "oklch(0.55 0.19 256)",
     sector: "IT Services",
-    blurb: "TCS NQT — aptitude, reasoning, verbal and a coding round. India's largest recruiter.",
+    blurb: "TCS NQT - aptitude, reasoning, verbal and a coding round. India's largest recruiter.",
     cutoffPRI: 55,
     slope: 0.9,
     eligibility: {
@@ -23,7 +23,7 @@ export const COMPANIES: Company[] = [
       pattern: [
         "Foundation/Advanced NQT: Numerical Ability, Reasoning Ability, Verbal Ability",
         "Programming Logic + Hands-on Coding (2 problems)",
-        "Adaptive test — difficulty adjusts to performance",
+        "Adaptive test - difficulty adjusts to performance",
       ],
       rounds: ["NQT (aptitude + coding)", "Technical Interview", "Managerial + HR"],
       sourceId: "tcs-nqt-official",
@@ -36,7 +36,7 @@ export const COMPANIES: Company[] = [
     short: "Infosys",
     accent: "oklch(0.6 0.13 215)",
     sector: "IT Services",
-    blurb: "InfyTQ-aligned hiring — strong aptitude + pseudocode + a hands-on coding round.",
+    blurb: "InfyTQ-aligned hiring - strong aptitude + pseudocode + a hands-on coding round.",
     cutoffPRI: 58,
     slope: 0.9,
     eligibility: {
@@ -59,7 +59,7 @@ export const COMPANIES: Company[] = [
     short: "Wipro",
     accent: "oklch(0.62 0.16 150)",
     sector: "IT Services",
-    blurb: "Wipro Elite NTH — aptitude, written communication essay, and coding.",
+    blurb: "Wipro Elite NTH - aptitude, written communication essay, and coding.",
     cutoffPRI: 52,
     slope: 0.9,
     eligibility: {
@@ -105,11 +105,11 @@ export const COMPANIES: Company[] = [
     short: "Zoho",
     accent: "oklch(0.6 0.2 30)",
     sector: "Product / SaaS",
-    blurb: "Programming-heavy. Multiple coding rounds — the toughest of the set, but high pay.",
+    blurb: "Programming-heavy. Multiple coding rounds - the toughest of the set, but high pay.",
     cutoffPRI: 70,
     slope: 0.75,
     eligibility: {
-      cgpa: "60%+ typical; skill-first — strong coders prioritized",
+      cgpa: "60%+ typical; skill-first - strong coders prioritized",
       backlogs: "Generally no active backlogs",
       tenthTwelfth: "Around 60% in 10th and 12th",
       pattern: [
@@ -128,7 +128,7 @@ export const COMPANIES: Company[] = [
     short: "Cognizant",
     accent: "oklch(0.62 0.17 240)",
     sector: "IT Services",
-    blurb: "GenC hiring — aptitude, automata-style coding, and communication.",
+    blurb: "GenC hiring - aptitude, automata-style coding, and communication.",
     cutoffPRI: 50,
     slope: 0.85,
     eligibility: {

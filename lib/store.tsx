@@ -328,7 +328,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             }
             const wasPassed = prev.passed
             const bestScore = Math.max(prev.bestScore, score)
-            const passed = bestScore >= 60
+            const passed = bestScore >= 70
             prog.chapters[chapterId] = {
               bestScore,
               passed,

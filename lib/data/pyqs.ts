@@ -1,5 +1,5 @@
 import type { CompanyId, Question, SectionId } from "@/lib/types"
-import { generateDrills, todaySeed } from "@/lib/data/question-bank"
+import { generateDrills, generateDrillsByDifficulty, todaySeed } from "@/lib/data/question-bank"
 
 /**
  * Previous-Year-Question bank. These are ORIGINAL reconstructions in
@@ -272,13 +272,13 @@ export const PYQS: (PYQ & { company: CompanyId })[] = [
 ]
 
 const COMPANY_PYQ_PLAN: Record<CompanyId, Partial<Record<SectionId, number>>> = {
-  tcs: { quant: 50, reasoning: 45, verbal: 40, coding: 45, "cs-core": 35, "comm-interview": 45 },
-  infosys: { quant: 50, reasoning: 45, verbal: 40, coding: 50, "cs-core": 35, "comm-interview": 45 },
-  wipro: { quant: 50, reasoning: 40, verbal: 50, coding: 40, "cs-core": 30, "comm-interview": 55 },
-  accenture: { quant: 45, reasoning: 45, verbal: 40, coding: 35, "cs-core": 55, "comm-interview": 55 },
-  zoho: { coding: 180, "cs-core": 40, "comm-interview": 40 },
-  cognizant: { quant: 45, reasoning: 45, verbal: 40, coding: 45, "cs-core": 40, "comm-interview": 50 },
-  general: { quant: 50, reasoning: 50, verbal: 45, coding: 55, "cs-core": 50, "comm-interview": 60 },
+  tcs: { quant: 90, reasoning: 80, verbal: 70, coding: 85, "cs-core": 65, "comm-interview": 75 },
+  infosys: { quant: 90, reasoning: 80, verbal: 70, coding: 95, "cs-core": 65, "comm-interview": 75 },
+  wipro: { quant: 85, reasoning: 75, verbal: 90, coding: 75, "cs-core": 60, "comm-interview": 90 },
+  accenture: { quant: 80, reasoning: 85, verbal: 75, coding: 70, "cs-core": 105, "comm-interview": 90 },
+  zoho: { quant: 55, reasoning: 55, verbal: 35, coding: 260, "cs-core": 85, "comm-interview": 70 },
+  cognizant: { quant: 85, reasoning: 85, verbal: 75, coding: 90, "cs-core": 75, "comm-interview": 85 },
+  general: { quant: 100, reasoning: 95, verbal: 85, coding: 110, "cs-core": 95, "comm-interview": 100 },
 }
 
 const COMPANY_SOURCE: Record<CompanyId, string> = {
@@ -398,8 +398,22 @@ const COMMUNICATION_PYQ_TEMPLATES = [
 ] as const
 
 function communicationPyqsFor(company: CompanyId, count: number): (PYQ & { company: CompanyId })[] {
+  const scenarios = [
+    "self-introduction",
+    "technical interview",
+    "HR round",
+    "group discussion",
+    "project explanation",
+    "communication assessment",
+    "managerial round",
+    "training-readiness",
+  ]
   return Array.from({ length: count }, (_, i) => {
     const template = COMMUNICATION_PYQ_TEMPLATES[i % COMMUNICATION_PYQ_TEMPLATES.length]
+    const scenario = scenarios[Math.floor(i / COMMUNICATION_PYQ_TEMPLATES.length) % scenarios.length]
+    const cycle = Math.floor(i / (COMMUNICATION_PYQ_TEMPLATES.length * scenarios.length)) + 1
+    const difficulty: Question["difficulty"] =
+      i % 6 === 0 ? "hard" : i % 3 === 0 ? "medium" : "easy"
     return {
       id: `pyq-${company}-comm-interview-${i + 1}`,
       company,
@@ -407,37 +421,68 @@ function communicationPyqsFor(company: CompanyId, count: number): (PYQ & { compa
       topic: template.topic,
       year: i % 2 === 0 ? 2026 : 2025,
       frequentlyAsked: i % 2 === 0,
-      difficulty: i % 5 === 0 ? "medium" : "easy",
-      prompt: `${template.prompt} (${company === "general" ? "core" : company.toUpperCase()} pattern practice ${Math.floor(i / COMMUNICATION_PYQ_TEMPLATES.length) + 1})`,
+      difficulty,
+      prompt: `${template.prompt} (${company === "general" ? "core" : company.toUpperCase()} ${scenario} pattern set ${cycle})`,
       options: [...template.options],
       answer: template.answer,
-      explanation: template.explanation,
+      explanation: `${template.explanation} This ${difficulty} item checks ${scenario.replace("-", " ")} judgement for campus placement rounds.`,
       sourceId: "studybench-curriculum",
       patternSourceId: COMPANY_SOURCE[company],
     }
   })
 }
 
+function generatedSectionPyqs(
+  company: CompanyId,
+  sectionId: SectionId,
+  count: number,
+  existingPrompts: Set<string>,
+): (PYQ & { company: CompanyId })[] {
+  const easy = Math.ceil(count * 0.34)
+  const medium = Math.ceil(count * 0.38)
+  const hard = Math.max(0, count - easy - medium)
+  const seed = sectionSeed(company, sectionId)
+  const generated = [
+    ...generateDrillsByDifficulty(sectionId, easy, "easy", seed + 11),
+    ...generateDrillsByDifficulty(sectionId, medium, "medium", seed + 23),
+    ...generateDrillsByDifficulty(sectionId, hard, "hard", seed + 37),
+  ]
+
+  const fallback = generateDrills(sectionId, count * 3, seed + 49)
+  const usedPrompts = new Set(existingPrompts)
+  return [...generated, ...fallback]
+    .filter((question) => {
+      const key = question.prompt.trim().toLowerCase()
+      if (usedPrompts.has(key)) return false
+      usedPrompts.add(key)
+      return true
+    })
+    .slice(0, count)
+    .map((question, i) => ({
+      ...question,
+      id: `pyq-${company}-${sectionId}-${i + 1}`,
+      company,
+      section: sectionId,
+      year: i % 2 === 0 ? 2026 : 2025,
+      frequentlyAsked: i % 3 === 0,
+      sourceId: "studybench-curriculum",
+      patternSourceId: COMPANY_SOURCE[company],
+    }))
+}
+
 function generatedPyqsFor(company: CompanyId): (PYQ & { company: CompanyId })[] {
   const plan = COMPANY_PYQ_PLAN[company]
   return Object.entries(plan).flatMap(([section, count]) => {
     const sectionId = section as SectionId
+    const existingPrompts = new Set(
+      PYQS.filter((question) => question.company === company && question.section === sectionId).map(
+        (question) => question.prompt.trim().toLowerCase(),
+      ),
+    )
     if (sectionId === "comm-interview") {
       return communicationPyqsFor(company, count ?? 0)
     }
-    return generateDrills(sectionId, count ?? 0, sectionSeed(company, sectionId)).map(
-      (question, i) => ({
-        ...question,
-        id: `pyq-${company}-${sectionId}-${i + 1}`,
-        company,
-        section: sectionId,
-        year: i % 2 === 0 ? 2026 : 2025,
-        frequentlyAsked: i % 3 === 0,
-        // Original StudyBench content; the official ID is only the PATTERN basis.
-        sourceId: "studybench-curriculum",
-        patternSourceId: COMPANY_SOURCE[company],
-      }),
-    )
+    return generatedSectionPyqs(company, sectionId, count ?? 0, existingPrompts)
   })
 }
 

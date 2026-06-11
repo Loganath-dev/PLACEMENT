@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { normalizeCodingOutput, parseCodingInput } from "@/lib/coding-runner"
+import {
+  executeCodingSubmission,
+  normalizeCodingOutput,
+  parseCodingInput,
+} from "@/lib/coding-runner"
 
 describe("parseCodingInput", () => {
   it("parses count plus array input", () => {
@@ -30,5 +34,45 @@ describe("normalizeCodingOutput", () => {
   it("normalizes arrays and whitespace", () => {
     expect(normalizeCodingOutput([4, 5, 1, 2, 3])).toBe("4 5 1 2 3")
     expect(normalizeCodingOutput("4   5\n1")).toBe("4 5 1")
+  })
+})
+
+describe("executeCodingSubmission", () => {
+  it("accepts returned values from solve", () => {
+    const result = executeCodingSubmission(
+      "function solve(arr) { return arr.filter((n) => n > 0).reduce((a, b) => a + b, 0) }",
+      "5\n1 -2 3 0 4",
+    )
+    expect(result).toEqual({ ok: true, output: "8" })
+  })
+
+  it("accepts console.log output for beginners", () => {
+    const result = executeCodingSubmission(
+      "function solve(arr) { console.log(arr[0] + arr[1]) }",
+      "2\n4 9",
+    )
+    expect(result).toEqual({ ok: true, output: "13" })
+  })
+
+  it("normalizes array returns for printed array problems", () => {
+    const result = executeCodingSubmission(
+      "function solve(arr, k) { return arr.slice(-k).concat(arr.slice(0, -k)) }",
+      "5 2\n1 2 3 4 5",
+    )
+    expect(result).toEqual({ ok: true, output: "4 5 1 2 3" })
+  })
+
+  it("supports matrix inputs", () => {
+    const result = executeCodingSubmission(
+      "function solve(matrix) { return matrix[0][0] + matrix[2][2] }",
+      "3 3\n1 2 3\n4 5 6\n7 8 9",
+    )
+    expect(result).toEqual({ ok: true, output: "10" })
+  })
+
+  it("returns a clear error when solve is missing", () => {
+    const result = executeCodingSubmission("const answer = 42", "1")
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.error).toContain("Define function solve")
   })
 })

@@ -12,9 +12,7 @@ import { getSections } from "@/lib/data/content"
 import {
   computePRI,
   EMPTY_PROGRESS,
-  placementProbability,
   priBand,
-  probabilityBand,
   sectionMastery,
 } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
@@ -29,7 +27,6 @@ export default function CompanyTrackPage() {
   const company = getCompany(companyId)
   const progress = state.progress[companyId] ?? EMPTY_PROGRESS
   const pri = computePRI(companyId, progress)
-  const prob = placementProbability(companyId, pri)
   const sections = getSections(companyId)
   const isPrimary = state.primary === companyId
 
@@ -52,7 +49,7 @@ export default function CompanyTrackPage() {
             </div>
             <p className="mt-1 text-muted-foreground">{company.blurb}</p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-              <ProbabilityStat value={prob} band={probabilityBand(prob)} compact />
+              <ProbabilityStat pri={pri} compact />
               {company.eligibility ? (
                 <Link
                   href={`/practice?company=${companyId}`}

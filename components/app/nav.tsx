@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
@@ -225,7 +225,7 @@ function MobileNav() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" aria-label="Open menu">
-          <Icon name="LayoutDashboard" className="size-5" />
+          <Icon name="Menu" className="size-5" />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72 bg-sidebar p-4">
