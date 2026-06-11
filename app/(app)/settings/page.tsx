@@ -516,6 +516,27 @@ function NotificationSettings() {
       }
       return next
     })
+
+    if (key === "reengage" && value) {
+      void fetch("/api/email/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "StudyBench updates are enabled",
+          message:
+            "You will receive useful preparation updates, reminders and learning nudges when they are available.",
+        }),
+      })
+        .then((response) => {
+          if (!response.ok) throw new Error("Email update failed")
+          toast.success("Email updates enabled")
+        })
+        .catch(() => {
+          toast("Email updates saved", {
+            description: "We could not send a confirmation email right now.",
+          })
+        })
+    }
   }
 
   const items: { key: keyof NotifPrefs; label: string; desc: string }[] = [

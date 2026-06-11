@@ -292,7 +292,7 @@ function MockTrendCard({ companyId }: { companyId: CompanyId }) {
               ))}
             </div>
             <p className="text-xs text-muted-foreground">
-              Percentile is an internal benchmark estimate from mock score versus target, not a public candidate ranking.
+              Percentile is an estimate from your mock score versus the target, not a public candidate ranking.
             </p>
           </>
         )}

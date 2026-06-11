@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
-export const runtime = "nodejs"
+export const runtime = "edge"
 
 const PREMIUM_AMOUNT_INR = 399
 
@@ -34,7 +34,7 @@ export async function POST() {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString("base64")}`,
+      Authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}`,
     },
     body: JSON.stringify({
       amount: PREMIUM_AMOUNT_INR * 100,

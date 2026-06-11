@@ -2,6 +2,8 @@
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
+export const runtime = "edge"
+
 /**
  * Handles auth redirects from:
  *  - OAuth / PKCE: `?code=...` (exchangeCodeForSession)

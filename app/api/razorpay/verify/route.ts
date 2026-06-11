@@ -1,9 +1,9 @@
-import crypto from "crypto"
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { hmacSha256Hex, timingSafeStringEqual } from "@/lib/crypto/edge-hmac"
 
-export const runtime = "nodejs"
+export const runtime = "edge"
 
 /**
  * Verifies a Razorpay payment signature and, on success, writes premium=true
@@ -37,15 +37,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing Razorpay verification fields." }, { status: 400 })
   }
 
-  const expected = crypto
-    .createHmac("sha256", keySecret)
-    .update(`${orderId}|${paymentId}`)
-    .digest("hex")
+  const expected = await hmacSha256Hex(keySecret, `${orderId}|${paymentId}`)
 
-  if (
-    expected.length !== signature.length ||
-    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
-  ) {
+  if (!timingSafeStringEqual(expected, signature)) {
     return NextResponse.json({ error: "Invalid payment signature." }, { status: 400 })
   }
 

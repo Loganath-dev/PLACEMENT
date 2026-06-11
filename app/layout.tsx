@@ -32,8 +32,17 @@ export const metadata: Metadata = {
   },
   description: SEO.description,
   keywords: SEO.keywords,
+  authors: [{ name: SITE_NAME, url: SITE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  category: "education",
   alternates: {
     canonical: SITE_URL,
+  },
+  icons: {
+    icon: [{ url: "/icon", sizes: "512x512", type: "image/png" }],
+    apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/icon"],
   },
   manifest: "/manifest.webmanifest",
   openGraph: {

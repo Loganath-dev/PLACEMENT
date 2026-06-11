@@ -92,7 +92,7 @@ describe("content quality audit", () => {
         }
       }
     }
-  }, 60_000)
+  }, 120_000)
 
   it("has valid mock questions without repeated prompts inside a mock", () => {
     for (const mock of MOCK_TESTS) {

@@ -2,8 +2,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 
-// Service-role deletion must run on the Node runtime (not edge).
-export const runtime = "nodejs"
+export const runtime = "edge"
 
 /**
  * Permanently deletes the signed-in user's account and all their data -

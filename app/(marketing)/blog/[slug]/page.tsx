@@ -18,6 +18,8 @@ export function generateStaticParams() {
   return allPostSlugs().map((slug) => ({ slug }))
 }
 
+export const dynamicParams = false
+
 export async function generateMetadata({
   params,
 }: {

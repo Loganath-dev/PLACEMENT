@@ -56,7 +56,17 @@ export default function OnboardingPage() {
 
   function finish() {
     const prim = (primary || interested[0] || "general") as CompanyId
+    const companies = interested.map(
+      (id) => SELECTABLE_COMPANIES.find((company) => company.id === id)?.short ?? id.toUpperCase(),
+    )
     completeOnboarding(profile, interested, prim)
+    void fetch("/api/email/welcome", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: profile.name, companies }),
+    }).catch(() => {
+      // Email should never block a student from reaching the dashboard.
+    })
     router.push("/dashboard")
   }
 

@@ -1,8 +1,8 @@
-import crypto from "crypto"
 import { NextResponse } from "next/server"
 import { createAdminClient } from "@/lib/supabase/admin"
+import { hmacSha256Hex, timingSafeStringEqual } from "@/lib/crypto/edge-hmac"
 
-export const runtime = "nodejs"
+export const runtime = "edge"
 
 /**
  * Razorpay webhook — server-side reconciliation for premium activation.
@@ -20,13 +20,9 @@ export async function POST(request: Request) {
 
   const rawBody = await request.text()
   const signature = request.headers.get("x-razorpay-signature") ?? ""
-  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex")
+  const expected = await hmacSha256Hex(secret, rawBody)
 
-  if (
-    !signature ||
-    expected.length !== signature.length ||
-    !crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
-  ) {
+  if (!signature || !timingSafeStringEqual(expected, signature)) {
     return NextResponse.json({ error: "Invalid webhook signature." }, { status: 400 })
   }
 

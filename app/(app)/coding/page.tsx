@@ -319,7 +319,7 @@ function BrowserJsRunner({
     <div className="overflow-hidden rounded-xl border border-border">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/50 px-3 py-2">
         <div>
-          <p className="text-sm font-medium">MVP coding judge</p>
+          <p className="text-sm font-medium">Code practice runner</p>
           <p className="text-xs text-muted-foreground">
             JavaScript only. Visible samples run in your browser.
           </p>
