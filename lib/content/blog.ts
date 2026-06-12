@@ -695,6 +695,169 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+  // ========================================================================
+  {
+    slug: "tcs-nqt-preparation-guide",
+    title: "TCS NQT Preparation 2026: Exam Pattern, Syllabus and 8-Week Plan",
+    description:
+      "Everything freshers need for the TCS NQT in 2026: how Ninja, Digital and Prime differ, the section-wise syllabus, and an 8-week preparation plan that works.",
+    excerpt:
+      "The TCS NQT is the highest-volume fresher exam in India. Here is what it actually tests, how the role tiers differ, and the 8-week plan to clear it.",
+    datePublished: "2026-06-12",
+    dateModified: "2026-06-12",
+    readMins: 10,
+    tags: ["TCS NQT", "Company guide", "Freshers"],
+    keywords: [
+      "TCS NQT preparation",
+      "TCS NQT syllabus 2026",
+      "TCS NQT exam pattern",
+      "TCS Ninja Digital Prime difference",
+      "TCS placement preparation for freshers",
+    ],
+    intro: [
+      "The TCS National Qualifier Test (NQT) is the single biggest entry door for Indian freshers - lakhs of students take it every cycle, and one score can put you in the running for Ninja, Digital and Prime roles at very different salary bands.",
+      "This guide breaks down what the test actually measures, how the role tiers differ, the section-wise syllabus, and an 8-week plan that prioritises the sections where most students lose their attempt. Always confirm the current pattern on the official TCS NQT registration page before your slot - TCS adjusts the format between cycles.",
+    ],
+    sections: [
+      {
+        id: "what-is-nqt",
+        heading: "1. What the TCS NQT is and why the role tiers matter",
+        blocks: [
+          {
+            k: "p",
+            text: "The NQT is TCS's standardised entry assessment for fresher hiring. Your performance places you in consideration for three tiers: **Ninja** (the base offer), **Digital** (a significantly higher package with tougher advanced sections), and **Prime** (the top band, typically requiring outstanding scores plus strong interviews).",
+          },
+          {
+            k: "p",
+            text: "This matters for strategy: clearing the foundation sections gets you into the Ninja pool, but the **advanced quantitative and coding sections decide whether you upgrade to Digital or Prime**. Students who only prepare for the basics leave the bigger offers on the table.",
+          },
+        ],
+      },
+      {
+        id: "exam-pattern",
+        heading: "2. The exam pattern in recent cycles",
+        blocks: [
+          {
+            k: "p",
+            text: "In recent cycles the NQT has combined a foundation part and an advanced part in one sitting. The foundation part tests **numerical ability, verbal ability and reasoning ability**. The advanced part adds **advanced quantitative/reasoning questions and hands-on coding** in a built-in editor.",
+          },
+          {
+            k: "list",
+            items: [
+              "**Numerical ability** - arithmetic, percentages, profit & loss, time-speed-distance, data interpretation.",
+              "**Verbal ability** - reading comprehension, grammar, sentence completion and ordering.",
+              "**Reasoning ability** - series, puzzles, blood relations, seating arrangement, visual and logical reasoning.",
+              "**Advanced section** - harder quant and reasoning at a noticeably higher difficulty.",
+              "**Coding** - one or more problems where you write working code; partial test-case scoring has been common.",
+            ],
+          },
+          {
+            k: "p",
+            text: "Timing and question counts have changed between cycles, so treat any fixed numbers you find online with suspicion - practise to be fast everywhere, and verify the live pattern in your official hall-ticket instructions.",
+          },
+        ],
+      },
+      {
+        id: "syllabus-priorities",
+        heading: "3. Section-wise syllabus and where students actually lose marks",
+        blocks: [
+          {
+            k: "p",
+            text: "Most NQT rejections do not come from the coding round - they come from running out of time in numerical ability and data interpretation. Speed is the real syllabus.",
+          },
+          {
+            k: "ol",
+            items: [
+              "**Quantitative aptitude (highest priority)** - master percentages, ratios, averages, profit & loss, and time & work to the point where a typical question takes under 60 seconds.",
+              "**Reasoning** - seating arrangements and puzzle sets are the time sinks; learn to triage and skip early.",
+              "**Verbal** - reading comprehension is free marks if you read the questions before the passage; grammar rules are a finite, learnable list.",
+              "**Coding** - arrays, strings, loops, and standard patterns (two pointers, frequency counting, simple math). NQT coding rewards clean working solutions, not exotic algorithms.",
+              "**Advanced quant** - only after the foundation sections are consistently above 80% in practice.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "eight-week-plan",
+        heading: "4. The 8-week preparation plan",
+        blocks: [
+          {
+            k: "p",
+            text: "Eight weeks is enough if every week has a job. The plan assumes 2-3 focused hours a day.",
+          },
+          {
+            k: "ol",
+            items: [
+              "**Weeks 1-2:** Quant foundations - percentages, ratios, averages, speed-distance. Daily timed drills, error log from day one.",
+              "**Weeks 3-4:** Reasoning + verbal in parallel with quant revision. One reading-comprehension set and one puzzle set daily.",
+              "**Week 5:** Coding - solve pattern-based problems daily in the language you will use in the exam editor.",
+              "**Week 6:** Advanced section - harder quant and multi-step reasoning. Keep daily mixed drills from earlier weeks alive.",
+              "**Weeks 7-8:** Full-length timed mocks on the TCS pattern, one every 2-3 days. Spend the day after each mock only on the topics you got wrong.",
+            ],
+          },
+          {
+            k: "quote",
+            text: "The error log is the plan. A wrong answer you never revisit will be wrong again in the real exam.",
+          },
+        ],
+      },
+      {
+        id: "common-mistakes",
+        heading: "5. Five mistakes that cost students the NQT",
+        blocks: [
+          {
+            k: "list",
+            items: [
+              "Preparing topic-wise forever and writing the first timed mock in the last week.",
+              "Ignoring verbal because it feels easy - it is the cheapest section to score and the rank list does not care where marks came from.",
+              "Practising coding on paper or in a rich IDE instead of a plain browser editor like the real exam.",
+              "Attempting puzzle sets in order instead of triaging - one stubborn seating arrangement can eat ten minutes.",
+              "Trusting an outdated pattern from a 2-3 year old YouTube video instead of the official current notification.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "know-you-are-ready",
+        heading: "6. How to know you are actually ready",
+        blocks: [
+          {
+            k: "p",
+            text: "Readiness is measurable: in your last three full-length mocks on the TCS pattern, you finish every section in time, your accuracy holds above the cutoff zone in quant and reasoning, and your coding solution passes the majority of test cases. If any of those is false, you know exactly which week of the plan to repeat.",
+          },
+          {
+            k: "p",
+            text: "StudyBench's TCS track packages this loop - pattern-aligned chapters, timed PYQ-style practice, full mocks and a per-company readiness score - so you can see the gap closing week by week instead of guessing.",
+          },
+        ],
+      },
+    ],
+    takeaways: [
+      "One NQT score feeds three very different offers - prepare for the advanced section, not just the foundation.",
+      "Speed in quant and data interpretation eliminates more students than the coding round.",
+      "Give the plan 8 weeks: foundations first, coding in week 5, full timed mocks in weeks 7-8.",
+      "Practise coding in a plain browser editor to match exam conditions.",
+      "Always verify the current pattern on the official TCS NQT notification - it changes between cycles.",
+    ],
+    faq: [
+      {
+        q: "What is the difference between TCS Ninja, Digital and Prime?",
+        a: "All three are fresher roles filled through the NQT pipeline. Ninja is the base package, Digital is a higher band that requires stronger advanced-section and coding performance, and Prime is the top band with the most demanding bar. The same test sitting can qualify you for upgrade interviews to the higher tiers.",
+      },
+      {
+        q: "Is there negative marking in the TCS NQT?",
+        a: "TCS has generally not used negative marking in recent NQT cycles, but the rules are stated in each cycle's official instructions - always confirm in your hall ticket and the on-screen instructions before answering strategically.",
+      },
+      {
+        q: "How long should I prepare for the TCS NQT?",
+        a: "Eight weeks of 2-3 focused hours a day is enough for most students: four weeks of aptitude foundations, one week of coding patterns, one week of advanced-section practice, and two weeks of full-length timed mocks with error-log revision.",
+      },
+      {
+        q: "Which programming language should I use in the NQT coding section?",
+        a: "Use the language you can write fastest without an IDE - C, C++, Java and Python are all commonly supported. The editor is plain, so practise writing complete, compilable programs in a browser environment beforehand.",
+      },
+    ],
+  },
 ]
 
 export function getPost(slug: string): BlogPost | undefined {

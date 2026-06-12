@@ -16,38 +16,25 @@ export function StudyBenchMark({ className }: { className?: string }) {
         role="img"
         aria-label="StudyBench"
       >
-        {/* Background */}
-        <rect width="64" height="64" rx="14" fill="#0F172A" />
-        {/* Left page — indigo */}
+        <rect width="64" height="64" rx="16" fill="#EFF6FF" />
+        <rect x="12" y="12" width="40" height="40" rx="12" fill="#FFFFFF" />
+        <rect x="19" y="35" width="22" height="5.5" rx="2.75" fill="#0F172A" />
+        <rect x="19" y="26.5" width="18" height="5.5" rx="2.75" fill="#2563EB" />
+        <rect x="19" y="18" width="27" height="5.5" rx="2.75" fill="#F59E0B" />
         <path
-          d="M14 19c7-2.8 13.2-2 18 2.6v25.8c-5-4-11-5-18-2.8V19Z"
-          fill="#818CF8"
-        />
-        {/* Right page — cyan */}
-        <path
-          d="M50 19c-7-2.8-13.2-2-18 2.6v25.8c5-4 11-5 18-2.8V19Z"
-          fill="#22D3EE"
-        />
-        {/* Spine */}
-        <path d="M32 21.6v24" stroke="#0F172A" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-        {/* Left page text lines */}
-        <path
-          d="M19.5 28c3.2-.8 6-.4 8.5 1.1M19.5 34.5c3.2-.8 6-.4 8.5 1.1"
-          stroke="white"
-          strokeWidth="2"
+          d="M30 45.5L44 31.5"
+          stroke="#0F172A"
+          strokeWidth="5"
           strokeLinecap="round"
-          opacity="0.6"
         />
-        {/* Right page text lines */}
         <path
-          d="M36 29.1c2.5-1.5 5.3-1.9 8.5-1.1M36 35.6c2.5-1.5 5.3-1.9 8.5-1.1"
-          stroke="white"
-          strokeWidth="2"
+          d="M39 31.5H44V36.5"
+          stroke="#0F172A"
+          strokeWidth="5"
           strokeLinecap="round"
-          opacity="0.6"
+          strokeLinejoin="round"
         />
-        {/* Amber bench line */}
-        <path d="M11 51h42" stroke="#F59E0B" strokeWidth="4" strokeLinecap="round" />
+        <circle cx="48" cy="18" r="4" fill="#22C55E" />
       </svg>
     </span>
   )
@@ -80,7 +67,8 @@ export function StudyBenchWordmark({
           textSize,
         )}
       >
-        <span className="font-medium text-foreground/70">Study</span><span className="font-extrabold text-primary">Bench</span>
+        <span className="font-medium text-foreground/70">Study</span>
+        <span className="font-extrabold text-primary">Bench</span>
       </span>
     </Link>
   )

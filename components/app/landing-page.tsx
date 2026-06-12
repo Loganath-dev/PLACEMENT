@@ -435,7 +435,7 @@ function SeoContentSection() {
 function ShareScoreCta({ startHref }: { startHref: string }) {
   const shareText =
     "I just scored 87% on a TCS mock on StudyBench 🎯 My placement prep is finally structured. Check it out:"
-  const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://studybench.in"
+  const shareUrl = "https://studybench.in"
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 md:px-6">

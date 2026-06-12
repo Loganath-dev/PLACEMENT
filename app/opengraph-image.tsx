@@ -1,4 +1,4 @@
-﻿import { ImageResponse } from "next/og"
+import { ImageResponse } from "next/og"
 import { SITE_NAME } from "@/lib/content/blocks"
 
 export const runtime = "edge"
@@ -31,19 +31,21 @@ export default function Image() {
               width: 72,
               height: 72,
               borderRadius: 18,
-              background: "#0F172A",
+              background: "#EFF6FF",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               position: "relative",
             }}
           >
-            {/* Left page */}
-            <div style={{ position: "absolute", left: 14, top: 18, width: 21, height: 28, borderRadius: "5px 2px 2px 5px", background: "#818CF8" }} />
-            {/* Right page */}
-            <div style={{ position: "absolute", right: 14, top: 18, width: 21, height: 28, borderRadius: "2px 5px 5px 2px", background: "#22D3EE" }} />
-            {/* Bench line */}
-            <div style={{ position: "absolute", left: 12, right: 12, bottom: 12, height: 6, borderRadius: 999, background: "#F59E0B" }} />
+            <div style={{ position: "absolute", left: 13, top: 13, width: 46, height: 46, borderRadius: 14, background: "#FFFFFF" }} />
+            <div style={{ position: "absolute", left: 21, top: 39, width: 25, height: 6, borderRadius: 3, background: "#0F172A" }} />
+            <div style={{ position: "absolute", left: 21, top: 30, width: 21, height: 6, borderRadius: 3, background: "#2563EB" }} />
+            <div style={{ position: "absolute", left: 21, top: 20, width: 31, height: 6, borderRadius: 3, background: "#F59E0B" }} />
+            <div style={{ position: "absolute", left: 36, top: 46, width: 26, height: 6, borderRadius: 3, background: "#0F172A", transform: "rotate(-45deg)", transformOrigin: "left center" }} />
+            <div style={{ position: "absolute", left: 50, top: 34, width: 12, height: 6, borderRadius: 3, background: "#0F172A" }} />
+            <div style={{ position: "absolute", left: 56, top: 34, width: 6, height: 12, borderRadius: 3, background: "#0F172A" }} />
+            <div style={{ position: "absolute", left: 51, top: 17, width: 7, height: 7, borderRadius: 4, background: "#22C55E" }} />
           </div>
           <div style={{ fontSize: 38, fontWeight: 800 }}>{SITE_NAME}</div>
         </div>
@@ -67,5 +69,3 @@ export default function Image() {
     size,
   )
 }
-
-

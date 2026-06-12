@@ -37,9 +37,9 @@ export const metadata: Metadata = {
   creator: SITE_NAME,
   publisher: SITE_NAME,
   category: "education",
-  alternates: {
-    canonical: SITE_URL,
-  },
+  // No global canonical here: a root-layout canonical is inherited by every
+  // page that doesn't override it, telling Google they are all duplicates of
+  // the homepage. Each indexable page declares its own canonical instead.
   icons: {
     icon: [{ url: "/icon", sizes: "512x512", type: "image/png" }],
     apple: [{ url: "/apple-icon", sizes: "180x180", type: "image/png" }],

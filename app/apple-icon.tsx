@@ -11,67 +11,20 @@ export default function AppleIcon() {
         style={{
           width: "100%",
           height: "100%",
-          background: "#0F172A",
-          borderRadius: 40,
+          background: "#EFF6FF",
+          borderRadius: 42,
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           position: "relative",
         }}
       >
-        {/* Left page — indigo */}
-        <div
-          style={{
-            position: "absolute",
-            left: 24,
-            top: 34,
-            width: 58,
-            height: 82,
-            background: "#818CF8",
-            borderRadius: "8px 3px 3px 8px",
-          }}
-        />
-        {/* Right page — cyan */}
-        <div
-          style={{
-            position: "absolute",
-            right: 24,
-            top: 34,
-            width: 58,
-            height: 82,
-            background: "#22D3EE",
-            borderRadius: "3px 8px 8px 3px",
-          }}
-        />
-        {/* Spine */}
-        <div
-          style={{
-            position: "absolute",
-            left: 85,
-            top: 34,
-            width: 10,
-            height: 82,
-            background: "#0F172A",
-          }}
-        />
-        {/* Left page lines */}
-        <div style={{ position: "absolute", left: 30, top: 60, width: 42, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
-        <div style={{ position: "absolute", left: 30, top: 74, width: 34, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
-        {/* Right page lines */}
-        <div style={{ position: "absolute", right: 30, top: 60, width: 42, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
-        <div style={{ position: "absolute", right: 30, top: 74, width: 34, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
-        {/* Amber bench line */}
-        <div
-          style={{
-            position: "absolute",
-            left: 20,
-            right: 20,
-            bottom: 30,
-            height: 12,
-            borderRadius: 999,
-            background: "#F59E0B",
-          }}
-        />
+        <div style={{ position: "absolute", left: 34, top: 34, width: 112, height: 112, borderRadius: 34, background: "#FFFFFF" }} />
+        <div style={{ position: "absolute", left: 54, top: 98, width: 62, height: 15, borderRadius: 8, background: "#0F172A" }} />
+        <div style={{ position: "absolute", left: 54, top: 74, width: 51, height: 15, borderRadius: 8, background: "#2563EB" }} />
+        <div style={{ position: "absolute", left: 54, top: 50, width: 76, height: 15, borderRadius: 8, background: "#F59E0B" }} />
+        <div style={{ position: "absolute", left: 90, top: 115, width: 63, height: 16, borderRadius: 8, background: "#0F172A", transform: "rotate(-45deg)", transformOrigin: "left center" }} />
+        <div style={{ position: "absolute", left: 122, top: 86, width: 29, height: 16, borderRadius: 8, background: "#0F172A" }} />
+        <div style={{ position: "absolute", left: 135, top: 86, width: 16, height: 29, borderRadius: 8, background: "#0F172A" }} />
+        <div style={{ position: "absolute", left: 128, top: 44, width: 17, height: 17, borderRadius: 9, background: "#22C55E" }} />
       </div>
     ),
     size,

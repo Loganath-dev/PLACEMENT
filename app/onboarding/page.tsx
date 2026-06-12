@@ -246,6 +246,76 @@ export default function OnboardingPage() {
                 <Button variant="ghost" onClick={() => setStep(1)}>
                   Back
                 </Button>
+                <Button onClick={() => setStep(3)}>
+                  Continue <Icon name="ChevronRight" className="size-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 3 && (
+          <Card className="mt-5 overflow-hidden">
+            <CardContent className="space-y-5 pt-6">
+              <div>
+                <h1 className="font-heading text-2xl font-bold">Here is what to do first</h1>
+                <p className="text-sm text-muted-foreground">
+                  Follow this order after onboarding. It keeps your preparation simple and builds your readiness score step by step.
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                {[
+                  {
+                    icon: "BookOpenCheck",
+                    title: "Start your first learning chapter",
+                    detail: "Open your primary company track and finish the first short chapter quiz.",
+                  },
+                  {
+                    icon: "CalendarCheck",
+                    title: "Complete today's daily challenge",
+                    detail: "Answer five quick questions to start your streak and reveal weak areas.",
+                  },
+                  {
+                    icon: "Code2",
+                    title: "Try one coding problem",
+                    detail: "Attempt one beginner problem from the coding ladder, even if you use hints.",
+                  },
+                  {
+                    icon: "Trophy",
+                    title: "Take a diagnostic mock",
+                    detail: "Use your first mock score as a baseline, then improve from there.",
+                  },
+                ].map((item, index) => (
+                  <div
+                    key={item.title}
+                    className="flex gap-3 rounded-xl border border-border bg-muted/35 p-3"
+                  >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon name={item.icon} className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase text-muted-foreground">
+                        Step {index + 1}
+                      </p>
+                      <p className="font-semibold">{item.title}</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{item.detail}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="font-heading font-semibold">Your dashboard will guide you</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  After this, you will see a getting-started checklist and three daily tasks so you always know the next action.
+                </p>
+              </div>
+
+              <div className="flex justify-between pt-2">
+                <Button variant="ghost" onClick={() => setStep(2)}>
+                  Back
+                </Button>
                 <Button onClick={finish}>
                   Start preparing <Icon name="ArrowRight" className="size-4" />
                 </Button>
@@ -259,7 +329,7 @@ export default function OnboardingPage() {
 }
 
 function Stepper({ step }: { step: number }) {
-  const labels = ["Profile", "Companies", "Primary"]
+  const labels = ["Profile", "Companies", "Primary", "Next steps"]
   return (
     <div className="flex items-center gap-2">
       {labels.map((l, i) => (
@@ -332,6 +402,5 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ArrowRight isn't in the icon registry by default name lookup fallback handles it,
 // but we map it here for crispness.
-
 
 

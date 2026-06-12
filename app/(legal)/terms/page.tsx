@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Terms & Conditions - StudyBench",
   description:
     "The terms governing your use of StudyBench, including subscriptions, refunds, acceptable use, disclaimers and dispute resolution under Indian law.",
+  alternates: { canonical: "/terms" },
 }
 
 export default function TermsPage() {

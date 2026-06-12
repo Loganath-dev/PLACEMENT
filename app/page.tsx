@@ -1,4 +1,5 @@
-﻿import { JsonLd } from "@/components/app/json-ld"
+﻿import type { Metadata } from "next"
+import { JsonLd } from "@/components/app/json-ld"
 import { LandingPage } from "@/components/app/landing-page"
 import {
   courseJsonLd,
@@ -6,6 +7,10 @@ import {
   softwareApplicationJsonLd,
   websiteJsonLd,
 } from "@/lib/seo"
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+}
 
 export default function HomePage() {
   return (

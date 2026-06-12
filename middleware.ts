@@ -40,6 +40,12 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/api/") ||
     pathname === "/sitemap.xml" ||
     pathname === "/robots.txt" ||
+    // Brand/meta assets must stay public: social crawlers (WhatsApp, LinkedIn,
+    // Google) fetch these without cookies and must never hit the login redirect.
+    pathname === "/icon" ||
+    pathname === "/apple-icon" ||
+    pathname === "/opengraph-image" ||
+    pathname === "/manifest.webmanifest" ||
     pathname.startsWith("/auth/") ||
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon")
@@ -51,6 +57,17 @@ export async function middleware(request: NextRequest) {
     // Preserve where the user was headed so we can return them there post-login.
     loginUrl.searchParams.set("next", pathname + request.nextUrl.search)
     return NextResponse.redirect(loginUrl)
+  }
+
+  // Signed-in users skip the marketing landing and auth entry pages and go
+  // straight to their dashboard. Honour a same-origin `next` param if present.
+  // (Deliberately NOT applied to /auth/callback or /auth/reset-password — the
+  // OAuth/recovery flows must run even with an active session.)
+  if (user && (pathname === "/" || pathname === "/auth/login" || pathname === "/auth/signup")) {
+    const next = request.nextUrl.searchParams.get("next")
+    // Same-origin paths only ("//host" would be a protocol-relative open redirect).
+    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
+    return NextResponse.redirect(new URL(safeNext, request.url))
   }
 
   return supabaseResponse
