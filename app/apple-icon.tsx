@@ -1,10 +1,7 @@
 import { ImageResponse } from "next/og"
 
 export const runtime = "edge"
-export const size = {
-  width: 180,
-  height: 180,
-}
+export const size = { width: 180, height: 180 }
 export const contentType = "image/png"
 
 export default function AppleIcon() {
@@ -14,73 +11,67 @@ export default function AppleIcon() {
         style={{
           width: "100%",
           height: "100%",
+          background: "#0F172A",
+          borderRadius: 40,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0f172a",
-          color: "#ffffff",
-          fontFamily: "Arial, sans-serif",
-          fontSize: 42,
-          fontWeight: 900,
           position: "relative",
         }}
       >
+        {/* Left page — indigo */}
         <div
           style={{
             position: "absolute",
-            inset: 18,
-            borderRadius: 36,
-            background: "#ffffff",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 82,
+            left: 24,
+            top: 34,
+            width: 58,
             height: 82,
-            borderRadius: 18,
-            border: "10px solid #0f172a",
-            background: "#ffffff",
-            transform: "rotate(5deg)",
+            background: "#818CF8",
+            borderRadius: "8px 3px 3px 8px",
           }}
         />
+        {/* Right page — cyan */}
         <div
           style={{
             position: "absolute",
-            right: 38,
-            bottom: 38,
-            width: 34,
-            height: 34,
-            borderRadius: 999,
-            background: "#14b8a6",
+            right: 24,
+            top: 34,
+            width: 58,
+            height: 82,
+            background: "#22D3EE",
+            borderRadius: "3px 8px 8px 3px",
           }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              width: 8,
-              height: 17,
-              borderRadius: 999,
-              background: "#ffffff",
-              transform: "rotate(45deg)",
-              left: 18,
-              top: 8,
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              width: 8,
-              height: 12,
-              borderRadius: 999,
-              background: "#ffffff",
-              transform: "rotate(-45deg)",
-              left: 11,
-              top: 13,
-            }}
-          />
-        </div>
-        <div style={{ position: "absolute", left: 28, top: 26 }}>SB</div>
+        />
+        {/* Spine */}
+        <div
+          style={{
+            position: "absolute",
+            left: 85,
+            top: 34,
+            width: 10,
+            height: 82,
+            background: "#0F172A",
+          }}
+        />
+        {/* Left page lines */}
+        <div style={{ position: "absolute", left: 30, top: 60, width: 42, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
+        <div style={{ position: "absolute", left: 30, top: 74, width: 34, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
+        {/* Right page lines */}
+        <div style={{ position: "absolute", right: 30, top: 60, width: 42, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
+        <div style={{ position: "absolute", right: 30, top: 74, width: 34, height: 7, borderRadius: 999, background: "rgba(255,255,255,0.55)" }} />
+        {/* Amber bench line */}
+        <div
+          style={{
+            position: "absolute",
+            left: 20,
+            right: 20,
+            bottom: 30,
+            height: 12,
+            borderRadius: 999,
+            background: "#F59E0B",
+          }}
+        />
       </div>
     ),
     size,
