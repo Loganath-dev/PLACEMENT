@@ -4,7 +4,8 @@ export const PREMIUM_PRICE_INR = 399
 export const PREMIUM_DURATION_LABEL = "year"
 export const FREE_PYQ_LIMIT = 15
 export const FREE_INTERVIEW_LIMIT = 12
-export const FREE_CODING_PROBLEM_LIMIT = 5
+// Coding practice is a Premium-only surface: free users see the locked page.
+export const FREE_CODING_PROBLEM_LIMIT = 0
 export const FREE_CHAPTER_PRACTICE_LIMIT = 50
 export const FREE_SECTION_INDEX = 0
 export const FREE_MOCK_LIMIT = 1
@@ -33,7 +34,7 @@ export const PLAN_FEATURES = [
   },
   {
     feature: "Coding ladder",
-    free: `${FREE_CODING_PROBLEM_LIMIT} problems per company with editorial hints`,
+    free: "Locked — Premium feature",
     premium: "All problems, hidden edge cases and full editorials",
   },
   {

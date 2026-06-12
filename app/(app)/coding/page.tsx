@@ -1,6 +1,5 @@
 ﻿"use client"
 
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
@@ -10,12 +9,8 @@ import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { CompanyPicker } from "@/components/app/company-picker"
-import {
-  FREE_CODING_PROBLEM_LIMIT,
-  lockedCount,
-  visibleCodingTestsForPlan,
-  visibleForPlan,
-} from "@/lib/access"
+import { LockedFeatureCard } from "@/components/app/upgrade-prompt"
+import { visibleCodingTestsForPlan } from "@/lib/access"
 import {
   normalizeCodingOutput,
 } from "@/lib/coding-runner"
@@ -40,11 +35,6 @@ export default function CodingPage() {
 
   const companyInfo = getCompany(company)
   const problems = React.useMemo(() => codingProblemsForCompany(company), [company])
-  const visibleProblems = React.useMemo(
-    () => visibleForPlan(problems, state.premium, FREE_CODING_PROBLEM_LIMIT),
-    [problems, state.premium],
-  )
-  const hiddenCount = lockedCount(problems.length, visibleProblems.length)
   const attemptsByProblem = React.useMemo(() => {
     const map = new Map<string, CodingAttempt>()
     for (const attempt of state.codingAttempts) {
@@ -55,6 +45,25 @@ export default function CodingPage() {
     }
     return map
   }, [state.codingAttempts])
+
+  // Coding practice is Premium-only: free users see the locked state, never
+  // the problem list (FREE_CODING_PROBLEM_LIMIT is 0 in lib/access.ts).
+  if (!state.premium) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Problem solving"
+          title="Coding Practice"
+          description="Original problems with sample cases, constraints and step-by-step editorials to study and dry-run."
+        />
+        <LockedFeatureCard
+          title="Coding practice is a Premium feature"
+          description="Unlock the full company-wise coding ladder — original problems with sample cases, hidden edge cases, step-by-step editorials and an in-browser runner."
+          cta="Go Premium"
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -85,7 +94,7 @@ export default function CodingPage() {
       </Card>
 
       <div className="space-y-3">
-        {visibleProblems.map((problem) => (
+        {problems.map((problem) => (
           <ProblemCard
             key={problem.id}
             problem={problem}
@@ -108,20 +117,6 @@ export default function CodingPage() {
         ))}
       </div>
 
-      {!state.premium && hiddenCount > 0 ? (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
-            <Icon name="Lock" className="size-7 text-primary" />
-            <p className="font-medium">Unlock complete coding practice</p>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Continue with deeper company-wise coding problems and editorials.
-            </p>
-            <Button asChild className="mt-1">
-              <Link href="/settings">Go Premium</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   )
 }

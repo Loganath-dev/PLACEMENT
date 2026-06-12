@@ -64,7 +64,7 @@ describe("plan access", () => {
     expect(FREE_SECTION_INDEX).toBe(0)
     expect(FREE_PYQ_LIMIT).toBe(15)
     expect(FREE_INTERVIEW_LIMIT).toBe(12)
-    expect(FREE_CODING_PROBLEM_LIMIT).toBe(5)
+    expect(FREE_CODING_PROBLEM_LIMIT).toBe(0)
     expect(FREE_CHAPTER_PRACTICE_LIMIT).toBe(50)
     expect(FREE_MOCK_COMPANY).toBe("general")
     expect(FREE_MOCK_LIMIT).toBe(1)
