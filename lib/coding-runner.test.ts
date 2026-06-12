@@ -75,4 +75,24 @@ describe("executeCodingSubmission", () => {
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toContain("Define function solve")
   })
+
+  it("runs first non-repeating character solutions", () => {
+    const code = `
+function solve(s) {
+  const freq = {};
+
+  for (const ch of s) {
+    freq[ch] = (freq[ch] || 0) + 1;
+  }
+
+  for (const ch of s) {
+    if (freq[ch] === 1) return ch;
+  }
+
+  return "-1";
+}`
+
+    expect(executeCodingSubmission(code, "placement")).toEqual({ ok: true, output: "p" })
+    expect(executeCodingSubmission(code, "aabbc")).toEqual({ ok: true, output: "c" })
+  })
 })

@@ -29,6 +29,8 @@ export default function MistakesPage() {
     return (
       <QuizRunner
         questions={adaptiveQuestions}
+        onReturn={() => setPlaying(false)}
+        returnLabel="Mistakes"
         onMistake={recordMistake}
         onFinish={(_results, scorePct) => {
           toast.success(`Adaptive mistake quiz complete - ${scorePct}%`)

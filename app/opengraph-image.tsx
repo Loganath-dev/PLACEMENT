@@ -22,7 +22,7 @@ export default function Image() {
           background: "#f8fafc",
           color: "#0f172a",
           padding: "64px",
-          fontFamily: "Arial, sans-serif",
+          fontFamily: "sans-serif",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
@@ -30,17 +30,20 @@ export default function Image() {
             style={{
               width: 72,
               height: 72,
-              borderRadius: 20,
-              background: "#2563eb",
-              color: "white",
+              borderRadius: 18,
+              background: "#0F172A",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 34,
-              fontWeight: 800,
+              position: "relative",
             }}
           >
-            SB
+            {/* Left page */}
+            <div style={{ position: "absolute", left: 14, top: 18, width: 21, height: 28, borderRadius: "5px 2px 2px 5px", background: "#818CF8" }} />
+            {/* Right page */}
+            <div style={{ position: "absolute", right: 14, top: 18, width: 21, height: 28, borderRadius: "2px 5px 5px 2px", background: "#22D3EE" }} />
+            {/* Bench line */}
+            <div style={{ position: "absolute", left: 12, right: 12, bottom: 12, height: 6, borderRadius: 999, background: "#F59E0B" }} />
           </div>
           <div style={{ fontSize: 38, fontWeight: 800 }}>{SITE_NAME}</div>
         </div>

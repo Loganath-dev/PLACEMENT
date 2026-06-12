@@ -3,10 +3,12 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import * as React from "react"
+import { StudyBenchWordmark } from "@/components/app/brand"
 import { Icon } from "@/components/app/icon"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { useLevel, useStore } from "@/lib/store"
+import { premiumPriceLabel } from "@/lib/access"
+import { useLevel, useStoreActions, useStoreState } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
 export interface NavItem {
@@ -21,26 +23,32 @@ export interface NavItem {
  */
 export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
-    label: "Plan",
-    items: [
-      { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
-      { href: "/plan", label: "Weekly Plan", icon: "CalendarCheck" },
-      { href: "/sprint", label: "7-Day Sprint", icon: "Target" },
-    ],
+    label: "Today",
+    items: [{ href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" }],
   },
   {
     label: "Learn",
-    items: [{ href: "/learn", label: "Tracks", icon: "GraduationCap" }],
+    items: [
+      { href: "/learn", label: "Tracks", icon: "GraduationCap" },
+      { href: "/revision", label: "Revision Sheets", icon: "BookMarked" },
+      { href: "/sprint", label: "7-Day Sprint", icon: "Zap" },
+    ],
   },
   {
     label: "Practice",
     items: [
       { href: "/practice", label: "PYQs", icon: "BookOpen" },
-      { href: "/chapter-practice", label: "Chapter Practice", icon: "BookOpenCheck" },
       { href: "/coding", label: "Coding", icon: "Code2" },
       { href: "/mock", label: "Mock Tests", icon: "Target" },
       { href: "/interview", label: "Interview", icon: "Mic" },
-      { href: "/challenges", label: "Daily Challenges", icon: "CalendarCheck" },
+    ],
+  },
+  {
+    label: "Placement Skills",
+    items: [
+      { href: "/gd", label: "Group Discussion", icon: "Users" },
+      { href: "/communication", label: "Communication", icon: "MessageSquare" },
+      { href: "/resume", label: "Resume Guide", icon: "FileText" },
     ],
   },
   {
@@ -48,8 +56,7 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/readiness", label: "Readiness", icon: "TrendingUp" },
       { href: "/analytics", label: "Analytics", icon: "ChartColumn" },
-      { href: "/revision", label: "Revision Sheets", icon: "NotebookTabs" },
-      { href: "/mistakes", label: "Mistake Notebook", icon: "Flag" },
+      { href: "/bookmarks", label: "Bookmarks", icon: "Bookmark" },
     ],
   },
 ]
@@ -63,16 +70,7 @@ const FOOTER_ITEMS: NavItem[] = [
 ]
 
 function Brand() {
-  return (
-    <Link href="/dashboard" className="flex items-center gap-2 rounded-lg px-2 py-1 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30">
-      <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-[0_14px_28px_-18px_var(--primary)]">
-        <Icon name="GraduationCap" className="size-5" />
-      </span>
-      <span className="font-heading text-lg font-bold tracking-tight">
-        Study<span className="text-primary">Bench</span>
-      </span>
-    </Link>
-  )
+  return <StudyBenchWordmark href="/dashboard" size="compact" />
 }
 
 function NavLink({
@@ -93,10 +91,10 @@ function NavLink({
       href={href}
       onClick={onClick}
       className={cn(
-        "flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+        "flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25 active:scale-[0.99]",
         active
-          ? "bg-background text-sidebar-foreground shadow-sm ring-1 ring-sidebar-border"
-          : "text-sidebar-foreground/65 hover:bg-background/70 hover:text-sidebar-foreground",
+          ? "bg-background text-sidebar-foreground ring-1 ring-sidebar-border"
+          : "text-sidebar-foreground/62 hover:bg-background/72 hover:text-sidebar-foreground",
       )}
     >
       <Icon name={icon} className="size-[18px]" />
@@ -108,7 +106,7 @@ function NavLink({
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { signOut } = useStore()
+  const { signOut } = useStoreActions()
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/")
 
@@ -148,7 +146,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppSidebar() {
   return (
-    <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col gap-4 border-r border-sidebar-border bg-sidebar/95 p-4 backdrop-blur lg:flex">
+    <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col gap-4 border-r border-sidebar-border bg-sidebar/92 p-4 backdrop-blur lg:flex">
       <div className="pt-2">
         <Brand />
       </div>
@@ -159,7 +157,7 @@ export function AppSidebar() {
 }
 
 function PremiumNudge() {
-  const { state } = useStore()
+  const { state } = useStoreState()
   if (state.premium) {
     return (
       <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-xs">
@@ -173,23 +171,23 @@ function PremiumNudge() {
   return (
     <Link
       href="/settings"
-      className="block rounded-lg border border-primary/20 bg-background/70 p-3 text-xs transition-colors hover:bg-primary/10"
+        className="block rounded-lg border border-primary/20 bg-background/70 p-3 text-xs transition-colors hover:bg-primary/10"
     >
       <p className="flex items-center gap-1.5 font-semibold text-primary">
-        <Icon name="Crown" className="size-3.5" /> Go Premium
+        <Icon name="Crown" className="size-3.5" /> Premium
       </p>
       <p className="mt-1 text-muted-foreground">
-        Unlock all chapters & companies for Rs 399/yr.
+        Unlock every section, chapter and practice bank for {premiumPriceLabel()}.
       </p>
     </Link>
   )
 }
 
 export function AppTopbar() {
-  const { state } = useStore()
+  const { state } = useStoreState()
   const lvl = useLevel()
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border/80 bg-background/80 px-4 backdrop-blur-md md:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-border bg-background/82 px-4 backdrop-blur-md md:px-7">
       <div className="flex items-center gap-2 lg:hidden">
         <MobileNav />
         <Brand />
@@ -197,15 +195,15 @@ export function AppTopbar() {
       <div className="hidden flex-1 lg:block" />
       <div className="flex items-center gap-2 sm:gap-3">
         <span
-          className="flex min-h-10 items-center gap-1.5 rounded-lg bg-warning/15 px-3 py-2 text-sm font-semibold text-warning-foreground"
+          className="flex min-h-10 items-center gap-1.5 rounded-md border border-border bg-card/72 px-3 py-2 text-sm font-semibold text-foreground"
           title="Daily streak"
         >
           <Icon name="CalendarCheck" className="size-4 text-primary" />
-          <span className="tabular-nums">{state.streak.count}</span>
+          <span className="tabular-nums text-primary">{state.streak.count}</span>
         </span>
         <Link
           href="/profile"
-          className="flex min-h-10 items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-2 text-sm font-semibold text-primary"
+          className="flex min-h-10 items-center gap-1.5 rounded-md border border-border bg-card/72 px-3 py-2 text-sm font-semibold text-foreground"
           title={`Level ${lvl.level} - ${state.xp} XP`}
         >
           <Icon name="Target" className="size-4" />

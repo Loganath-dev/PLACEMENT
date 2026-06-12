@@ -8,14 +8,17 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Icon } from "@/components/app/icon"
 import { QuizRunner, type QuizResultItem } from "@/components/app/quiz-runner"
-import { Prose, UpgradeBanner } from "@/components/app/ui-bits"
+import { Prose } from "@/components/app/prose"
+import { UpgradeBanner } from "@/components/app/upgrade-prompt"
+import { canAccessLearningChapter } from "@/lib/access"
 import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
-import { getSection } from "@/lib/data/content"
+import { getSection, getSections } from "@/lib/data/content"
 import { EMPTY_PROGRESS } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
 import type { CompanyId, Difficulty, Question, SectionId } from "@/lib/types"
+import { cn } from "@/lib/utils"
 
-const CHAPTER_QUESTION_COUNT = 100
+const CHAPTER_QUESTION_COUNT = 20
 
 export default function ChapterPage() {
   const params = useParams<{ company: string; section: string; chapter: string }>()
@@ -28,6 +31,7 @@ export default function ChapterPage() {
   if (!COMPANY_BY_ID[companyId]) notFound()
   const section = getSection(companyId, sectionId)
   if (!section) notFound()
+  const sectionIndex = getSections(companyId).findIndex((item) => item.id === sectionId)
   const idx = section.chapters.findIndex((c) => c.id === params.chapter)
   if (idx === -1) notFound()
 
@@ -37,7 +41,7 @@ export default function ChapterPage() {
   const nextCh = section.chapters[idx + 1]
   const progress = state.progress[companyId] ?? EMPTY_PROGRESS
   const gateLocked = prevCh ? !progress.chapters[prevCh.id]?.passed : false
-  const paywalled = !state.premium && idx > 0
+  const paywalled = !canAccessLearningChapter(sectionIndex, idx, state.premium)
   const backHref = `/learn/${companyId}/${sectionId}`
   const lessonPracticeSets = lessonPracticeQuestions(chapter.quiz, chapter.lessons.length)
   const completedLessonCount = Object.keys(lessonResults).length
@@ -51,6 +55,29 @@ export default function ChapterPage() {
       )
     : 0
   const chapterComplete = completedLessonCount === chapter.lessons.length
+
+  if (paywalled) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-5">
+        <BackLink href={backHref} label={section.name} />
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+            <span className="grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Icon name="Lock" className="size-8" />
+            </span>
+            <div>
+              <h1 className="font-heading text-2xl font-bold">{chapter.title}</h1>
+              <p className="mt-1 text-muted-foreground">
+                Free users get all of Section 1 in every track.
+                Upgrade to unlock Sections 2 onwards and go deeper.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+        <UpgradeBanner />
+      </div>
+    )
+  }
 
   if (gateLocked && prevCh) {
     return (
@@ -78,28 +105,6 @@ export default function ChapterPage() {
     )
   }
 
-  if (paywalled) {
-    return (
-      <div className="mx-auto max-w-2xl space-y-5">
-        <BackLink href={backHref} label={section.name} />
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-            <span className="grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary">
-              <Icon name="Lock" className="size-8" />
-            </span>
-            <div>
-              <h1 className="font-heading text-2xl font-bold">{chapter.title}</h1>
-              <p className="mt-1 text-muted-foreground">
-                Upgrade to continue deeper into this section.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <UpgradeBanner />
-      </div>
-    )
-  }
-
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <BackLink href={backHref} label={section.name} />
@@ -120,12 +125,12 @@ export default function ChapterPage() {
                 Chapter practice score: {chapterPracticeScore}%
               </p>
                 <p className="text-sm text-muted-foreground">
-                  {chapterPracticeScore >= 60
+                  {chapterPracticeScore >= 70
                   ? "Great work. Your best chapter score is saved."
-                  : "Retake the chapter later and improve your overall score."}
+                  : "Retake the chapter later — placement cutoffs are 70%+."}
                 </p>
             </div>
-            {nextCh && chapterPracticeScore >= 60 ? (
+            {nextCh && chapterPracticeScore >= 70 ? (
               <Button asChild>
                 <Link href={`/learn/${companyId}/${sectionId}/${nextCh.id}`}>
                   Next chapter <Icon name="ArrowRight" className="size-4" />
@@ -140,6 +145,12 @@ export default function ChapterPage() {
         ) : (
           <Card>
             <CardContent className="space-y-4 pt-6">
+              {/* Lesson progress stepper */}
+              <LessonStepper
+                total={chapter.lessons.length}
+                current={currentLessonIndex}
+                completedCount={completedLessonCount}
+              />
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary">
@@ -170,8 +181,10 @@ export default function ChapterPage() {
         <QuizRunner
           key={`${chapter.id}-${practiceLessonIndex}`}
           questions={lessonPracticeSets[practiceLessonIndex] ?? []}
-          passThreshold={60}
-          passThresholdLabel="for this lesson practice"
+          passThreshold={70}
+          passThresholdLabel="for this lesson practice (placement cutoff is 70%)"
+          onReturn={() => setPracticeLessonIndex(null)}
+          returnLabel="Lesson"
           onMistake={recordMistake}
           onFinish={(results) => {
             const nextResults = { ...lessonResults, [practiceLessonIndex]: results }
@@ -257,6 +270,50 @@ function takeQuestion(pool: Question[], used: Set<string>) {
   return next
 }
 
+function LessonStepper({
+  total,
+  current,
+  completedCount,
+}: {
+  total: number
+  current: number
+  completedCount: number
+}) {
+  if (total <= 1) return null
+  return (
+    <div className="flex items-center gap-1.5">
+      {Array.from({ length: total }, (_, i) => {
+        const done = i < completedCount
+        const active = i === current
+        return (
+          <React.Fragment key={i}>
+            <div
+              className={cn(
+                "flex size-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-all",
+                done
+                  ? "border-success/50 bg-success/15 text-[color:var(--success)]"
+                  : active
+                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    : "border-border bg-muted/50 text-muted-foreground",
+              )}
+            >
+              {done ? <Icon name="Check" className="size-3.5" /> : i + 1}
+            </div>
+            {i < total - 1 ? (
+              <div
+                className={cn(
+                  "h-0.5 flex-1 rounded-full transition-colors",
+                  done ? "bg-success/40" : "bg-border",
+                )}
+              />
+            ) : null}
+          </React.Fragment>
+        )
+      })}
+    </div>
+  )
+}
+
 function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
@@ -267,4 +324,3 @@ function BackLink({ href, label }: { href: string; label: string }) {
     </Link>
   )
 }
-

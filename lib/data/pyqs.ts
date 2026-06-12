@@ -1,5 +1,6 @@
 import type { CompanyId, Question, SectionId } from "@/lib/types"
 import { generateDrills, generateDrillsByDifficulty, todaySeed } from "@/lib/data/question-bank"
+import { createStableIdFactory, idKey } from "@/lib/data/stable-id"
 
 /**
  * Previous-Year-Question bank. These are ORIGINAL reconstructions in
@@ -18,7 +19,7 @@ export interface PYQ extends Question {
   patternSourceId?: string
 }
 
-let pc = 0
+const nextPyqId = createStableIdFactory("pyq")
 function p(
   company: CompanyId,
   section: SectionId,
@@ -31,9 +32,11 @@ function p(
   answer: number,
   explanation: string,
 ): PYQ & { company: CompanyId } {
-  pc += 1
+  // Content-derived stable id (see lib/data/stable-id.ts): adding or moving a
+  // hand-authored PYQ no longer renumbers every question after it.
+  const id = nextPyqId(idKey(company, section, prompt, options.join("|")))
   return {
-    id: `pyq${pc}`,
+    id,
     company,
     section,
     topic,
@@ -95,7 +98,7 @@ export const PYQS: (PYQ & { company: CompanyId })[] = [
   p("cognizant", "quant", "Ratio", 2024, true, "easy", "If a:b = 2:3 and b:c = 4:5, then a:c =", ["8:15", "2:5", "8:5", "4:5"], 0, "Make b common: a:b = 8:12, b:c = 12:15 -> a:c = 8:15."),
   p("cognizant", "quant", "Averages", 2023, false, "easy", "The average of the first 5 natural numbers (1-5) is:", ["2.5", "3", "3.5", "15"], 1, "(1+2+3+4+5)/5 = 15/5 = 3."),
   p("cognizant", "reasoning", "Direction", 2023, true, "medium", "Facing North, you turn right, then right again. You now face:", ["East", "West", "South", "North"], 2, "North -> right = East -> right = South."),
-  p("cognizant", "verbal", "Spelling", 2024, true, "easy", "Choose the correctly spelt word:", ["Acommodation", "Accomodation", "Accommodation", "Accommadation"], 2, "'Accommodation' - double c and double m."),
+  p("cognizant", "verbal", "Spelling", 2024, true, "easy", "Which of these spellings is correct?", ["Acommodation", "Accomodation", "Accommodation", "Accommadation"], 2, "'Accommodation' - double c and double m."),
   p("cognizant", "verbal", "Grammar", 2024, false, "easy", "Identify the error: 'He don't like coffee.'", ["He", "don't", "like", "coffee"], 1, "Third person singular needs 'doesn't', not 'don't'."),
   p("cognizant", "coding", "Data Structures", 2023, false, "medium", "FILO (First-In-Last-Out) order is followed by a:", ["Queue", "Stack", "Array", "Tree"], 1, "A stack is LIFO/FILO - the first element in is the last out."),
 
@@ -160,7 +163,7 @@ export const PYQS: (PYQ & { company: CompanyId })[] = [
   p("wipro", "quant", "Simple Interest", 2024, false, "medium", "SI on Rs 1000 at 10% per annum for 2 years is:", ["Rs 100", "Rs 200", "Rs 210", "Rs 150"], 1, "SI = 1000 x 10 x 2 / 100 = Rs 200."),
   p("wipro", "quant", "Averages", 2023, false, "easy", "The average of the first 5 even numbers (2,4,6,8,10) is:", ["5", "6", "7", "30"], 1, "Sum 30 / 5 = 6."),
   p("wipro", "verbal", "Synonyms", 2024, false, "easy", "Choose the synonym of 'Brave':", ["Cowardly", "Courageous", "Weak", "Timid"], 1, "'Brave' means courageous."),
-  p("wipro", "verbal", "Spelling", 2023, true, "easy", "Choose the correctly spelt word:", ["Neccessary", "Necessary", "Necesary", "Neccesary"], 1, "'Necessary' - one c, two s."),
+  p("wipro", "verbal", "Spelling", 2023, true, "easy", "Pick the correctly spelt word:", ["Neccessary", "Necessary", "Necesary", "Neccesary"], 1, "'Necessary' - one c, two s."),
   p("wipro", "reasoning", "Direction", 2024, false, "easy", "Facing South, you turn left. You now face:", ["East", "West", "North", "South"], 0, "Facing south, your left side is east; turning left faces East."),
   p("wipro", "coding", "Loops", 2023, false, "easy", "How many times does this print? for(i=0;i<5;i++) print(i)", ["4", "5", "6", "10"], 1, "i = 0,1,2,3,4 -> 5 times."),
 
@@ -183,7 +186,7 @@ export const PYQS: (PYQ & { company: CompanyId })[] = [
   // Cognizant
   p("cognizant", "quant", "Ratio", 2024, true, "medium", "If a:b = 1:2 and b:c = 3:4, then a:c =", ["1:2", "3:8", "3:4", "1:4"], 1, "Make b common: a:b = 3:6, b:c = 6:8 -> a:c = 3:8."),
   p("cognizant", "reasoning", "Series", 2023, true, "medium", "Find the next term: 2, 5, 10, 17, 26, ?", ["35", "37", "36", "40"], 1, "Differences 3, 5, 7, 9; next is 11 -> 26 + 11 = 37."),
-  p("cognizant", "verbal", "Grammar", 2024, false, "easy", "Choose the correct sentence:", ["He go to school.", "He goes to school.", "He going to school.", "He gone to school."], 1, "Third person singular needs 'goes'."),
+  p("cognizant", "verbal", "Grammar", 2024, false, "easy", "Which sentence is grammatically correct?", ["He go to school.", "He goes to school.", "He going to school.", "He gone to school."], 1, "Third person singular needs 'goes'."),
   p("cognizant", "coding", "Automata Fix", 2024, true, "medium", "A loop 'for(i=0;i<=n;i++)' over an array of size n causes:", ["Correct output", "An out-of-bounds access", "An infinite loop", "A syntax error"], 1, "Valid indices are 0..n-1; i = n is out of bounds (off-by-one)."),
   p("cognizant", "cs-core", "Data Structures", 2023, false, "easy", "FIFO order is followed by a:", ["Stack", "Queue", "Tree", "Graph"], 1, "A queue is First-In-First-Out."),
 
@@ -269,6 +272,268 @@ export const PYQS: (PYQ & { company: CompanyId })[] = [
   p("general", "verbal", "Grammar", 2023, false, "easy", "The past tense of 'go' is:", ["goed", "went", "gone", "going"], 1, "'Go' is irregular; its past tense is 'went'."),
   p("general", "coding", "Number Systems", 2024, false, "easy", "The binary representation of 8 is:", ["1000", "1010", "1100", "100"], 0, "8 = 1000 in binary."),
   p("general", "cs-core", "Fundamentals", 2023, false, "easy", "1 KB equals how many bytes?", ["1000", "1024", "100", "512"], 1, "1 KB = 1024 bytes."),
+
+  // ===================== Expanded set 5 — deeper topic coverage =====================
+  // TCS — compound interest, probability, advanced number system, pointers, data interpretation
+  p("tcs", "quant", "Compound Interest", 2024, true, "medium", "Compound interest on Rs 2000 at 10% per annum for 2 years is:", ["Rs 400", "Rs 420", "Rs 440", "Rs 380"], 1, "CI = 2000 x (1.1)^2 - 2000 = 2420 - 2000 = Rs 420."),
+  p("tcs", "quant", "Probability", 2023, true, "medium", "A bag has 3 red and 5 blue balls. Probability of picking a red ball is:", ["3/8", "5/8", "1/3", "3/5"], 0, "Favourable 3, total 8 -> 3/8."),
+  p("tcs", "quant", "Probability", 2024, false, "medium", "Two dice are rolled. Probability that the sum is 7 is:", ["1/6", "7/36", "6/36", "5/36"], 0, "Pairs summing to 7: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6 out of 36 = 1/6."),
+  p("tcs", "quant", "Data Interpretation", 2024, true, "medium", "Sales in Q1 were 400 units and in Q2 were 500 units. The percentage increase is:", ["20%", "25%", "30%", "22%"], 1, "Increase = 100 on base 400 -> 100/400 x 100 = 25%."),
+  p("tcs", "quant", "Permutations", 2023, false, "medium", "The number of ways to arrange 4 different books on a shelf is:", ["12", "24", "16", "48"], 1, "4! = 4 x 3 x 2 x 1 = 24."),
+  p("tcs", "quant", "Time & Work", 2024, false, "medium", "A and B together can do a job in 6 days. A alone can in 10 days. B alone can in:", ["12 days", "15 days", "18 days", "24 days"], 1, "B's rate = 1/6 - 1/10 = 1/15 -> 15 days."),
+  p("tcs", "reasoning", "Analogy", 2024, true, "easy", "Book : Library :: Star : ?", ["Moon", "Sky", "Galaxy", "Sun"], 2, "A book is kept in a library; a star belongs to a galaxy."),
+  p("tcs", "reasoning", "Direction", 2023, false, "medium", "A man walks 5 km North, turns right and walks 12 km. His distance from the start is:", ["13 km", "17 km", "10 km", "15 km"], 0, "Pythagoras: sqrt(5^2 + 12^2) = sqrt(169) = 13 km."),
+  p("tcs", "verbal", "Reading Comprehension", 2024, false, "medium", "Passage: 'The growth of AI is rapid, but ethical concerns grow with it.' The tone is:", ["purely optimistic", "purely critical", "balanced or cautious", "dismissive"], 2, "The passage names both a positive (rapid growth) and a concern (ethics) — balanced."),
+  p("tcs", "verbal", "Sentence correction", 2023, false, "easy", "Pick the grammatically correct sentence:", ["The news are good.", "The news is good.", "The news were good.", "The news have been good."], 1, "'News' is uncountable and singular -> 'is'."),
+  p("tcs", "coding", "C Pointers", 2024, true, "hard", "In C, if int *p = &x and *p = 20, then x becomes:", ["Unchanged", "20", "Address of p", "0"], 1, "A pointer dereference *p = 20 writes 20 into the variable x."),
+  p("tcs", "coding", "C Output", 2024, false, "medium", "In C, what does printf(\"%d\", !0) print?", ["0", "1", "-1", "Error"], 1, "!0 is logical NOT of false, which is 1 (true) in C."),
+  p("tcs", "coding", "C Output", 2023, true, "medium", "int a = 5; int b = a++ + ++a; printf(\"%d\", b). Output (undefined per standard, common result):", ["11", "12", "10", "13"], 1, "Post-increment uses 5, then pre-increment gives 7 -> 5 + 7 = 12 (common interpretation)."),
+
+  // Infosys — clocks, calendars, advanced syllogism, pseudocode debugging
+  p("infosys", "quant", "Compound Interest", 2024, true, "medium", "Find CI on Rs 1000 at 20% per annum for 2 years (compounded annually):", ["Rs 400", "Rs 440", "Rs 420", "Rs 350"], 1, "CI = 1000 x (1.2)^2 - 1000 = 1440 - 1000 = Rs 440."),
+  p("infosys", "quant", "Mixture & Alligation", 2023, true, "medium", "A 60-litre mixture has milk and water in ratio 2:1. Milk = 40 L, water = 20 L. To change the ratio to 1:1, litres of water to add:", ["10", "20", "15", "25"], 1, "For ratio 1:1, water must equal milk = 40 L. Currently 20 L water, so add 40 - 20 = 20 L."),
+  p("infosys", "reasoning", "Clocks", 2024, true, "medium", "The angle between the clock hands at 4:00 is:", ["60 degrees", "120 degrees", "90 degrees", "150 degrees"], 1, "|30 x 4 - 0| = 120 degrees."),
+  p("infosys", "reasoning", "Calendars", 2023, false, "medium", "If 1 Jan 2023 was a Sunday, what day was 1 Jan 2024 (2023 was not a leap year)?", ["Sunday", "Monday", "Tuesday", "Saturday"], 1, "Ordinary year has 1 odd day; Sunday + 1 = Monday."),
+  p("infosys", "reasoning", "Clocks", 2024, false, "easy", "How many times do the clock hands overlap in 24 hours?", ["22", "24", "23", "20"], 0, "They overlap 11 times per 12 hours, so 22 times in 24 hours."),
+  p("infosys", "reasoning", "Syllogism", 2023, true, "hard", "All birds fly. No fish fly. Conclusion I: No fish are birds. Conclusion II: Some birds are not fish.", ["Only I", "Only II", "Both I and II", "Neither"], 2, "Since no fish fly and all birds fly, no fish is a bird (I follows). Since birds are not fish, some birds are not fish (II follows)."),
+  p("infosys", "verbal", "Sentence correction", 2024, false, "medium", "Select the correct version: 'Neither he nor his friends ___ responsible.'", ["is", "are", "was", "have been"], 1, "With 'neither...nor', the verb agrees with the nearer subject 'friends' (plural) -> 'are'."),
+  p("infosys", "coding", "Pseudocode", 2024, true, "hard", "f(1)=1; f(n)=f(n-1)*n for n>1. What is f(5)?", ["100", "120", "60", "24"], 1, "5! = 5 x 4 x 3 x 2 x 1 = 120."),
+  p("infosys", "coding", "Pseudocode", 2023, false, "medium", "for i in 1..5: if (i % 2 != 0) print(i). Output:", ["1 3 5", "2 4", "1 2 3 4 5", "1 3"], 0, "Odd numbers from 1 to 5 are 1, 3, 5."),
+  p("infosys", "coding", "Pseudocode", 2024, false, "medium", "s=0; for i in 1..n: s+=i*i. For n=3, s=?", ["6", "14", "9", "12"], 1, "1 + 4 + 9 = 14."),
+
+  // Wipro — essay-style verbal, tenses, data interpretation, algebra
+  p("wipro", "quant", "Compound Interest", 2024, true, "medium", "CI - SI difference on Rs 1000 at 10% for 2 years is:", ["Rs 10", "Rs 20", "Rs 5", "Rs 15"], 0, "Difference = P x (R/100)^2 = 1000 x 0.01 = Rs 10."),
+  p("wipro", "quant", "Algebra", 2023, false, "easy", "If x + 5 = 12, then x =", ["5", "7", "8", "6"], 1, "x = 12 - 5 = 7."),
+  p("wipro", "quant", "Data Interpretation", 2024, false, "medium", "A shop sold 80 items in Jan and 100 in Feb. The % change is:", ["20%", "25%", "30%", "15%"], 1, "Increase = 20 on base 80 -> 20/80 x 100 = 25%."),
+  p("wipro", "reasoning", "Syllogism", 2024, false, "medium", "All cats are animals. All dogs are animals. Conclusion: All cats are dogs.", ["Follows", "Does not follow", "Cannot say", "True"], 1, "Both are subsets of 'animals' but neither is necessarily a subset of the other."),
+  p("wipro", "verbal", "Tenses", 2024, true, "medium", "Choose the correct sentence:", ["She have been working here for two years.", "She has been working here for two years.", "She had working here for two years.", "She is work here for two years."], 1, "Present perfect continuous with 'she' (3rd person singular): 'has been working'."),
+  p("wipro", "verbal", "Para Jumble", 2023, false, "medium", "Which sentence is the BEST opener for a paragraph? A: This leads to higher productivity. B: Research shows that focused work sessions improve output. C: Therefore, regular breaks are valuable. D: However, distractions reduce this benefit.", ["A", "B", "C", "D"], 1, "B introduces the topic (research shows...); the others are follow-on (This, Therefore, However)."),
+  p("wipro", "verbal", "Vocabulary", 2024, false, "easy", "Choose the synonym of 'Vital':", ["Unimportant", "Essential", "Ordinary", "Old"], 1, "'Vital' means absolutely essential."),
+  p("wipro", "coding", "Operators", 2024, false, "easy", "In Java/Python, what is 2 ** 10?", ["20", "1024", "512", "100"], 1, "2 to the power 10 = 1024."),
+  p("wipro", "coding", "Strings", 2023, false, "easy", "The length of the string 'PLACEMENT' is:", ["8", "9", "10", "7"], 1, "P-L-A-C-E-M-E-N-T = 9 characters."),
+
+  // Accenture — OS scheduling, network layers, database transactions, cloud details
+  p("accenture", "cs-core", "OS Scheduling", 2024, true, "medium", "Round Robin CPU scheduling uses a fixed:", ["Memory limit", "Time quantum", "Priority value", "Stack size"], 1, "Round Robin cycles through processes giving each a fixed time quantum."),
+  p("accenture", "cs-core", "OS Memory", 2023, false, "medium", "Virtual memory allows a process to use more memory than physically available by using:", ["CPU registers", "Cache", "Disk as extension of RAM", "ROM"], 2, "Virtual memory extends RAM using disk (swap space)."),
+  p("accenture", "cs-core", "Networks", 2024, true, "medium", "The OSI layer responsible for routing packets is:", ["Transport", "Network", "Data Link", "Physical"], 1, "The Network layer (Layer 3) handles routing via IP."),
+  p("accenture", "cs-core", "DBMS Transactions", 2024, true, "medium", "The ACID property that ensures a transaction is fully done or not at all is:", ["Consistency", "Isolation", "Atomicity", "Durability"], 2, "Atomicity ensures all-or-nothing execution of a transaction."),
+  p("accenture", "cs-core", "DBMS Transactions", 2023, false, "medium", "The ACID property that protects committed data even after a system crash is:", ["Atomicity", "Consistency", "Isolation", "Durability"], 3, "Durability guarantees committed changes survive failures."),
+  p("accenture", "cs-core", "Cloud", 2024, false, "medium", "In which cloud model does the provider manage everything except the user's data and access settings?", ["IaaS", "PaaS", "SaaS", "BaaS"], 2, "In SaaS, the provider manages infrastructure, platform and app; the user only manages their data."),
+  p("accenture", "reasoning", "Puzzle", 2024, false, "medium", "Five people A,B,C,D,E sit in a row. A is at the extreme right. B is to the immediate left of A. How many people are to the left of B?", ["2", "3", "4", "1"], 1, "From left: C/D/E (3 people), B, A. Exactly 3 people to B's left."),
+  p("accenture", "quant", "Ratio", 2023, false, "easy", "If a:b = 2:3 and b:c = 3:4, then a:b:c =", ["2:3:4", "4:6:8", "2:6:4", "6:9:12"], 0, "b is common; a:b:c = 2:3:4."),
+  p("accenture", "coding", "Pseudocode", 2024, false, "medium", "int x = 10; x = x < 5 ? x + 1 : x - 1; print(x). Output:", ["9", "11", "10", "5"], 0, "10 < 5 is false -> execute x - 1 = 9."),
+
+  // Zoho — advanced algorithm, recursion, bit ops, string problems
+  p("zoho", "coding", "Bit Manipulation", 2024, true, "hard", "To check if an integer n is a power of 2, the condition is:", ["n & (n-1) == 0", "n % 2 == 0", "n >> 1 == 1", "n | 1 == n"], 0, "Powers of 2 have exactly one set bit; n & (n-1) clears that bit -> 0 for powers of 2."),
+  p("zoho", "coding", "Recursion", 2023, true, "medium", "In the Tower of Hanoi with 3 discs, the minimum number of moves is:", ["6", "7", "8", "9"], 1, "Minimum moves = 2^n - 1 = 2^3 - 1 = 7."),
+  p("zoho", "coding", "Strings", 2024, true, "hard", "The number of distinct characters in 'mississippi' is:", ["4", "5", "6", "3"], 0, "m, i, s, p -> 4 distinct characters."),
+  p("zoho", "coding", "Arrays", 2023, false, "medium", "Given [1, 2, 3, 4, 5], the subarray with the largest sum is the array itself. Its sum is:", ["10", "15", "12", "20"], 1, "All positive -> full array sums to 1+2+3+4+5 = 15."),
+  p("zoho", "coding", "Sorting", 2024, false, "medium", "For sorting a nearly-sorted array efficiently, the best choice is:", ["Quick Sort", "Insertion Sort", "Bubble Sort", "Selection Sort"], 1, "Insertion Sort performs close to O(n) on nearly-sorted data."),
+  p("zoho", "coding", "Logic", 2024, true, "hard", "What is the output? a=1; b=2; c=3; print(a<b && b<c)", ["0", "1", "True", "Error"], 1, "Both conditions are true -> logical AND returns 1 (true)."),
+  p("zoho", "coding", "Number Logic", 2023, false, "medium", "A number is a perfect number if it equals the sum of its proper divisors. Is 6 a perfect number?", ["Yes", "No", "Only sometimes", "Cannot say"], 0, "Proper divisors of 6 are 1, 2, 3; 1+2+3 = 6 -> yes, 6 is perfect."),
+  p("zoho", "coding", "Output", 2024, false, "medium", "for(i=1; i<=4; i++) print(i*i). The output is:", ["1 4 9 16", "1 2 3 4", "2 4 6 8", "4 9 16 25"], 0, "i*i for i=1,2,3,4 gives 1,4,9,16."),
+
+  // Cognizant — SQL queries, DBMS normalization, automata-fix patterns
+  p("cognizant", "cs-core", "SQL", 2024, true, "medium", "Which SQL keyword is used to avoid duplicate rows in the result?", ["UNIQUE", "DISTINCT", "NODUPLICATE", "FILTER"], 1, "SELECT DISTINCT removes duplicate output rows."),
+  p("cognizant", "cs-core", "SQL", 2023, true, "medium", "The SQL aggregate function that returns the number of rows is:", ["SUM()", "AVG()", "COUNT()", "MAX()"], 2, "COUNT() returns the number of rows matching a condition."),
+  p("cognizant", "cs-core", "DBMS", 2024, false, "medium", "Removing transitive dependencies is the goal of:", ["1NF", "2NF", "3NF", "4NF"], 2, "3NF removes non-key columns that depend on other non-key columns (transitive dependency)."),
+  p("cognizant", "cs-core", "DBMS", 2023, false, "medium", "A view in SQL is best described as:", ["A copy of a table", "A stored virtual query result", "A backup file", "An index"], 1, "A view is a stored query that behaves like a virtual table."),
+  p("cognizant", "reasoning", "Ranking", 2024, false, "easy", "In a class of 50 students, Priya is 10th from the top. Her rank from the bottom is:", ["40th", "41st", "39th", "42nd"], 1, "From bottom = 50 - 10 + 1 = 41st."),
+  p("cognizant", "reasoning", "Analogy", 2023, false, "easy", "Author : Book :: Composer : ?", ["Song", "Music", "Orchestra", "Lyrics"], 1, "An author writes a book; a composer creates music."),
+  p("cognizant", "coding", "Automata Fix", 2024, true, "hard", "A function to check if a string is a palindrome returns wrong answers. The most likely bug is:", ["It does not reverse the string before comparing", "It checks length only", "It uses the wrong data type", "It has a missing semicolon"], 0, "A palindrome check must compare the string to its reverse; an absent reversal gives wrong answers."),
+  p("cognizant", "coding", "Output", 2023, false, "easy", "x = 3; y = 4; print(x * x + y * y). Output:", ["25", "49", "7", "12"], 0, "3*3 + 4*4 = 9 + 16 = 25."),
+  p("cognizant", "quant", "Permutations", 2024, false, "medium", "The number of ways to arrange the letters of the word 'STAR' is:", ["12", "24", "6", "48"], 1, "All letters different -> 4! = 24."),
+
+  // General (Core Prep) — bridging easy/medium concepts students commonly miss
+  p("general", "quant", "Compound Interest", 2024, false, "medium", "CI - SI for 2 years at 5% on Rs 2000 is:", ["Rs 5", "Rs 10", "Rs 15", "Rs 20"], 0, "Difference = P(R/100)^2 = 2000 x (0.05)^2 = 2000 x 0.0025 = Rs 5."),
+  p("general", "quant", "Probability", 2023, false, "easy", "A coin is tossed once. Probability of heads is:", ["1/4", "1/3", "1/2", "1"], 2, "One favourable outcome out of two total -> 1/2."),
+  p("general", "quant", "Ratio", 2024, false, "easy", "If a:b = 4:6, the simplified ratio is:", ["2:3", "4:6", "8:12", "1:2"], 0, "Divide both by 2 -> 2:3."),
+  p("general", "reasoning", "Clocks", 2024, false, "medium", "The angle between the clock hands at 9:00 is:", ["180 degrees", "270 degrees", "90 degrees", "120 degrees"], 2, "|30 x 9 - 0| = 270 degrees; the reflex angle is 360 - 270 = 90 degrees. Standard answer = 90 degrees."),
+  p("general", "reasoning", "Blood Relations", 2023, false, "easy", "If A is the sister of B and B is the brother of C, how is A related to C?", ["Aunt", "Sister", "Mother", "Niece"], 1, "A is the sister of B who is C's sibling, so A is C's sister."),
+  p("general", "verbal", "Vocabulary", 2024, false, "easy", "Choose the synonym of 'Intelligent':", ["Foolish", "Smart", "Lazy", "Weak"], 1, "'Intelligent' means smart or clever."),
+  p("general", "verbal", "Grammar", 2023, false, "easy", "Select the correct sentence:", ["The team are playing well.", "The team is playing well.", "The team was playing well yesterday still.", "The team have been playing well."], 1, "'Team' is a collective noun and takes a singular verb in formal usage."),
+  p("general", "coding", "Loops", 2024, false, "easy", "What prints? i=1; while(i<=5) { print(i); i+=2 }", ["1 2 3 4 5", "1 3 5", "2 4", "5 4 3 2 1"], 1, "i starts at 1 and increments by 2: 1, 3, 5."),
+  p("general", "coding", "Functions", 2023, false, "easy", "A function that calls itself is called:", ["Iterative", "Recursive", "Sequential", "Parallel"], 1, "A function that calls itself is recursive."),
+  p("general", "cs-core", "OOP", 2024, false, "easy", "Which OOP concept allows a child class to use a parent class's method?", ["Polymorphism", "Inheritance", "Abstraction", "Encapsulation"], 1, "Inheritance lets a child class reuse methods and properties of the parent."),
+  p("general", "cs-core", "Networks", 2023, false, "easy", "The full form of HTTP is:", ["HyperText Transfer Pro", "HyperText Transfer Protocol", "High Text Transfer Protocol", "HyperText Transmission Protocol"], 1, "HTTP = HyperText Transfer Protocol."),
+
+  // ===================== Expanded set 6 — hand-authored, company-pattern aligned =====================
+  // Difficulty mix per company: ~40% hard, ~40% medium, ~20% easy.
+
+  // --- TCS (NQT pattern: numerical + reasoning + verbal + C-flavoured programming logic) ---
+  p("tcs", "quant", "Profit & Loss", 2024, true, "easy", "A trader buys an article for Rs 250 and sells it for Rs 300. The profit percent is:", ["15%", "20%", "25%", "18%"], 1, "Profit = 300 - 250 = Rs 50 on cost price 250. Profit% = 50/250 x 100 = 20%."),
+  p("tcs", "verbal", "Vocabulary", 2023, false, "easy", "Choose the synonym of 'Candid':", ["Secretive", "Frank", "Rude", "Shy"], 1, "'Candid' means truthful and straightforward - frank."),
+  p("tcs", "reasoning", "Series", 2024, false, "easy", "Find the next term: 4, 12, 36, 108, ?", ["216", "324", "312", "432"], 1, "Each term is multiplied by 3: 108 x 3 = 324."),
+  p("tcs", "quant", "Boats & Streams", 2024, true, "medium", "A boat's speed in still water is 8 km/h and the stream flows at 2 km/h. Time to travel 18 km upstream is:", ["2 h", "2.5 h", "3 h", "3.5 h"], 2, "Upstream speed = 8 - 2 = 6 km/h. Time = 18/6 = 3 hours."),
+  p("tcs", "quant", "Ages", 2023, true, "medium", "The sum of a father's and son's ages is 60. The father is three times as old as the son. The son's age is:", ["12", "15", "18", "20"], 1, "Let son = x, father = 3x. 4x = 60, so x = 15."),
+  p("tcs", "reasoning", "Seating", 2024, false, "medium", "Eight people sit around a circular table in seats numbered 1-8, facing the centre. The seat directly opposite seat 3 is:", ["Seat 6", "Seat 7", "Seat 8", "Seat 5"], 1, "Opposite seat = 3 + 8/2 = 7."),
+  p("tcs", "verbal", "Error Spotting", 2023, true, "medium", "Identify the error: 'One of my friend lives in Mumbai.'", ["One of", "my friend", "lives", "in Mumbai"], 1, "'One of' takes a plural noun: 'one of my friends'."),
+  p("tcs", "coding", "C Arrays", 2024, true, "medium", "In C, for int arr[10], the value of sizeof(arr)/sizeof(arr[0]) is:", ["9", "10", "40", "4"], 1, "sizeof(arr) = 10 x sizeof(int); dividing by sizeof one element gives the count, 10."),
+  p("tcs", "coding", "C Operators", 2023, false, "medium", "In C, after x = (5 > 3) ? 10 : 20; the value of x is:", ["20", "10", "5", "3"], 1, "The condition 5 > 3 is true, so the ternary operator returns 10."),
+  p("tcs", "quant", "Number System", 2024, true, "hard", "The unit digit of 3^47 is:", ["1", "3", "7", "9"], 2, "Powers of 3 cycle 3, 9, 7, 1 (period 4). 47 mod 4 = 3, so the third term in the cycle = 7."),
+  p("tcs", "quant", "Mensuration", 2023, false, "hard", "A wire bent into a square of side 11 cm is re-bent into a circle. The area of the circle is (pi = 22/7):", ["144 cm^2", "154 cm^2", "164 cm^2", "176 cm^2"], 1, "Wire length = 4 x 11 = 44 cm = circumference. 2 x (22/7) x r = 44 gives r = 7. Area = (22/7) x 49 = 154 cm^2."),
+  p("tcs", "quant", "Discount", 2024, false, "hard", "Successive discounts of 20% and 10% on a Rs 500 item give a final price of:", ["Rs 350", "Rs 360", "Rs 370", "Rs 400"], 1, "500 x 0.80 x 0.90 = 360. (The single equivalent discount is 28%, not 30%.)"),
+  p("tcs", "reasoning", "Syllogism", 2023, true, "hard", "All A are B. No B is C. Conclusion: No A is C.", ["Follows", "Does not follow", "Cannot say", "Only sometimes"], 0, "Every A sits inside B, and B is completely separate from C, so no A can be C - the conclusion follows."),
+  p("tcs", "coding", "C Functions", 2024, true, "hard", "In C, a static local variable inside a function:", ["Resets on every call", "Retains its value between calls", "Is stored on the stack", "Cannot be initialised"], 1, "A static local is initialised once and keeps its value across function calls (stored in the data segment, not the stack)."),
+  p("tcs", "coding", "Recursion", 2023, false, "hard", "f(n) returns 0 if n == 0, else n + f(n-1). The value of f(4) is:", ["4", "10", "24", "9"], 1, "f(4) = 4 + 3 + 2 + 1 + 0 = 10."),
+
+  // --- Infosys (aptitude + pseudocode pattern) ---
+  p("infosys", "quant", "Averages", 2024, false, "easy", "The average of 3, 7 and 11 is:", ["6", "7", "8", "9"], 1, "Sum = 21, count = 3, average = 7."),
+  p("infosys", "verbal", "Antonyms", 2023, false, "easy", "Choose the antonym of 'Transparent':", ["Clear", "Opaque", "Visible", "Bright"], 1, "'Transparent' (see-through) is the opposite of 'opaque' (cannot be seen through)."),
+  p("infosys", "reasoning", "Letter Series", 2024, false, "easy", "Find the next term: A, C, F, J, ?", ["N", "O", "M", "P"], 1, "Gaps are +2, +3, +4; the next gap is +5: J + 5 = O."),
+  p("infosys", "quant", "Probability", 2024, true, "medium", "Two fair dice are rolled. The probability that the sum is 7 is:", ["1/6", "1/9", "1/12", "5/36"], 0, "Favourable: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = 6 of 36 outcomes = 1/6."),
+  p("infosys", "quant", "Partnership", 2023, false, "medium", "A invests Rs 5000 and B invests Rs 7000 for the same period. From a profit of Rs 2400, A's share is:", ["Rs 1000", "Rs 1200", "Rs 1400", "Rs 900"], 0, "Ratio 5000:7000 = 5:7. A gets 5/12 x 2400 = Rs 1000."),
+  p("infosys", "coding", "Pseudocode", 2024, true, "medium", "count = 0; x = 10; while (x > 1) { x = x / 2 (integer division); count = count + 1 } - final count is:", ["2", "3", "4", "5"], 1, "x: 10 -> 5 (count 1) -> 2 (count 2) -> 1 (count 3). Loop stops; count = 3."),
+  p("infosys", "reasoning", "Ranking", 2023, false, "medium", "In a class of 25 students, Ram is 12th from the top. His rank from the bottom is:", ["12th", "13th", "14th", "15th"], 2, "From bottom = 25 - 12 + 1 = 14th."),
+  p("infosys", "verbal", "Prepositions", 2024, false, "medium", "'He persisted ___ his efforts despite repeated failures.'", ["on", "in", "at", "with"], 1, "The fixed phrase is 'persist in'."),
+  p("infosys", "quant", "Time & Work", 2024, true, "hard", "A alone finishes a job in 6 days, B alone in 8 days. With C's help all three finish it in 3 days. C alone would take:", ["12 days", "16 days", "24 days", "20 days"], 2, "C's rate = 1/3 - 1/6 - 1/8 = 8/24 - 4/24 - 3/24 = 1/24 per day, so 24 days."),
+  p("infosys", "reasoning", "Number Series", 2023, false, "hard", "Find the next term: 3, 7, 16, 35, 74, ?", ["148", "153", "150", "143"], 1, "Pattern: x2+1, x2+2, x2+3, x2+4 -> next is 74 x 2 + 5 = 153."),
+  p("infosys", "coding", "Pseudocode Recursion", 2024, true, "hard", "f(n) = 1 if n <= 1, else n * f(n-2). The value of f(6) is:", ["36", "48", "120", "24"], 1, "f(6) = 6 x f(4) = 6 x 4 x f(2) = 6 x 4 x 2 x f(0) = 6 x 4 x 2 x 1 = 48."),
+  p("infosys", "reasoning", "Syllogism", 2024, false, "hard", "Some A are B. No B is C. Conclusion: Some A are not C.", ["Follows", "Does not follow", "Cannot say", "Contradicts"], 0, "The A's that are B cannot be C (B and C are disjoint), so at least some A are not C - it follows."),
+  p("infosys", "verbal", "Sentence Correction", 2023, true, "hard", "Which sentence is correctly framed?", ["Hardly he had arrived when it started raining.", "Hardly had he arrived when it started raining.", "Hardly he arrived than it started raining.", "Hardly did he arrived when it started raining."], 1, "After 'hardly' at the start, invert subject and auxiliary: 'Hardly had he arrived when...'."),
+  p("infosys", "quant", "Trains", 2024, true, "hard", "A train crosses a man in 8 seconds and a 180 m platform in 20 seconds. The speed of the train is:", ["45 km/h", "54 km/h", "60 km/h", "72 km/h"], 1, "Let length L and speed v: L = 8v and L + 180 = 20v. Subtracting, 180 = 12v, so v = 15 m/s = 54 km/h."),
+
+  // --- Wipro (Elite NTH pattern: verbal-heavy + aptitude + Java-flavoured coding) ---
+  p("wipro", "verbal", "One-Word Substitution", 2024, false, "easy", "One who writes the story of another person's life is a:", ["Autobiographer", "Biographer", "Novelist", "Journalist"], 1, "A biographer writes someone else's life story (an autobiographer writes their own)."),
+  p("wipro", "quant", "Percentages", 2023, false, "easy", "25% of 480 is:", ["110", "115", "120", "125"], 2, "480 / 4 = 120."),
+  p("wipro", "reasoning", "Analogy", 2024, false, "easy", "Doctor : Hospital :: Teacher : ?", ["Office", "School", "Court", "Library"], 1, "A doctor works in a hospital; a teacher works in a school."),
+  p("wipro", "verbal", "Sentence Improvement", 2024, true, "medium", "Improve: 'He is senior than me.'", ["senior than I", "senior to me", "more senior than me", "No improvement"], 1, "'Senior', 'junior', 'superior', 'inferior' take 'to', not 'than'."),
+  p("wipro", "verbal", "Idioms", 2023, false, "medium", "The idiom 'to bite the dust' means:", ["To eat quickly", "To fail or be defeated", "To work hard", "To clean the floor"], 1, "'Bite the dust' means to fail, fall or be defeated."),
+  p("wipro", "quant", "Pipes & Cisterns", 2024, true, "medium", "Pipe A fills a tank in 12 h, pipe B in 15 h, and pipe C empties it in 20 h. With all three open, the tank fills in:", ["8 h", "10 h", "12 h", "15 h"], 1, "1/12 + 1/15 - 1/20 = 5/60 + 4/60 - 3/60 = 6/60 = 1/10 per hour -> 10 hours."),
+  p("wipro", "quant", "Successive Change", 2023, true, "medium", "A value is increased by 10% and then by 20%. The net increase is:", ["30%", "32%", "28%", "35%"], 1, "Net = 10 + 20 + (10 x 20)/100 = 32%."),
+  p("wipro", "reasoning", "Coding-Decoding", 2024, false, "medium", "If TABLE is coded as UBCMF, then CHAIR is coded as:", ["DIBJS", "DJBJS", "DIBIS", "DIAJS"], 0, "Each letter shifts +1: C->D, H->I, A->B, I->J, R->S -> DIBJS."),
+  p("wipro", "coding", "Java Strings", 2023, true, "medium", "In Java, System.out.println(\"5\" + 2) prints:", ["7", "52", "10", "Error"], 1, "String + int performs concatenation: \"5\" + 2 = \"52\"."),
+  p("wipro", "quant", "Trains", 2024, true, "hard", "Two trains of lengths 120 m and 180 m run towards each other at 54 km/h and 36 km/h. They cross each other in:", ["10 s", "12 s", "15 s", "18 s"], 1, "Relative speed = 90 km/h = 25 m/s. Total length = 300 m. Time = 300/25 = 12 s."),
+  p("wipro", "quant", "Alligation", 2023, false, "hard", "Rice at Rs 30/kg is mixed with rice at Rs 45/kg to get a mixture worth Rs 35/kg. The ratio (cheaper : dearer) is:", ["1:2", "2:1", "3:2", "2:3"], 1, "Cheaper : dearer = (45 - 35) : (35 - 30) = 10 : 5 = 2 : 1."),
+  p("wipro", "verbal", "Voice", 2024, false, "hard", "The passive form of 'She wrote the letter' is:", ["The letter is written by her.", "The letter was written by her.", "The letter has written by her.", "The letter had written by her."], 1, "Simple past active becomes 'was/were + past participle' in passive: 'The letter was written by her.'"),
+  p("wipro", "coding", "Java Strings", 2024, true, "hard", "In Java: String s = \"hi\"; s.concat(\" there\"); System.out.println(s); prints:", ["hi there", "hi", "there", "Compilation error"], 1, "Strings are immutable - concat returns a NEW string which was discarded. s still refers to \"hi\"."),
+  p("wipro", "quant", "Boats & Streams", 2023, false, "hard", "A man rows 20 km downstream in 2 hours and 12 km upstream in 3 hours. His speed in still water is:", ["6 km/h", "7 km/h", "8 km/h", "5 km/h"], 1, "Downstream = 10 km/h, upstream = 4 km/h. Still water = (10 + 4)/2 = 7 km/h (stream = 3 km/h)."),
+  p("wipro", "reasoning", "Statement-Conclusion", 2024, false, "hard", "Statement: 'All the books in this library are in English.' Conclusion: 'This library has no Hindi books.'", ["Follows", "Does not follow", "Partially follows", "Cannot say"], 0, "If every book is in English, none can be in Hindi - the conclusion follows directly."),
+
+  // --- Accenture (cognitive + technical MCQ pattern: cs-core heavy) ---
+  p("accenture", "cs-core", "Web", 2024, false, "easy", "The full form of URL is:", ["Uniform Resource Locator", "Universal Routing Link", "Unified Resource Library", "Uniform Routing Locator"], 0, "URL = Uniform Resource Locator - the address of a resource on the web."),
+  p("accenture", "quant", "Percentages", 2023, false, "easy", "12.5% of 640 is:", ["70", "75", "80", "85"], 2, "12.5% = 1/8, so 640/8 = 80."),
+  p("accenture", "reasoning", "Analogy", 2024, false, "easy", "Pen : Write :: Knife : ?", ["Sharp", "Cut", "Steel", "Kitchen"], 1, "A pen is used to write; a knife is used to cut."),
+  p("accenture", "cs-core", "Security", 2024, true, "medium", "Which protocol encrypts web traffic between a browser and server?", ["HTTP", "HTTPS", "FTP", "Telnet"], 1, "HTTPS wraps HTTP in TLS encryption; the others transmit data unencrypted."),
+  p("accenture", "cs-core", "SQL", 2023, true, "medium", "In SQL, SELECT COUNT(*) FROM employees returns:", ["All rows", "The number of rows", "The first row", "Column names"], 1, "COUNT(*) is an aggregate that returns the total number of rows in the result."),
+  p("accenture", "cs-core", "SQL", 2024, false, "medium", "Which SQL clause sorts the result set?", ["GROUP BY", "ORDER BY", "SORT BY", "ARRANGE BY"], 1, "ORDER BY sorts results ascending (default) or descending (DESC)."),
+  p("accenture", "reasoning", "Attention to Detail", 2023, true, "medium", "In the sequence 7 2 7 3 7 4 7 7 6, how many 7s are immediately followed by an even number?", ["2", "3", "4", "1"], 1, "Pairs: 7-2 (yes), 7-3 (no), 7-4 (yes), 7-7 (no), 7-6 (yes) -> 3."),
+  p("accenture", "verbal", "Prepositions", 2024, false, "medium", "'She is accustomed ___ working late.'", ["with", "to", "for", "in"], 1, "The fixed phrase is 'accustomed to'."),
+  p("accenture", "cs-core", "OS", 2024, true, "hard", "Which CPU scheduling algorithm can cause starvation of low-priority processes?", ["Round Robin", "FCFS", "Priority scheduling", "Multilevel feedback with aging"], 2, "Pure priority scheduling can indefinitely delay low-priority processes if high-priority ones keep arriving. Aging fixes this."),
+  p("accenture", "cs-core", "DBMS", 2023, true, "hard", "Which normal form removes transitive dependencies?", ["1NF", "2NF", "3NF", "BCNF only"], 2, "3NF requires that no non-key attribute depends on another non-key attribute (no transitive dependency)."),
+  p("accenture", "cs-core", "Security", 2024, false, "hard", "An email pretending to be from a bank asking you to confirm your password is an example of:", ["Phishing", "Firewall", "Encryption", "Spam filtering"], 0, "Phishing impersonates a trusted entity to steal credentials or sensitive data."),
+  p("accenture", "quant", "Compound Interest", 2023, false, "hard", "A town's population of 8000 grows at 5% per annum. The population after 2 years is:", ["8800", "8820", "8840", "8900"], 1, "8000 x 1.05 x 1.05 = 8000 x 1.1025 = 8820."),
+  p("accenture", "reasoning", "Direction", 2024, true, "hard", "A man walks 4 km North, 3 km East, then 4 km South. How far is he from the start?", ["3 km", "4 km", "5 km", "7 km"], 0, "The 4 km North and 4 km South cancel; he is 3 km East of the start."),
+  p("accenture", "coding", "Pseudocode", 2024, false, "hard", "x = 5; if (x > 3) { if (x > 7) print('A') else print('B') } else print('C') - output is:", ["A", "B", "C", "Nothing"], 1, "x > 3 is true, so enter the outer if; x > 7 is false, so the inner else prints 'B'."),
+  p("accenture", "quant", "Speed & Distance", 2023, false, "medium", "A car covers 270 km at 60 km/h. The time taken is:", ["4 h", "4.5 h", "5 h", "3.5 h"], 1, "Time = 270/60 = 4.5 hours."),
+
+  // --- Zoho (programming-heavy pattern) ---
+  p("zoho", "coding", "ASCII", 2024, false, "easy", "The ASCII value of 'A' is:", ["64", "65", "96", "97"], 1, "'A' = 65 (and 'a' = 97)."),
+  p("zoho", "coding", "Math Logic", 2023, false, "easy", "The value of 2^10 is:", ["512", "1024", "2048", "1000"], 1, "2^10 = 1024 - the classic kilobyte constant."),
+  p("zoho", "coding", "Operators", 2024, true, "medium", "The value of 2 + 3 * 4 is:", ["20", "14", "24", "11"], 1, "Multiplication binds tighter: 2 + 12 = 14."),
+  p("zoho", "coding", "Bitwise", 2023, true, "medium", "After x = 7; x = x ^ x; the value of x is:", ["7", "0", "14", "1"], 1, "XOR of any value with itself is 0."),
+  p("zoho", "coding", "Algorithms", 2024, false, "medium", "The minimum number of comparisons needed to find the maximum of n elements is:", ["n", "n - 1", "n/2", "log n"], 1, "Each comparison eliminates one candidate; eliminating n-1 candidates needs n-1 comparisons."),
+  p("zoho", "coding", "Matrices", 2023, false, "medium", "In a 0-indexed 2D array with 4 columns stored row-major, element [2][3] is at linear offset:", ["10", "11", "12", "9"], 1, "Offset = row x columns + col = 2 x 4 + 3 = 11."),
+  p("zoho", "coding", "Loops", 2024, false, "medium", "How many times does this loop run? for (i = 10; i > 0; i -= 3)", ["3", "4", "5", "2"], 1, "i takes 10, 7, 4, 1 -> 4 iterations."),
+  p("zoho", "coding", "Recursion", 2024, true, "hard", "f(n): if n == 0 return; print(n); f(n-1). Calling f(5) prints:", ["1 2 3 4 5", "5 4 3 2 1", "5 5 5 5 5", "Nothing"], 1, "Each call prints n before recursing down: 5 4 3 2 1."),
+  p("zoho", "coding", "Strings", 2023, true, "hard", "The number of palindromic substrings of \"aaa\" is:", ["3", "5", "6", "4"], 2, "Substrings: 'a' x 3, 'aa' x 2, 'aaa' x 1 - all palindromic -> 6."),
+  p("zoho", "coding", "Two Pointer", 2024, true, "hard", "In the sorted array [1, 3, 5, 7, 9], how many pairs sum to exactly 10?", ["1", "2", "3", "4"], 1, "(1,9) and (3,7). The middle element 5 has no partner (5+5 needs two 5s)."),
+  p("zoho", "coding", "Bitwise", 2024, true, "hard", "The value of 12 & 11 (bitwise AND) is:", ["8", "9", "10", "12"], 0, "1100 & 1011 = 1000 = 8. (n & (n-1) clears the lowest set bit.)"),
+  p("zoho", "coding", "Stack", 2023, false, "hard", "Push 1, 2, 3 onto a stack, pop once, push 4, then pop twice. The popped sequence is:", ["3, 4, 2", "3, 2, 4", "4, 3, 2", "1, 2, 3"], 0, "Pop -> 3 (top). Push 4 -> stack [1,2,4]. Pop -> 4, pop -> 2. Sequence: 3, 4, 2."),
+  p("zoho", "coding", "Searching", 2024, false, "hard", "Binary search on a sorted array of 1000 elements needs at most about how many comparisons?", ["100", "500", "10", "31"], 2, "log2(1000) is just under 10, so at most ~10 comparisons."),
+  p("zoho", "quant", "Number Patterns", 2023, false, "hard", "The sum of the first 15 odd numbers is:", ["200", "210", "225", "240"], 2, "Sum of first n odd numbers = n^2 = 15^2 = 225."),
+  p("zoho", "reasoning", "Logic", 2024, false, "medium", "If all Zorks are Blims and some Blims are Crons, can we conclude some Zorks are Crons?", ["Yes, always", "No, not necessarily", "Yes, if Crons exist", "Only if Blims are Zorks"], 1, "The Blims that are Crons may not include any Zork - the conclusion is not forced."),
+
+  // --- Cognizant (GenC pattern: aptitude + verbal + automata/debugging) ---
+  p("cognizant", "quant", "Proportion", 2024, false, "easy", "If 3 : 4 = x : 20, then x is:", ["12", "15", "16", "18"], 1, "x = 3 x 20 / 4 = 15."),
+  p("cognizant", "verbal", "Spelling", 2023, false, "easy", "Select the word with the correct spelling:", ["Maintainance", "Maintenance", "Maintenence", "Maintanance"], 1, "'Maintenance' - from 'maintain', but spelt with 'tenance'."),
+  p("cognizant", "cs-core", "SQL", 2024, false, "easy", "The full form of SQL is:", ["Standard Query Language", "Structured Query Language", "Simple Query Language", "Sequential Query Language"], 1, "SQL = Structured Query Language."),
+  p("cognizant", "quant", "Ages", 2024, true, "medium", "The present ages of two friends are in the ratio 5:7. After 6 years the ratio becomes 7:9. Their present ages are:", ["10 and 14", "15 and 21", "20 and 28", "25 and 35"], 1, "(5x+6)/(7x+6) = 7/9 -> 45x + 54 = 49x + 42 -> x = 3 -> ages 15 and 21."),
+  p("cognizant", "reasoning", "Coding-Decoding", 2023, false, "medium", "If MOBILE is coded as NPCJMF, then PHONE is coded as:", ["QIPOF", "QIPNF", "QHPOF", "QIONF"], 0, "Each letter shifts +1: P->Q, H->I, O->P, N->O, E->F -> QIPOF."),
+  p("cognizant", "cs-core", "OS", 2024, true, "medium", "Which of these is NOT one of the four deadlock conditions?", ["Mutual exclusion", "Hold and wait", "Preemption", "Circular wait"], 2, "The actual condition is NO preemption. Preemption (forcibly taking resources) is a way to BREAK deadlock."),
+  p("cognizant", "coding", "Automata Fix", 2023, true, "medium", "A function returns a garbage value when summing an array. The most likely bug is:", ["The loop is too slow", "The accumulator was never initialised to 0", "The array is sorted", "The function name is wrong"], 1, "An uninitialised local variable holds garbage; sum must start at 0 before the loop."),
+  p("cognizant", "verbal", "Agreement", 2024, false, "medium", "'Neither of the answers ___ correct.'", ["are", "is", "were", "have been"], 1, "'Neither' is singular and takes a singular verb: 'is'."),
+  p("cognizant", "coding", "Loops", 2024, true, "hard", "How many times does this loop execute? for (i = 0; i <= 5; i++)", ["5", "6", "4", "Infinite"], 1, "i takes 0, 1, 2, 3, 4, 5 -> 6 iterations. The <= is the classic off-by-one trap."),
+  p("cognizant", "cs-core", "DBMS", 2023, false, "hard", "Which statement about keys is TRUE?", ["Every candidate key is a primary key", "Every primary key is a candidate key", "A table can have many primary keys", "A primary key can be NULL"], 1, "The primary key is chosen FROM the candidate keys, so it is always a candidate key. The reverse is not true."),
+  p("cognizant", "cs-core", "OS", 2024, true, "hard", "A page fault occurs when:", ["The CPU overheats", "A needed page is not in main memory", "A file is deleted", "The disk is full"], 1, "A page fault fires when a program accesses a page that is mapped but not currently loaded in RAM, forcing a fetch from disk."),
+  p("cognizant", "quant", "Boats & Streams", 2023, false, "hard", "A boat's speed in still water is 9 km/h; the stream flows at 3 km/h. Time for a round trip of 24 km each way is:", ["5 h", "6 h", "7 h", "8 h"], 1, "Downstream 24/12 = 2 h; upstream 24/6 = 4 h; total 6 hours."),
+  p("cognizant", "reasoning", "Calendars", 2024, true, "hard", "January 1, 2024 was a Monday. January 1, 2025 falls on a:", ["Tuesday", "Wednesday", "Thursday", "Monday"], 1, "2024 is a leap year (366 days = 52 weeks + 2 odd days), so the day advances by 2: Monday + 2 = Wednesday."),
+  p("cognizant", "quant", "Averages", 2023, false, "hard", "The average of 11 numbers is 50. The average of the first 6 is 49 and of the last 6 is 52. The 6th number is:", ["54", "56", "58", "50"], 1, "First 6 sum = 294, last 6 sum = 312; total counts the 6th twice: 294 + 312 - 550 = 56."),
+  p("cognizant", "coding", "Loops", 2024, false, "medium", "Which loop correctly prints 1 to 10?", ["for (i = 1; i < 10; i++)", "for (i = 1; i <= 10; i++)", "for (i = 0; i < 10; i--)", "for (i = 10; i > 0; i++)"], 1, "i runs 1 through 10 inclusive with i <= 10. Option A stops at 9; C and D never terminate correctly."),
+
+  // --- General / Core Prep (1st & 2nd year foundations, with stretch questions) ---
+  p("general", "cs-core", "Memory Units", 2024, false, "easy", "1 KB equals:", ["1000 bytes", "1024 bytes", "1024 bits", "100 bytes"], 1, "1 KB = 2^10 = 1024 bytes."),
+  p("general", "quant", "Squares", 2023, false, "easy", "The square root of 144 is:", ["11", "12", "13", "14"], 1, "12 x 12 = 144."),
+  p("general", "verbal", "Grammar", 2024, false, "easy", "The plural of 'foot' is:", ["foots", "feet", "feets", "footes"], 1, "'Foot' has the irregular plural 'feet'."),
+  p("general", "coding", "Syntax", 2023, false, "easy", "In C and Java, a single-line comment starts with:", ["/*", "//", "#", "--"], 1, "// begins a single-line comment in C, C++, Java and JavaScript."),
+  p("general", "quant", "HCF-LCM", 2024, false, "medium", "The LCM of 9 and 12 is:", ["24", "36", "48", "72"], 1, "9 = 3^2, 12 = 2^2 x 3 -> LCM = 2^2 x 3^2 = 36."),
+  p("general", "quant", "Fractions", 2023, false, "medium", "3/5 expressed as a percentage is:", ["50%", "55%", "60%", "65%"], 2, "3/5 = 0.6 = 60%."),
+  p("general", "reasoning", "Series", 2024, true, "medium", "Find the next term: 2, 5, 10, 17, ?", ["24", "26", "25", "27"], 1, "Pattern is n^2 + 1: 1+1, 4+1, 9+1, 16+1 -> next is 25 + 1 = 26."),
+  p("general", "coding", "Operators", 2023, false, "medium", "The value of 10 % 4 is:", ["2", "2.5", "4", "0"], 0, "% gives the remainder: 10 = 2 x 4 + 2 -> remainder 2."),
+  p("general", "cs-core", "Languages", 2024, false, "medium", "Python is typically classified as:", ["A compiled language", "An interpreted language", "An assembly language", "A markup language"], 1, "Python source runs through an interpreter (CPython compiles to bytecode and interprets it)."),
+  p("general", "verbal", "Articles", 2023, false, "medium", "'She studies at ___ university.'", ["a", "an", "the only", "no article"], 0, "'University' starts with a consonant SOUND (yu-), so it takes 'a', not 'an'."),
+  p("general", "cs-core", "OOP", 2024, true, "medium", "Bundling data and the methods that operate on it, while restricting direct access, is called:", ["Inheritance", "Encapsulation", "Polymorphism", "Compilation"], 1, "Encapsulation hides internal state behind a controlled interface (private fields + public methods)."),
+  p("general", "quant", "Remainders", 2024, false, "hard", "The smallest number that leaves remainder 3 when divided by 5 and remainder 2 when divided by 4 is:", ["13", "18", "23", "8"], 1, "Numbers = 3 mod 5: 3, 8, 13, 18... Check mod 4: 18 mod 4 = 2. Answer: 18."),
+  p("general", "reasoning", "Cubes", 2023, false, "hard", "A cube painted on all faces is cut into 27 equal small cubes. How many small cubes have exactly two painted faces?", ["8", "12", "6", "24"], 1, "Two-face cubes lie on the edges (not corners): 12 edges x 1 middle cube each = 12."),
+  p("general", "coding", "Recursion", 2024, true, "hard", "With fib(0) = 0 and fib(1) = 1, the value of fib(5) is:", ["3", "5", "8", "13"], 1, "Sequence: 0, 1, 1, 2, 3, 5 -> fib(5) = 5."),
+  p("general", "cs-core", "Number Systems", 2023, false, "hard", "The binary number 1101 in decimal is:", ["11", "12", "13", "14"], 2, "8 + 4 + 0 + 1 = 13."),
+
+  // ===================== Expanded set 7 — hard-tier bank (toughest 25% of each company's paper) =====================
+  // --- TCS hard ---
+  p("tcs", "quant", "Compound Interest", 2024, true, "hard", "A sum doubles in 4 years at compound interest. In how many years will it become 8 times?", ["8 years", "12 years", "16 years", "24 years"], 1, "8 = 2^3, so it needs three doubling periods: 3 x 4 = 12 years."),
+  p("tcs", "quant", "Races", 2023, false, "hard", "A runs 1.5 times as fast as B. If A gives B a 60 m head start, how long should the race be so they finish together?", ["120 m", "150 m", "180 m", "200 m"], 2, "Let race = d. Times equal: d/1.5 = (d - 60)/1 -> d = 1.5d - 90 -> d = 180 m."),
+  p("tcs", "reasoning", "Calendars", 2024, false, "hard", "15 August 1947 fell on which day of the week?", ["Thursday", "Friday", "Saturday", "Sunday"], 1, "Counting odd days from a known reference gives Friday - a classic odd-days calculation."),
+  p("tcs", "verbal", "Inversion", 2023, false, "hard", "Choose the correctly framed sentence:", ["No sooner did he arrive than the train left.", "No sooner he arrived than the train left.", "No sooner did he arrived than the train left.", "No sooner he did arrive when the train left."], 0, "'No sooner' requires inversion with did + base verb, paired with 'than'."),
+  p("tcs", "coding", "C Pointers", 2024, true, "hard", "In C: int a[] = {1, 2, 3, 4}; the value of *(a + 2) is:", ["2", "3", "4", "Address of a[2]"], 1, "*(a + 2) dereferences the pointer 2 elements past the start: a[2] = 3."),
+  p("tcs", "coding", "Complexity", 2023, false, "hard", "Two consecutive (NOT nested) loops, each running n times, give a total complexity of:", ["O(n^2)", "O(n)", "O(2^n)", "O(n log n)"], 1, "Sequential loops add: n + n = 2n = O(n). Only nesting multiplies."),
+
+  // --- Infosys hard ---
+  p("infosys", "quant", "Mixtures", 2024, true, "hard", "A vessel has 40 L of milk. 8 L is removed and replaced with water, and this is done once more. The milk remaining is:", ["24 L", "25.6 L", "26.4 L", "28 L"], 1, "Each operation keeps 32/40 = 0.8 of the milk: 40 x 0.8 x 0.8 = 25.6 L."),
+  p("infosys", "quant", "Probability", 2023, false, "hard", "A fair coin is tossed 3 times. The probability of getting at least one head is:", ["3/8", "5/8", "7/8", "1/2"], 2, "P(at least one head) = 1 - P(all tails) = 1 - 1/8 = 7/8."),
+  p("infosys", "reasoning", "Blood Relations", 2024, false, "hard", "A's son B is married to C. C's sister D is married to E, who is B's brother. How is D related to A?", ["Daughter", "Niece", "Daughter-in-law", "Sister-in-law"], 2, "E is B's brother, so E is also A's son. D is E's wife, making D A's daughter-in-law."),
+  p("infosys", "coding", "Pseudocode", 2024, true, "hard", "n = 9875; sum = 0; while (n > 0) { sum = sum + n mod 10; n = n div 10 } - final sum is:", ["28", "29", "30", "27"], 1, "Digits 9 + 8 + 7 + 5 = 29."),
+  p("infosys", "coding", "Pseudocode", 2023, false, "hard", "count = 0; for i = 1 to 5 { for j = 1 to 5 { if (j == 3) break; count = count + 1 } } - final count is:", ["10", "15", "25", "12"], 0, "The inner loop adds 2 per outer iteration (j = 1, 2 then breaks at 3): 5 x 2 = 10."),
+  p("infosys", "verbal", "Inference", 2024, false, "hard", "'Every member who attended the meeting signed the register.' Which conclusion MUST be true?", ["Everyone signed the register.", "Anyone who did not sign did not attend.", "Only members attended.", "The register was full."], 1, "The contrapositive is the only forced conclusion: not signed -> did not attend."),
+
+  // --- Wipro hard ---
+  p("wipro", "quant", "Profit & Loss", 2024, true, "hard", "A shop marks up goods 40% above cost and then offers a 15% discount. The net profit percent is:", ["25%", "19%", "21%", "17%"], 1, "SP = 1.40 x 0.85 = 1.19 x CP -> 19% profit."),
+  p("wipro", "quant", "Wages", 2023, false, "hard", "A finishes a job in 6 days, B in 12 days. They complete it together and earn Rs 900. A's share is:", ["Rs 450", "Rs 600", "Rs 500", "Rs 540"], 1, "Work ratio A:B = (1/6):(1/12) = 2:1. A gets 2/3 x 900 = Rs 600."),
+  p("wipro", "verbal", "One-Word Substitution", 2024, false, "hard", "A person who can speak many languages is a:", ["Linguist only", "Polyglot", "Translator", "Orator"], 1, "A polyglot speaks multiple languages. (A linguist studies language scientifically.)"),
+  p("wipro", "verbal", "Phrases", 2023, false, "hard", "'He accepted the cheque in lieu of cash.' Here 'in lieu of' means:", ["Along with", "Instead of", "Because of", "In addition to"], 1, "'In lieu of' means 'in place of / instead of'."),
+  p("wipro", "coding", "Java", 2024, true, "hard", "In Java, comparing two distinct String objects with the same characters using == returns:", ["Always true", "false (it compares references)", "A compile error", "true only for short strings"], 1, "== compares object references; .equals() compares contents. Two separately created objects differ by reference."),
+  p("wipro", "reasoning", "Ranking", 2024, false, "hard", "In a row of 50 people, A is 18th from the left and B is 20th from the right. The number of people between them is:", ["11", "12", "13", "10"], 1, "B's position from left = 50 - 20 + 1 = 31. Between = 31 - 18 - 1 = 12."),
+
+  // --- Accenture hard ---
+  p("accenture", "cs-core", "Networks", 2024, true, "hard", "Which of these is a PRIVATE IP address range?", ["8.8.8.x", "192.168.x.x", "172.4.x.x", "11.0.x.x"], 1, "192.168.0.0/16 is reserved for private networks (with 10.0.0.0/8 and 172.16-31.x.x)."),
+  p("accenture", "cs-core", "SQL", 2023, false, "hard", "Students has 5 rows; Marks has matching rows for only 3 students. SELECT * FROM Students LEFT JOIN Marks ... returns:", ["3 rows", "5 rows", "8 rows", "15 rows"], 1, "LEFT JOIN keeps every left-table row: all 5 students appear, 2 with NULL marks."),
+  p("accenture", "cs-core", "OS", 2024, false, "hard", "A process waiting for disk I/O to complete is in which state?", ["Running", "Ready", "Blocked/Waiting", "Terminated"], 2, "A process waiting for an event (like I/O) is Blocked/Waiting; Ready means it can run but the CPU is busy."),
+  p("accenture", "quant", "Time & Work", 2023, true, "hard", "15 workers can finish a job in 8 days. After 4 days, 5 workers leave. The remaining work takes:", ["5 days", "6 days", "8 days", "4 days"], 1, "Total = 120 worker-days; 60 done in 4 days. Remaining 60 by 10 workers = 6 days."),
+  p("accenture", "reasoning", "Syllogism", 2024, false, "hard", "Some A are B. Some B are C. Conclusion: Some A are C.", ["Follows", "Does not follow", "Always true", "Certain"], 1, "The A's that are B may be entirely different B's from those that are C - nothing forces an overlap."),
+  p("accenture", "reasoning", "Attention to Detail", 2023, false, "hard", "How many even digits are in the number 3847562?", ["3", "4", "5", "2"], 1, "Digits: 3, 8, 4, 7, 5, 6, 2. Even: 8, 4, 6, 2 -> four."),
+
+  // --- Zoho hard ---
+  p("zoho", "coding", "Arrays", 2024, true, "hard", "arr = [2, 4, 6, 8] (0-indexed). The sum of elements at ODD indexes is:", ["6", "10", "12", "8"], 2, "Odd indexes 1 and 3 hold 4 and 8: sum = 12."),
+  p("zoho", "coding", "Recursion", 2023, false, "hard", "Using Euclid's algorithm, gcd(48, 18) is:", ["2", "3", "6", "9"], 2, "gcd(48,18) -> gcd(18,12) -> gcd(12,6) -> gcd(6,0) = 6."),
+  p("zoho", "coding", "Complexity", 2024, true, "hard", "Building a string by concatenating one character at a time inside a loop of n iterations (immutable strings) costs:", ["O(n)", "O(n log n)", "O(n^2)", "O(1)"], 2, "Each concat copies the existing string: 1 + 2 + ... + n = O(n^2). Use a builder/buffer for O(n)."),
+  p("zoho", "coding", "Linked List", 2023, false, "hard", "Using slow/fast pointers on a 9-node list (slow +1, fast +2), when fast reaches the end, slow is at node:", ["4", "5", "6", "3"], 1, "Slow moves half as fast, landing on the middle: node 5 of 9."),
+  p("zoho", "coding", "Sorting", 2024, false, "hard", "Which of these sorting algorithms is stable?", ["Quick sort", "Heap sort", "Merge sort", "Selection sort"], 2, "Merge sort preserves the relative order of equal elements; quick, heap and selection do not (in standard forms)."),
+  p("zoho", "coding", "Bitwise", 2024, true, "hard", "The number of 1-bits in the binary representation of 29 is:", ["3", "4", "5", "2"], 1, "29 = 11101 in binary -> four 1-bits."),
+
+  // --- Cognizant hard ---
+  p("cognizant", "coding", "Automata Fix", 2024, true, "hard", "A find-maximum function returns 0 for an array of all negative numbers. The bug is:", ["The loop runs too long", "max was initialised to 0 instead of the first element", "The array is unsorted", "The return type is wrong"], 1, "Initialising max = 0 fails for all-negative arrays; initialise with arr[0] (or the minimum possible value)."),
+  p("cognizant", "cs-core", "SQL", 2023, false, "hard", "The key difference between DELETE and TRUNCATE in SQL is:", ["DELETE is faster", "TRUNCATE can use a WHERE clause", "DELETE can be filtered and rolled back; TRUNCATE removes all rows as DDL", "They are identical"], 2, "DELETE is row-by-row DML with WHERE support; TRUNCATE deallocates all rows at once and is DDL."),
+  p("cognizant", "cs-core", "OS", 2024, false, "hard", "Threads of the same process share all of these EXCEPT:", ["Heap memory", "Global variables", "Code section", "Stack"], 3, "Each thread has its own stack; heap, globals and code are shared across the process's threads."),
+  p("cognizant", "quant", "Trains", 2023, true, "hard", "A 150 m train at 60 km/h overtakes a man walking at 6 km/h in the same direction. Time to pass him:", ["8 s", "9 s", "10 s", "12 s"], 2, "Relative speed = 54 km/h = 15 m/s. Time = 150/15 = 10 s."),
+  p("cognizant", "reasoning", "Clocks", 2024, false, "hard", "A clock gains 5 minutes every hour. If set correct at 7:00 am, what does it show when the correct time is 12:00 noon?", ["12:20 pm", "12:25 pm", "12:30 pm", "12:15 pm"], 1, "5 real hours pass; the clock gains 5 x 5 = 25 minutes -> shows 12:25 pm."),
+  p("cognizant", "verbal", "Error Spotting", 2023, false, "hard", "Identify the error: 'The number of students in colleges are increasing every year.'", ["The number of", "students in colleges", "are increasing", "every year"], 2, "'The number of' is singular: 'is increasing'. (Compare: 'A number of students ARE'.)"),
+
+  // --- General / Core Prep hard ---
+  p("general", "quant", "Averages", 2024, true, "hard", "The average of 8 numbers is 27. If one number 35 is replaced by 19, the new average is:", ["24", "25", "26", "23"], 1, "The sum falls by 16; the average falls by 16/8 = 2 -> 27 - 2 = 25."),
+  p("general", "reasoning", "Counting Figures", 2023, false, "hard", "The total number of squares in a 3 x 3 grid of unit squares is:", ["9", "13", "14", "12"], 2, "1x1: 9, 2x2: 4, 3x3: 1 -> 9 + 4 + 1 = 14."),
+  p("general", "coding", "Bitwise", 2024, false, "hard", "a = 3, b = 5. After a = a^b; b = b^a; a = a^b; the values of a and b are:", ["3 and 5", "5 and 3", "0 and 0", "8 and 2"], 1, "The XOR swap exchanges values without a temp: a = 5, b = 3."),
+  p("general", "cs-core", "Number Systems", 2023, false, "hard", "The hexadecimal number 1F in decimal is:", ["30", "31", "32", "29"], 1, "1F = 1 x 16 + 15 = 31."),
+  p("general", "quant", "Equations", 2024, true, "hard", "If x + y = 10 and x - y = 4, then the product xy is:", ["20", "21", "24", "18"], 1, "Adding: 2x = 14 -> x = 7, y = 3 -> xy = 21."),
+  p("general", "verbal", "Analogy", 2023, false, "hard", "Scarce : Abundant :: Brave : ?", ["Bold", "Cowardly", "Strong", "Fearless"], 1, "The pair are antonyms; the antonym of 'brave' is 'cowardly'."),
 ]
 
 const COMPANY_PYQ_PLAN: Record<CompanyId, Partial<Record<SectionId, number>>> = {
@@ -438,8 +703,8 @@ function generatedSectionPyqs(
   count: number,
   existingPrompts: Set<string>,
 ): (PYQ & { company: CompanyId })[] {
-  const easy = Math.ceil(count * 0.34)
-  const medium = Math.ceil(count * 0.38)
+  const easy = Math.ceil(count * 0.2)
+  const medium = Math.ceil(count * 0.4)
   const hard = Math.max(0, count - easy - medium)
   const seed = sectionSeed(company, sectionId)
   const generated = [
@@ -475,9 +740,8 @@ function generatedPyqsFor(company: CompanyId): (PYQ & { company: CompanyId })[] 
   return Object.entries(plan).flatMap(([section, count]) => {
     const sectionId = section as SectionId
     const existingPrompts = new Set(
-      PYQS.filter((question) => question.company === company && question.section === sectionId).map(
-        (question) => question.prompt.trim().toLowerCase(),
-      ),
+      PYQS.filter((question) => question.company === company && question.section === sectionId)
+        .map((question) => question.prompt.trim().toLowerCase()),
     )
     if (sectionId === "comm-interview") {
       return communicationPyqsFor(company, count ?? 0)
@@ -495,7 +759,6 @@ export const EXPANDED_PYQS: (PYQ & { company: CompanyId })[] = [
   ...generatedPyqsFor("cognizant"),
   ...generatedPyqsFor("general"),
 ]
-
 export const ALL_PYQS: (PYQ & { company: CompanyId })[] = [...PYQS, ...EXPANDED_PYQS]
 
 const PYQS_BY_COMPANY = ALL_PYQS.reduce(
@@ -718,7 +981,7 @@ export function dailyPool(category: "general" | "aptitude" | "coding"): Question
       ...generateDrills("reasoning", 25, seed + 1),
     ]
   }
-  return [...ALL_PYQS, ...generateDrills("mixed", 40, seed + 2)] // general = mixed
+  return [...ALL_PYQS, ...generateDrills("mixed", 40, seed + 2)]
 }
 
 export function dailyChallengeQuestions(
@@ -731,6 +994,3 @@ export function dailyChallengeQuestions(
   }
   return seededSample(dailyPool(category), DAILY_CHALLENGE_SIZE, seed)
 }
-
-
-

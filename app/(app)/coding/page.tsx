@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -9,13 +10,16 @@ import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { CompanyPicker } from "@/components/app/company-picker"
-import { FREE_CODING_PROBLEM_LIMIT, lockedCount, visibleForPlan } from "@/lib/access"
 import {
-  executeCodingSubmission,
+  FREE_CODING_PROBLEM_LIMIT,
+  lockedCount,
+  visibleCodingTestsForPlan,
+  visibleForPlan,
+} from "@/lib/access"
+import {
   normalizeCodingOutput,
-  parseCodingInput,
 } from "@/lib/coding-runner"
-import { getCompany } from "@/lib/data/companies"
+import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
 import { codingProblemsForCompany } from "@/lib/data/coding-problems"
 import {
   codingFeedback,
@@ -28,9 +32,12 @@ import type { CodingAttempt, CodingProblem, CodingTestCase, CompanyId } from "@/
 
 export default function CodingPage() {
   const { state, recordCodingAttempt } = useStore()
-  const initial = state.primary || "general"
-  const [company, setCompany] = React.useState<CompanyId>(initial)
+  const searchParams = useSearchParams()
+  const queryCompany = companyFromParam(searchParams.get("company"))
+  const [selectedCompany, setSelectedCompany] = React.useState<CompanyId | null>(null)
   const [openId, setOpenId] = React.useState<string | null>(null)
+  const company = selectedCompany ?? queryCompany ?? state.primary ?? "general"
+
   const companyInfo = getCompany(company)
   const problems = React.useMemo(() => codingProblemsForCompany(company), [company])
   const visibleProblems = React.useMemo(
@@ -60,7 +67,7 @@ export default function CodingPage() {
       <CompanyPicker
         value={company}
         onChange={(id) => {
-          setCompany(id)
+          setSelectedCompany(id)
           setOpenId(null)
         }}
       />
@@ -84,6 +91,7 @@ export default function CodingPage() {
             problem={problem}
             open={openId === problem.id}
             companyId={company}
+            premium={state.premium}
             lastAttempt={attemptsByProblem.get(problem.id)}
             onAttempt={(passed, total) =>
               recordCodingAttempt({
@@ -118,10 +126,16 @@ export default function CodingPage() {
   )
 }
 
+function companyFromParam(value: string | null): CompanyId | null {
+  if (!value || !(value in COMPANY_BY_ID)) return null
+  return value as CompanyId
+}
+
 function ProblemCard({
   problem,
   open,
   companyId,
+  premium,
   lastAttempt,
   onAttempt,
   onToggle,
@@ -129,14 +143,22 @@ function ProblemCard({
   problem: CodingProblem
   open: boolean
   companyId: CompanyId
+  premium: boolean
   lastAttempt?: { passed: number; total: number }
   onAttempt: (passed: number, total: number) => void
   onToggle: () => void
 }) {
+  const [attempted, setAttempted] = React.useState(Boolean(lastAttempt))
   const visibleTests = React.useMemo(
     () => problem.testCases.filter((tc) => !tc.hidden),
     [problem.testCases],
   )
+  const availableTests = React.useMemo(
+    () => visibleCodingTestsForPlan(problem.testCases, premium),
+    [premium, problem.testCases],
+  )
+  const hiddenTestCount = problem.testCases.length - visibleTests.length
+  const editorialUnlocked = attempted || Boolean(lastAttempt)
 
   async function copyStarterCode() {
     try {
@@ -160,8 +182,18 @@ function ProblemCard({
           <span className="flex items-center gap-1 text-muted-foreground">
             <Icon name="Clock" className="size-3.5" /> {problem.estimatedMinutes} min
           </span>
+          {problem.topics.slice(0, 2).map((t) => (
+            <span key={t} className="rounded-full bg-muted/80 px-2 py-0.5 text-muted-foreground">
+              #{t}
+            </span>
+          ))}
+          {problem.companyId && problem.companyId !== companyId ? (
+            <span className="rounded-full bg-warning/10 px-2 py-0.5 font-medium text-warning-foreground">
+              {getCompany(problem.companyId).short} pattern
+            </span>
+          ) : null}
           {lastAttempt ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+            <span className="rounded-full bg-success/10 px-2 py-0.5 font-medium text-[color:var(--success)]">
               last run {lastAttempt.passed}/{lastAttempt.total}
             </span>
           ) : null}
@@ -229,14 +261,19 @@ function ProblemCard({
           </div>
           <BrowserJsRunner
             problem={problem}
-            tests={visibleTests}
+            tests={availableTests}
             companyId={companyId}
-            onAttempt={onAttempt}
+            onAttempt={(passed, total) => {
+              setAttempted(true)
+              onAttempt(passed, total)
+            }}
           />
           <div className="grid gap-3 md:grid-cols-2">
-            {visibleTests.map((tc, i) => (
+            {availableTests.map((tc, i) => (
               <div key={i} className="rounded-xl border border-border p-3 text-sm">
-                <p className="font-medium">Sample {i + 1}</p>
+                <p className="font-medium">
+                  {tc.hidden ? "Premium edge case" : "Sample"} {i + 1}
+                </p>
                 <p className="mt-2 text-muted-foreground">Input</p>
                 <pre className="whitespace-pre-wrap rounded-lg bg-muted p-2">{tc.input}</pre>
                 <p className="mt-2 text-muted-foreground">Output</p>
@@ -244,6 +281,17 @@ function ProblemCard({
               </div>
             ))}
           </div>
+          {!premium && hiddenTestCount > 0 ? (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+              <p className="flex items-center gap-1.5 font-medium">
+                <Icon name="Lock" className="size-4 text-primary" />
+                {hiddenTestCount} premium edge case{hiddenTestCount === 1 ? "" : "s"} locked
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Upgrade to run the extra edge cases used to check interview-level correctness.
+              </p>
+            </div>
+          ) : null}
           <div className="rounded-xl border border-border p-3 text-sm">
             <p className="flex items-center gap-1.5 font-medium">
               <Icon name="Terminal" className="size-4 text-primary" /> After samples pass
@@ -254,10 +302,21 @@ function ProblemCard({
               <li>3. Compare your approach with the editorial after solving.</li>
             </ol>
           </div>
-          <div className="rounded-xl bg-muted/60 p-3 text-sm">
-            <p className="font-medium">Student explanation</p>
-            <p className="mt-1 text-muted-foreground">{problem.editorial}</p>
-          </div>
+          {editorialUnlocked ? (
+            <div className="rounded-xl bg-muted/60 p-3 text-sm">
+              <p className="font-medium">Student explanation</p>
+              <p className="mt-1 text-muted-foreground">{problem.editorial}</p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
+              <p className="flex items-center gap-1.5 font-medium">
+                <Icon name="Lock" className="size-4 text-primary" /> Editorial locked
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Run the available cases once to unlock the explanation.
+              </p>
+            </div>
+          )}
         </CardContent>
       ) : null}
     </Card>
@@ -321,7 +380,7 @@ function BrowserJsRunner({
         <div>
           <p className="text-sm font-medium">Code practice runner</p>
           <p className="text-xs text-muted-foreground">
-            JavaScript only. Visible samples run in your browser.
+            JavaScript only. Available cases run in your browser.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -331,7 +390,7 @@ function BrowserJsRunner({
           </Button>
           <Button size="sm" onClick={runSamples} disabled={running || tests.length === 0}>
             <Icon name="Play" className="size-3.5" />
-            {running ? "Running..." : "Run samples"}
+            {running ? "Running..." : "Run cases"}
           </Button>
         </div>
       </div>
@@ -350,7 +409,7 @@ function BrowserJsRunner({
           {results.map((result) => (
             <div key={result.index} className="rounded-lg border border-border bg-background p-2 text-xs">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">Sample {result.index + 1}</span>
+                <span className="font-medium">Case {result.index + 1}</span>
                 <span
                   className={
                     result.status === "passed"
@@ -382,24 +441,15 @@ function BrowserJsRunner({
 
 function runOneTest(code: string, test: CodingTestCase, index: number): Promise<RunResult> {
   return new Promise((resolve) => {
-    const workerCode = `
-      const normalizeCodingOutput = ${normalizeCodingOutput.toString()};
-      const parseCodingInput = ${parseCodingInput.toString()};
-      const executeSubmission = ${executeCodingSubmission.toString()};
-      self.onmessage = function(event) {
-        const payload = event.data;
-        self.postMessage(executeSubmission(payload.code, payload.input));
-      };
-    `
-    const blob = new Blob([workerCode], { type: "text/javascript" })
+    const blob = new Blob([codingWorkerSource], { type: "text/javascript" })
     const workerUrl = URL.createObjectURL(blob)
-    const worker = new Worker(workerUrl)
     let settled = false
+    let worker: Worker
     function finish(result: RunResult) {
       if (settled) return
       settled = true
       window.clearTimeout(timer)
-      worker.terminate()
+      worker?.terminate()
       URL.revokeObjectURL(workerUrl)
       resolve(result)
     }
@@ -412,6 +462,19 @@ function runOneTest(code: string, test: CodingTestCase, index: number): Promise<
         error: "Execution took more than 1.5 seconds.",
       })
     }, 1500)
+
+    try {
+      worker = new Worker(workerUrl)
+    } catch (error) {
+      finish({
+        index,
+        status: "error",
+        input: test.input,
+        expected: normalizeCodingOutput(test.output),
+        error: String(error && error instanceof Error ? error.message : error),
+      })
+      return
+    }
 
     worker.onmessage = (event: MessageEvent<{ ok: boolean; output?: string; error?: string }>) => {
       const expected = normalizeCodingOutput(test.output)
@@ -446,6 +509,84 @@ function runOneTest(code: string, test: CodingTestCase, index: number): Promise<
     worker.postMessage({ code, input: test.input })
   })
 }
+
+const codingWorkerSource = `
+function normalizeCodingOutput(value) {
+  if (Array.isArray(value)) return value.flat(Infinity).join(" ").trim();
+  return String(value == null ? "" : value).trim().replace(/\\s+/g, " ");
+}
+
+function parseCodingInput(input, arity) {
+  const trimmed = String(input).trim();
+  if (trimmed.length === 0) return arity === 0 ? [] : [""];
+
+  const lines = trimmed.split(/\\n+/).map((line) => line.trim()).filter(Boolean);
+  const tokens = trimmed.split(/\\s+/).filter(Boolean);
+  const nums = tokens.map(Number);
+  const allNums = tokens.length > 0 && nums.every((n) => Number.isFinite(n));
+  const firstNums = (lines[0] || "").split(/\\s+/).filter(Boolean).map(Number);
+  const restLines = lines.slice(1);
+
+  if (arity > 1 && !allNums) return lines.slice(0, arity);
+  if (arity > 1 && lines.length === 1 && allNums) return nums.slice(0, arity);
+
+  if (lines.length > 1) {
+    if (allNums && arity === 2 && firstNums.length >= 2 && restLines.length === 1) {
+      return [restLines[0].split(/\\s+/).map(Number), firstNums[1]];
+    }
+    if (allNums && arity === 1 && firstNums.length === 2 && restLines.length === firstNums[0]) {
+      return [restLines.map((line) => line.split(/\\s+/).map(Number))];
+    }
+    if (allNums && arity === 1 && firstNums.length === 1 && restLines.length === firstNums[0]) {
+      return [restLines.map((line) => line.split(/\\s+/).map(Number))];
+    }
+    if (allNums && arity === 1 && firstNums.length === 1) return [nums.slice(1)];
+    if (allNums && arity === 1) return [restLines.map((line) => line.split(/\\s+/).map(Number))];
+    if (!allNums && arity === 1) return [trimmed];
+  }
+
+  if (arity > 1 && allNums) return nums.slice(0, arity);
+  if (tokens.length === 1) return [allNums ? nums[0] : tokens[0]];
+  if (allNums) return [nums];
+  return [trimmed];
+}
+
+function executeSubmission(code, input) {
+  const logs = [];
+  const studentConsole = {
+    log: (...parts) => {
+      logs.push(parts.map((part) => normalizeCodingOutput(part)).join(" "));
+    },
+    __output: () => logs.join("\\n"),
+  };
+
+  try {
+    const runner = new Function(
+      "input",
+      "parseCodingInput",
+      "normalizeCodingOutput",
+      "console",
+      code + "\\n" +
+        "if (typeof solve !== 'function') throw new Error('Define function solve(...) first.');\\n" +
+        "const args = parseCodingInput(input, solve.length);\\n" +
+        "const value = solve.apply(null, args);\\n" +
+        "return value === undefined ? console.__output() : value;"
+    );
+    const value = runner(input, parseCodingInput, normalizeCodingOutput, studentConsole);
+    return { ok: true, output: normalizeCodingOutput(value) };
+  } catch (error) {
+    return {
+      ok: false,
+      error: String(error && error instanceof Error ? error.message : error),
+    };
+  }
+}
+
+self.onmessage = function(event) {
+  const payload = event.data;
+  self.postMessage(executeSubmission(payload.code, payload.input));
+};
+`
 
 function InfoBlock({ title, text }: { title: string; text: string }) {
   return (

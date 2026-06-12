@@ -107,6 +107,19 @@ describe("content quality audit", () => {
     }
   }, 30_000)
 
+  it("does not clone the same mock question set inside a company series", () => {
+    for (const company of COMPANIES) {
+      const signatures = MOCK_TESTS.filter((mock) => mock.companyId === company.id).map((mock) =>
+        buildMockQuestions(mock)
+          .map((question) => normalizeText(question.prompt))
+          .sort()
+          .join(" || "),
+      )
+
+      expectNoDuplicateTexts(signatures, `${company.id} mock question-set signatures`)
+    }
+  }, 60_000)
+
   it("has no repeated coding problems, coding test cases or interview prompts", () => {
     expectNoDuplicateTexts(
       ALL_CODING_PROBLEMS.map((problem) => problem.title),

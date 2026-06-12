@@ -28,7 +28,10 @@ import {
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
-import { FREE_COMPANY_CAP } from "@/lib/access"
+import {
+  PLAN_FEATURES,
+  premiumPriceLabel,
+} from "@/lib/access"
 import { SELECTABLE_COMPANIES, getCompany } from "@/lib/data/companies"
 import { useStore } from "@/lib/store"
 import type { CompanyId, Profile } from "@/lib/types"
@@ -75,12 +78,6 @@ export default function SettingsPage() {
   const activeUntil = state.premiumUntil ?? null
 
   function tryAdd(id: CompanyId) {
-    if (!state.premium && state.interested.length >= FREE_COMPANY_CAP) {
-      toast.error("Upgrade to add more companies", {
-        description: "Upgrade to Premium to prepare across every track.",
-      })
-      return
-    }
     addInterested(id)
     toast.success(`Added ${getCompany(id).short}`)
   }
@@ -91,8 +88,14 @@ export default function SettingsPage() {
     try {
       await loadRazorpayCheckout()
       const orderResponse = await fetch("/api/razorpay/order", { method: "POST" })
-      const order = await orderResponse.json()
+      const order = await readApiJson<{ error?: string; keyId?: string; amount?: number; currency?: string; orderId?: string }>(
+        orderResponse,
+        "Could not start checkout.",
+      )
       if (!orderResponse.ok) throw new Error(order.error ?? "Could not start checkout.")
+      if (!order.keyId || !order.amount || !order.currency || !order.orderId) {
+        throw new Error("Checkout configuration is incomplete. Please contact support.")
+      }
       if (!window.Razorpay) throw new Error("Razorpay checkout did not load.")
 
       const checkout = new window.Razorpay({
@@ -110,7 +113,10 @@ export default function SettingsPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(response),
           })
-          const verified = await verifyResponse.json()
+          const verified = await readApiJson<{ error?: string; premiumUntil?: string }>(
+            verifyResponse,
+            "Payment verification failed.",
+          )
           if (!verifyResponse.ok) {
             toast.error(verified.error ?? "Payment verification failed")
             return
@@ -152,7 +158,7 @@ export default function SettingsPage() {
                   <Icon name="CircleCheckBig" className="size-4" /> Premium active
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  All chapters, all companies, full PYQs, mocks and readiness unlocked.
+                  All chapters, all company depth, full PYQs, mocks and readiness unlocked.
                   {activeUntil ? ` Valid until ${new Date(activeUntil).toLocaleDateString()}.` : ""}
                 </p>
               </div>
@@ -171,7 +177,8 @@ export default function SettingsPage() {
               <div>
                 <p className="font-heading text-lg font-semibold">StudyBench Premium</p>
                 <p className="text-sm text-muted-foreground">
-                  Everything unlocked across all tracks for <strong>Rs 399/year</strong>. No ads.
+                  Everything unlocked across all tracks for <strong>{premiumPriceLabel()}</strong>.
+                  No ads.
                 </p>
               </div>
               <Button
@@ -182,13 +189,7 @@ export default function SettingsPage() {
               </Button>
             </div>
           )}
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {PREMIUM_FEATURES.map((feature) => (
-              <div key={feature} className="rounded-lg border border-border bg-muted/35 p-3 text-sm">
-                {feature}
-              </div>
-            ))}
-          </div>
+          <PlanComparison premium={state.premium} />
 
         </CardContent>
       </Card>
@@ -273,7 +274,7 @@ export default function SettingsPage() {
               </div>
               {!state.premium ? (
                 <p className="mt-2 text-xs text-muted-foreground">
-                  Upgrade to prepare across every company track.
+                  Free opens Section 1, Chapter 1. Premium unlocks every section and chapter.
                 </p>
               ) : null}
             </div>
@@ -327,6 +328,27 @@ export default function SettingsPage() {
       </Card>
     </div>
   )
+}
+
+async function readApiJson<T extends { error?: string }>(
+  response: Response,
+  fallbackMessage: string,
+): Promise<T> {
+  const contentType = response.headers.get("content-type") ?? ""
+  if (contentType.includes("application/json")) {
+    return (await response.json()) as T
+  }
+
+  const body = await response.text()
+  if (body.toLowerCase().includes("<!doctype") || body.toLowerCase().includes("<html")) {
+    throw new Error(
+      response.status === 401
+        ? "Please sign in again before upgrading."
+        : "The payment endpoint returned a web page instead of JSON. Check deployment environment variables and API routing.",
+    )
+  }
+
+  throw new Error(body.trim() || fallbackMessage)
 }
 
 function loadRazorpayCheckout() {
@@ -479,16 +501,31 @@ const LEGACY_NOTIF_PREFS_KEY = "placeready.notifs.v1"
 const DEFAULT_NOTIF_PREFS = { daily: true, drive: true, reengage: false }
 type NotifPrefs = typeof DEFAULT_NOTIF_PREFS
 
-const PREMIUM_FEATURES = [
-  "All company tracks",
-  "Full-length mocks",
-  "Complete PYQ bank",
-  "Interview answer bank",
-  "Detailed analytics",
-  "Revision sheets",
-  "Coding practice ladder",
-  "Mistake-based quizzes",
-]
+function PlanComparison({ premium }: { premium: boolean }) {
+  return (
+    <div className="mt-5 overflow-hidden rounded-xl border border-border">
+      <div className="grid grid-cols-[1.1fr_1fr_1fr] border-b border-border bg-muted/45 px-3 py-2 text-xs font-semibold uppercase text-muted-foreground">
+        <span>Feature</span>
+        <span>Free</span>
+        <span className="flex items-center gap-1 text-primary">
+          <Icon name="Crown" className="size-3.5" /> Premium
+        </span>
+      </div>
+      {PLAN_FEATURES.map((row) => (
+        <div
+          key={row.feature}
+          className="grid grid-cols-[1.1fr_1fr_1fr] gap-2 border-b border-border px-3 py-2.5 text-sm last:border-b-0"
+        >
+          <span className="font-medium">{row.feature}</span>
+          <span className="text-muted-foreground">{row.free}</span>
+          <span className={premium ? "font-medium text-[color:var(--success)]" : "font-medium text-foreground"}>
+            {row.premium}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 function NotificationSettings() {
   const [prefs, setPrefs] = React.useState<NotifPrefs>(() => {

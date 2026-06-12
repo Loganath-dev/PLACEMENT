@@ -17,108 +17,78 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0f172a",
-          fontFamily: "Arial, sans-serif",
-          position: "relative",
+          background: "#0F172A",
+          borderRadius: 112,
         }}
       >
+        {/* Left page */}
         <div
           style={{
             position: "absolute",
-            inset: 36,
-            borderRadius: 104,
-            background: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            left: 88,
+            top: 112,
+            width: 150,
+            height: 210,
+            borderRadius: "18px 4px 4px 18px",
+            background: "#818CF8",
+            clipPath: "polygon(0 8%, 100% 0%, 100% 100%, 0 92%)",
           }}
-        >
+        />
+        {/* Right page */}
+        <div
+          style={{
+            position: "absolute",
+            right: 88,
+            top: 112,
+            width: 150,
+            height: 210,
+            borderRadius: "4px 18px 18px 4px",
+            background: "#22D3EE",
+            clipPath: "polygon(0 0%, 100% 8%, 100% 92%, 0 100%)",
+          }}
+        />
+        {/* Lines on left page */}
+        {[175, 220, 265].map((top) => (
           <div
-            style={{
-              width: 255,
-              height: 255,
-              borderRadius: 56,
-              background: "#2563eb",
-              transform: "rotate(-8deg)",
-              position: "absolute",
-            }}
-          />
-          <div
-            style={{
-              width: 230,
-              height: 230,
-              borderRadius: 48,
-              border: "24px solid #0f172a",
-              background: "#ffffff",
-              transform: "rotate(5deg)",
-              position: "absolute",
-            }}
-          />
-          {[183, 238, 293].map((top) => (
-            <div
-              key={top}
-              style={{
-                position: "absolute",
-                width: 126,
-                height: 24,
-                borderRadius: 999,
-                background: "#0f172a",
-                top,
-                left: 193,
-              }}
-            />
-          ))}
-          <div
+            key={top}
             style={{
               position: "absolute",
-              width: 86,
-              height: 86,
+              left: 112,
+              top,
+              width: 100,
+              height: 14,
               borderRadius: 999,
-              background: "#14b8a6",
-              right: 106,
-              bottom: 107,
+              background: "rgba(255,255,255,0.45)",
             }}
-          >
-            <div
-              style={{
-                position: "absolute",
-                width: 19,
-                height: 42,
-                borderRadius: 999,
-                background: "#ffffff",
-                transform: "rotate(45deg)",
-                left: 46,
-                top: 22,
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                width: 19,
-                height: 28,
-                borderRadius: 999,
-                background: "#ffffff",
-                transform: "rotate(-45deg)",
-                left: 27,
-                top: 35,
-              }}
-            />
-          </div>
-        </div>
+          />
+        ))}
+        {/* Lines on right page */}
+        {[175, 220].map((top) => (
+          <div
+            key={top}
+            style={{
+              position: "absolute",
+              right: 112,
+              top,
+              width: 100,
+              height: 14,
+              borderRadius: 999,
+              background: "rgba(255,255,255,0.45)",
+            }}
+          />
+        ))}
+        {/* Amber bench line */}
         <div
           style={{
             position: "absolute",
-            left: 74,
-            top: 67,
-            color: "#ffffff",
-            fontSize: 84,
-            fontWeight: 900,
-            letterSpacing: -2,
-            fontFamily: "Arial, sans-serif",
+            left: 72,
+            right: 72,
+            bottom: 100,
+            height: 28,
+            borderRadius: 999,
+            background: "#F59E0B",
           }}
-        >
-          SB
-        </div>
+        />
       </div>
     ),
     size,

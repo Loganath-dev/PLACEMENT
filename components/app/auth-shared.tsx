@@ -1,9 +1,8 @@
 ﻿"use client"
 
 import * as React from "react"
-import Link from "next/link"
+import { StudyBenchWordmark } from "@/components/app/brand"
 import { Button } from "@/components/ui/button"
-import { Icon } from "@/components/app/icon"
 import { createClient } from "@/lib/supabase/client"
 
 export function GoogleIcon({ className }: { className?: string }) {
@@ -54,7 +53,7 @@ export function GoogleButton({ label = "Continue with Google" }: { label?: strin
       disabled={loading}
     >
       {loading ? (
-        <span className="size-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+        <span className="h-1.5 w-5 rounded-sm bg-muted-foreground/40" />
       ) : (
         <>
           <GoogleIcon className="size-4" /> {label}
@@ -74,15 +73,8 @@ export function AuthShell({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center bg-gradient-to-b from-accent/40 to-background px-4 py-10">
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground">
-          <Icon name="GraduationCap" className="size-5" />
-        </span>
-        <span className="font-heading text-xl font-bold tracking-tight">
-          Study<span className="text-primary">Bench</span>
-        </span>
-      </Link>
+    <div className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-10">
+      <StudyBenchWordmark href="/" className="mb-8" />
       <div className="w-full max-w-sm">
         <div className="mb-5 text-center">
           <h1 className="font-heading text-2xl font-bold">{title}</h1>

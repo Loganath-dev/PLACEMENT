@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -10,34 +11,46 @@ import { PageHeader } from "@/components/app/page-header"
 import { QuizRunner } from "@/components/app/quiz-runner"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { CompanyPicker } from "@/components/app/company-picker"
-import { FREE_MOCK_COMPANY } from "@/lib/access"
-import { getCompany } from "@/lib/data/companies"
+import {
+  canAccessMockCompany,
+  FREE_MOCK_COMPANY,
+  premiumPriceLabel,
+  visibleMocksForPlan,
+} from "@/lib/access"
+import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
 import { buildMockQuestions, mocksForCompany } from "@/lib/data/mocks"
 import { buildMockAnalysis, mockPressureLabel, type MockAnalysis } from "@/lib/domain/mock-analysis"
 import { EMPTY_PROGRESS, mockMastery } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
-import type { CompanyId } from "@/lib/types"
+import type { CompanyId, Question } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export default function MockPage() {
   const { state, submitMock, recordMistake } = useStore()
-  const initial = state.primary || FREE_MOCK_COMPANY
-  const [company, setCompany] = React.useState<CompanyId>(initial)
+  const searchParams = useSearchParams()
+  const queryCompany = companyFromParam(searchParams.get("company"))
+  const [selectedCompany, setSelectedCompany] = React.useState<CompanyId | null>(null)
   const [mockIndex, setMockIndex] = React.useState(0)
   const [playing, setPlaying] = React.useState(false)
+  const [retakingWrong, setRetakingWrong] = React.useState(false)
   const [lastAnalysis, setLastAnalysis] = React.useState<MockAnalysis | null>(null)
+  const [wrongQuestions, setWrongQuestions] = React.useState<Question[]>([])
+  const company = selectedCompany ?? queryCompany ?? state.primary ?? FREE_MOCK_COMPANY
 
   const c = getCompany(company)
   const mocks = React.useMemo(() => mocksForCompany(company), [company])
+  const locked = !canAccessMockCompany(company, state.premium)
   const visibleMocks = React.useMemo(
-    () => (state.premium ? mocks : mocks.slice(0, 1)),
-    [mocks, state.premium],
+    () => visibleMocksForPlan(mocks, company, state.premium),
+    [company, mocks, state.premium],
   )
   const mock = visibleMocks[mockIndex] ?? visibleMocks[0]
   const progress = state.progress[company] ?? EMPTY_PROGRESS
-  const questions = React.useMemo(() => (mock ? buildMockQuestions(mock) : []), [mock])
-  const locked = !state.premium && company !== FREE_MOCK_COMPANY
-  const hiddenMockCount = Math.max(0, mocks.length - visibleMocks.length)
+  const questions = React.useMemo(
+    () => (!locked && mock ? buildMockQuestions(mock) : []),
+    [locked, mock],
+  )
+  const hiddenMockCount = locked ? mocks.length : Math.max(0, mocks.length - visibleMocks.length)
   const best = progress.mockScores.length ? Math.max(...progress.mockScores) : 0
   const timeLimitSec = mock
     ? mock.sections.reduce((sum, section) => sum + section.durationMinutes, 0) * 60
@@ -56,10 +69,12 @@ export default function MockPage() {
       <CompanyPicker
         value={company}
         onChange={(id) => {
-          setCompany(id)
+          setSelectedCompany(id)
           setMockIndex(0)
           setPlaying(false)
+          setRetakingWrong(false)
           setLastAnalysis(null)
+          setWrongQuestions([])
         }}
       />
 
@@ -71,16 +86,45 @@ export default function MockPage() {
         </div>
       ) : null}
 
-      {playing ? (
+      {retakingWrong ? (
+        <QuizRunner
+          key={`wrong-${mock?.id}-${wrongQuestions.map((q) => q.id).join("-")}`}
+          questions={wrongQuestions}
+          timeLimitSec={Math.max(60, wrongQuestions.length * 60)}
+          onReturn={() => setRetakingWrong(false)}
+          returnLabel="Mock analysis"
+          onMistake={recordMistake}
+          onFinish={(_results, scorePct) => {
+            toast.success(`Wrong-question retake complete - ${scorePct}%`)
+          }}
+          doneActions={() => (
+            <Button variant="outline" onClick={() => setRetakingWrong(false)}>
+              Back to analysis
+            </Button>
+          )}
+        />
+      ) : playing ? (
         <QuizRunner
           key={mock?.id}
           questions={questions}
           timeLimitSec={timeLimitSec}
           passThreshold={mock?.cutoffPercent}
+          onReturn={() => setPlaying(false)}
+          returnLabel="Mock setup"
           onMistake={recordMistake}
           onFinish={(results, scorePct) => {
             const { xpGained } = submitMock(company, scorePct)
-            setLastAnalysis(buildMockAnalysis(results, scorePct, mock?.cutoffPercent ?? 70))
+            const wrong = results
+              .filter((result) => !result.correct && result.questionIndex != null)
+              .map((result) => questions[result.questionIndex ?? -1])
+              .filter(Boolean)
+            setWrongQuestions(wrong)
+            setLastAnalysis(
+              buildMockAnalysis(results, scorePct, mock?.cutoffPercent ?? 70, {
+                sections: mock?.sections,
+                timeLimitSec,
+              }),
+            )
             toast.success(`Mock complete - ${scorePct}%! +${xpGained} XP`)
           }}
           doneActions={() => (
@@ -91,7 +135,13 @@ export default function MockPage() {
         />
       ) : (
         <>
-        {lastAnalysis ? <MockAnalysisCard analysis={lastAnalysis} /> : null}
+        {lastAnalysis ? (
+          <MockAnalysisCard
+            analysis={lastAnalysis}
+            wrongCount={wrongQuestions.length}
+            onRetakeWrong={() => setRetakingWrong(true)}
+          />
+        ) : null}
         <Card>
           <CardHeader className="flex-row items-center gap-3 space-y-0">
             <CompanyAvatar id={company} size={40} />
@@ -165,7 +215,7 @@ export default function MockPage() {
                     Upgrade to practise every company mock with full analytics.
                   </p>
                   <Button asChild className="mt-1">
-                    <Link href="/settings">Go Premium - Rs 399/yr</Link>
+                    <Link href="/settings">Go Premium - {premiumPriceLabel()}</Link>
                   </Button>
                 </>
               ) : (
@@ -203,21 +253,170 @@ export default function MockPage() {
   )
 }
 
-function MockAnalysisCard({ analysis }: { analysis: MockAnalysis }) {
+function companyFromParam(value: string | null): CompanyId | null {
+  if (!value || !(value in COMPANY_BY_ID)) return null
+  return value as CompanyId
+}
+
+function MockAnalysisCard({
+  analysis,
+  wrongCount,
+  onRetakeWrong,
+}: {
+  analysis: MockAnalysis
+  wrongCount: number
+  onRetakeWrong: () => void
+}) {
   return (
     <Card className="border-primary/25 bg-primary/[0.04]">
-      <CardHeader>
-        <CardTitle className="font-heading text-base">Mock analysis</CardTitle>
+      <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
+        <div>
+          <CardTitle className="font-heading text-base">Advanced mock analysis</CardTitle>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Section percentile, topic accuracy, speed loss and cutoff prediction.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetakeWrong}
+          disabled={wrongCount === 0}
+        >
+          <Icon name="RotateCcw" className="size-4" /> Retake wrong
+        </Button>
       </CardHeader>
-      <CardContent className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">{analysis.carelessRisk}</p>
-          <div className="grid grid-cols-2 gap-2">
-            <AnalysisMetric label="Score" value={`${analysis.scorePct}%`} />
-            <AnalysisMetric label="Cutoff" value={`${analysis.cutoff}%`} />
+      <CardContent className="space-y-5">
+        <div className="grid gap-3 md:grid-cols-4">
+          <AnalysisMetric label="Score" value={`${analysis.scorePct}%`} />
+          <AnalysisMetric label="Cutoff" value={`${analysis.cutoff}%`} />
+          <AnalysisMetric label="Avg time/question" value={formatSeconds(analysis.avgTimeSec)} />
+          <AnalysisMetric label="Projected score" value={`${analysis.cutoffPrediction.projectedScore}%`} />
+        </div>
+
+        <div className="rounded-xl border border-border bg-background p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="font-heading font-semibold">{analysis.cutoffPrediction.label}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{analysis.cutoffPrediction.detail}</p>
+            </div>
+            <span
+              className={cn(
+                "rounded-full px-2.5 py-1 text-xs font-semibold capitalize",
+                analysis.cutoffPrediction.status === "clear"
+                  ? "bg-success/15 text-[color:var(--success)]"
+                  : analysis.cutoffPrediction.status === "near"
+                    ? "bg-warning/15 text-warning-foreground"
+                    : "bg-destructive/10 text-destructive",
+              )}
+            >
+              {analysis.cutoffPrediction.status}
+            </span>
           </div>
         </div>
+
         <div className="space-y-3">
+          <p className="font-heading text-sm font-semibold">Section-wise percentile</p>
+          <div className="grid gap-2 md:grid-cols-2">
+            {analysis.sectionStats.length ? (
+              analysis.sectionStats.map((section) => (
+                <div key={section.id} className="rounded-xl border border-border bg-background p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium">{section.label}</p>
+                    <span className="text-sm font-semibold tabular-nums text-primary">
+                      P{section.estimatedPercentile}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${section.accuracy}%` }} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {section.correct}/{section.total} correct - {formatSeconds(section.avgTimeSec)} avg
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">Section analytics unlock after a mock attempt.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <div>
+            <p className="text-sm font-medium">Accuracy by topic</p>
+            <div className="mt-2 space-y-2">
+              {analysis.topicAccuracy.slice(0, 6).map((topic) => (
+                <div key={topic.topic} className="rounded-lg bg-background p-2 text-xs ring-1 ring-border">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{topic.topic}</span>
+                    <span className="tabular-nums">{topic.accuracy}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${topic.accuracy}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Lost marks: speed vs concept</p>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <LossBox label="Speed" value={analysis.lossBreakdown.speed} />
+              <LossBox label="Concept" value={analysis.lossBreakdown.concept} />
+              <LossBox label="Careless" value={analysis.lossBreakdown.careless} />
+              <LossBox label="Unanswered" value={analysis.lossBreakdown.unanswered} />
+            </div>
+            <p className="mt-2 rounded-lg bg-background p-2 text-xs text-muted-foreground ring-1 ring-border">
+              {analysis.lossBreakdown.summary}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+          <div>
+            <p className="text-sm font-medium">Difficulty heatmap</p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {analysis.difficultyStats.map((item) => (
+                <div
+                  key={item.difficulty}
+                  className={cn(
+                    "rounded-xl border p-3 text-center",
+                    item.accuracy >= 75
+                      ? "border-success/30 bg-success/10"
+                      : item.accuracy >= 50
+                        ? "border-warning/30 bg-warning/10"
+                        : "border-destructive/25 bg-destructive/10",
+                  )}
+                >
+                  <p className="text-xs font-semibold capitalize">{item.difficulty}</p>
+                  <p className="mt-1 font-heading text-xl font-bold tabular-nums">{item.accuracy}%</p>
+                  <p className="text-xs text-muted-foreground">{item.correct}/{item.total}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium">Time per question</p>
+            <div className="mt-2 space-y-2">
+              {analysis.slowQuestions.length ? (
+                analysis.slowQuestions.map((item) => (
+                  <div key={`${item.questionNo}-${item.topic}`} className="flex items-center gap-2 rounded-lg bg-background p-2 text-xs ring-1 ring-border">
+                    <span className="grid size-7 place-items-center rounded-md bg-muted font-semibold tabular-nums">
+                      Q{item.questionNo}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{item.topic}</span>
+                    <span className={item.correct ? "text-[color:var(--success)]" : "text-destructive"}>
+                      {formatSeconds(item.timeSpentSec)}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">Timing appears after answered questions.</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
           <div>
             <p className="text-sm font-medium">Weak topics</p>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -243,6 +442,21 @@ function MockAnalysisCard({ analysis }: { analysis: MockAnalysis }) {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function formatSeconds(seconds: number): string {
+  if (!seconds) return "0s"
+  if (seconds < 60) return `${seconds}s`
+  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`
+}
+
+function LossBox({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-background p-2 text-center ring-1 ring-border">
+      <p className="font-heading text-lg font-bold tabular-nums">{value}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
+    </div>
   )
 }
 

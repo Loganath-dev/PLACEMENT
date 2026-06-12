@@ -1,20 +1,13 @@
-﻿import Link from "next/link"
+import Link from "next/link"
+import { StudyBenchWordmark } from "@/components/app/brand"
 import { Button } from "@/components/ui/button"
-import { Icon } from "@/components/app/icon"
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-svh bg-gradient-to-b from-accent/30 to-background">
+    <div className="min-h-svh bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <Icon name="GraduationCap" className="size-4" />
-            </span>
-            <span className="font-heading text-lg font-bold tracking-tight">
-              Study<span className="text-primary">Bench</span>
-            </span>
-          </Link>
+          <StudyBenchWordmark href="/" size="compact" />
           <nav className="flex items-center gap-1 text-sm font-medium sm:gap-4">
             <Link href="/blog" className="px-2 text-muted-foreground hover:text-foreground">
               Blog
@@ -53,5 +46,3 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
     </div>
   )
 }
-
-

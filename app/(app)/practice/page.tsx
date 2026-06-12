@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import * as React from "react"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
@@ -15,22 +16,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { getCompany } from "@/lib/data/companies"
+import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
 import { SECTION_META } from "@/lib/data/content"
 import { pyqsForCompany, type PYQ } from "@/lib/data/pyqs"
-import { FREE_PYQ_LIMIT, lockedCount, visibleForPlan } from "@/lib/access"
+import {
+  FREE_PYQ_LIMIT,
+  lockedCount,
+  premiumPriceLabel,
+  visibleForPlan,
+} from "@/lib/access"
 import { useStore } from "@/lib/store"
 import type { CompanyId } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export default function PracticePage() {
-  const { state } = useStore()
-  const initial = state.primary || "general"
-  const [company, setCompany] = React.useState<CompanyId>(initial)
+  const { state, recordMistake } = useStore()
+  const searchParams = useSearchParams()
+  const queryCompany = companyFromParam(searchParams.get("company"))
+  const [selectedCompany, setSelectedCompany] = React.useState<CompanyId | null>(null)
   const [section, setSection] = React.useState<string>("all")
   const [difficulty, setDifficulty] = React.useState<string>("all")
   const [year, setYear] = React.useState<string>("all")
   const [faOnly, setFaOnly] = React.useState(false)
+  const company = selectedCompany ?? queryCompany ?? state.primary ?? "general"
 
   const c = getCompany(company)
   const all = React.useMemo(() => pyqsForCompany(company), [company])
@@ -64,13 +72,15 @@ export default function PracticePage() {
       <CompanyPicker
         value={company}
         onChange={(id) => {
-          setCompany(id)
+          setSelectedCompany(id)
           setSection("all")
           setDifficulty("all")
           setYear("all")
           setFaOnly(false)
         }}
       />
+
+      <TrustNotice company={company} />
 
       {c.eligibility ? (
         <Card>
@@ -88,6 +98,8 @@ export default function PracticePage() {
             <Fact label="Backlogs" value={c.eligibility.backlogs} />
             <Fact label="10th / 12th" value={c.eligibility.tenthTwelfth} />
             <Fact label="Rounds" value={c.eligibility.rounds.join(" -> ")} />
+            <Fact label="Source" value={sourceLabel(c.eligibility.sourceId)} />
+            <Fact label="Last verified" value={formatVerifiedDate(c.eligibility.lastVerified)} />
             <div className="sm:col-span-2">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Test pattern
@@ -170,7 +182,7 @@ export default function PracticePage() {
       ) : (
         <div className="space-y-3">
           {visible.map((q) => (
-            <PyqItem key={q.id} q={q} />
+            <PyqItem key={q.id} q={q} onMistake={recordMistake} />
           ))}
         </div>
       )}
@@ -184,13 +196,53 @@ export default function PracticePage() {
               Practise the full company-wise question bank with explanations.
             </p>
             <Button asChild className="mt-1">
-              <Link href="/settings">Go Premium - Rs 399/yr</Link>
+              <Link href="/settings">Go Premium - {premiumPriceLabel()}</Link>
             </Button>
           </CardContent>
         </Card>
       ) : null}
     </div>
   )
+}
+
+function TrustNotice({ company }: { company: CompanyId }) {
+  const c = getCompany(company)
+  const verified = c.eligibility?.lastVerified
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/80 p-4 text-sm sm:flex-row sm:items-start">
+      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-success/10 text-[color:var(--success)]">
+        <Icon name="ShieldCheck" className="size-4" />
+      </span>
+      <div>
+        <p className="font-semibold">Content trust note</p>
+        <p className="mt-1 text-muted-foreground">
+          PYQs are original practice reconstructions, not copied exam papers. Eligibility and
+          pattern notes are shown with source context
+          {verified ? ` and were last verified on ${formatVerifiedDate(verified)}` : ""}.
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function sourceLabel(sourceId: string) {
+  return sourceId
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
+function formatVerifiedDate(value: string) {
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${value}T00:00:00`))
+}
+
+function companyFromParam(value: string | null): CompanyId | null {
+  if (!value || !(value in COMPANY_BY_ID)) return null
+  return value as CompanyId
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -204,9 +256,31 @@ function Fact({ label, value }: { label: string; value: string }) {
   )
 }
 
-function PyqItem({ q }: { q: PYQ & { company: CompanyId } }) {
+function PyqItem({
+  q,
+  onMistake,
+}: {
+  q: PYQ & { company: CompanyId }
+  onMistake: (q: PYQ, chosen: number) => void
+}) {
   const [open, setOpen] = React.useState(false)
+  const [selected, setSelected] = React.useState<number | null>(null)
   const meta = SECTION_META.find((s) => s.id === q.section)
+  const answered = selected !== null
+  const revealed = answered
+  const selectedCorrect = selected === q.answer
+
+  function markAnswer(index: number) {
+    if (answered) return
+    setSelected(index)
+    setOpen(true)
+    if (index !== q.answer) onMistake(q, index)
+  }
+
+  function resetAnswer() {
+    setSelected(null)
+    setOpen(false)
+  }
 
   return (
     <Card>
@@ -228,26 +302,60 @@ function PyqItem({ q }: { q: PYQ & { company: CompanyId } }) {
         </div>
         <p className="font-medium">{q.prompt}</p>
         <div className="grid gap-2 sm:grid-cols-2">
-          {q.options.map((opt, i) => (
-            <div
-              key={i}
-              className={cn(
-                "rounded-lg border px-3 py-2 text-sm",
-                open && i === q.answer
-                  ? "border-success/50 bg-success/10"
-                  : "border-border",
-              )}
-            >
-              {opt}
-            </div>
-          ))}
+          {q.options.map((opt, i) => {
+            const isAnswer = i === q.answer
+            const isPicked = i === selected
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={answered}
+                aria-pressed={isPicked}
+                onClick={() => markAnswer(i)}
+                className={cn(
+                  "flex min-h-11 items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left text-sm transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+                  !revealed && "border-border hover:bg-muted/55",
+                  !revealed && isPicked && "border-primary bg-primary/5",
+                  revealed && isAnswer && "border-success/50 bg-success/10 text-foreground",
+                  revealed && isPicked && !isAnswer && "border-destructive/50 bg-destructive/10 text-foreground",
+                  revealed && !isPicked && !isAnswer && "border-border opacity-70",
+                )}
+              >
+                <span>{opt}</span>
+                {revealed && isAnswer ? (
+                  <Icon name="Check" className="size-4 shrink-0 text-[color:var(--success)]" />
+                ) : revealed && isPicked ? (
+                  <Icon name="X" className="size-4 shrink-0 text-destructive" />
+                ) : null}
+              </button>
+            )
+          })}
         </div>
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => setOpen((v) => !v)}>
-            {open ? "Hide solution" : "Show solution"}
-          </Button>
-        </div>
-        {open ? (
+        {answered ? (
+          <div
+            className={cn(
+              "rounded-xl px-3 py-2 text-sm font-medium",
+              selectedCorrect
+                ? "bg-success/10 text-[color:var(--success)]"
+                : "bg-destructive/10 text-destructive",
+            )}
+          >
+            {selectedCorrect
+              ? "Correct answer marked."
+              : "Wrong answer marked and saved to Mistake Notebook."}
+          </div>
+        ) : null}
+        {answered ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setOpen((v) => !v)}>
+              {open ? "Hide solution" : "Show solution"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={resetAnswer}>
+              Try again
+            </Button>
+          </div>
+        ) : null}
+        {answered && open ? (
           <div className="rounded-xl bg-muted/60 p-3 text-sm">
             <p className="text-muted-foreground">{q.explanation}</p>
           </div>

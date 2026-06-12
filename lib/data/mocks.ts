@@ -167,11 +167,13 @@ function hardFullLengthSections(base: MockTest) {
   }))
 }
 
+export const MOCKS_PER_COMPANY = 20
+
 function expandMock(base: MockTest): MockTest[] {
-  return Array.from({ length: 10 }, (_, index) => {
+  return Array.from({ length: MOCKS_PER_COMPANY }, (_, index) => {
     const mockNo = index + 1
     const fullLength = mockNo >= 6
-    const hard = mockNo >= 8
+    const hard = mockNo >= 13
     return {
       ...base,
       id: `${base.id}-${String(mockNo).padStart(2, "0")}`,
@@ -180,7 +182,7 @@ function expandMock(base: MockTest): MockTest[] {
         mockNo === 1
           ? base.description
           : hard
-            ? `${base.description} Hard variant ${mockNo - 7} adds more question volume and tighter review expectations for final placement pressure.`
+            ? `${base.description} Hard variant ${mockNo - 12} adds more question volume and tighter review expectations for final placement pressure.`
             : fullLength
             ? `${base.description} Full-length variant ${mockNo - 5} increases section volume and timer pressure for final-drive simulation.`
             : `${base.description} Mini variant ${mockNo} uses a different question mix for warm-up practice.`,
@@ -212,7 +214,7 @@ export function mocksForCompany(companyId: CompanyId): MockTest[] {
 }
 
 const MOCK_QUESTION_CACHE = new Map<string, Question[]>()
-const MOCK_QUESTION_CACHE_LIMIT = 120
+const MOCK_QUESTION_CACHE_LIMIT = 280
 
 export function buildMockQuestions(mock: MockTest, seed = 20260607): Question[] {
   const cacheKey = `${mock.id}:${seed}`
@@ -237,10 +239,20 @@ export function buildMockQuestions(mock: MockTest, seed = 20260607): Question[] 
   const out: Question[] = []
   const usedIds = new Set<string>()
   const usedPrompts = new Set<string>()
+  // Per-section topic caps prevent the same concept (e.g. "unit digit") from
+  // appearing more than once across PYQs and generated questions combined.
+  // Reset each section so topic diversity is enforced independently per section.
+  let sectionTopicCounts = new Map<string, number>()
+  let sectionTopicCap = 1
 
-  function add(q: Question) {
+  function add(q: Question, ignoreTopic = false) {
     const promptKey = q.prompt.trim().toLowerCase().replace(/\s+/g, " ")
     if (usedIds.has(q.id) || usedPrompts.has(promptKey)) return
+    if (!ignoreTopic) {
+      const tc = sectionTopicCounts.get(q.topic) ?? 0
+      if (tc >= sectionTopicCap) return
+      sectionTopicCounts.set(q.topic, tc + 1)
+    }
     usedIds.add(q.id)
     usedPrompts.add(promptKey)
     out.push(q)
@@ -249,6 +261,11 @@ export function buildMockQuestions(mock: MockTest, seed = 20260607): Question[] 
   let expectedTotal = 0
   for (const [sectionIndex, section] of mock.sections.entries()) {
     expectedTotal += section.questionCount
+    // Allow each topic at most ceil(sectionSize/8) appearances so short sections
+    // enforce strict diversity and full-length sections allow gentle repetition.
+    sectionTopicCap = Math.max(1, Math.ceil(section.questionCount / 8))
+    sectionTopicCounts = new Map()
+
     const candidates = pyqsBySection[section.id]
     const offset = candidates.length ? stableSeed(`${mock.id}:${section.id}`) % candidates.length : 0
     for (let i = 0; i < Math.min(section.questionCount, candidates.length); i++) {
@@ -259,10 +276,20 @@ export function buildMockQuestions(mock: MockTest, seed = 20260607): Question[] 
     if (missing > 0) {
       const generated = generateDrills(
         section.id as SectionId,
-        missing,
+        missing * 3,
         seed + stableSeed(mock.id) + sectionIndex,
       )
-      for (const q of generated) add(q)
+      for (const q of generated) {
+        if (out.length >= expectedTotal) break
+        add(q)
+      }
+      const stillMissing = expectedTotal - out.length
+      if (stillMissing > 0) {
+        for (const q of generated) {
+          if (out.length >= expectedTotal) break
+          add(q, true)
+        }
+      }
     }
   }
 
@@ -273,5 +300,3 @@ export function buildMockQuestions(mock: MockTest, seed = 20260607): Question[] 
   MOCK_QUESTION_CACHE.set(cacheKey, out)
   return out
 }
-
-

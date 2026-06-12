@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { rateLimit } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 import { buildProductUpdateEmail, sendEmail } from "@/lib/email/resend"
 
@@ -15,6 +16,12 @@ export async function POST(request: Request) {
 
   if (!user?.email) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 })
+  }
+
+  // 5 update emails per user per hour.
+  const { allowed } = await rateLimit(`update-email:${user.id}`, 5, 60 * 60 * 1000)
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 })
   }
 
   const body = await request.json().catch(() => ({}))

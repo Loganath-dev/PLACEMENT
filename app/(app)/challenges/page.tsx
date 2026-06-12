@@ -114,6 +114,8 @@ export default function ChallengesPage() {
       {playing ? (
         <QuizRunner
           questions={questions}
+          onReturn={() => setPlaying(false)}
+          returnLabel="Challenges"
           onMistake={recordMistake}
           onFinish={(results) => {
             const { xpGained } = submitDaily(cat, results)

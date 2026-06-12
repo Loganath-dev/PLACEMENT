@@ -258,7 +258,9 @@ function MockTrendCard({ companyId }: { companyId: CompanyId }) {
   const first = scores[0]
   const delta = latest != null && first != null ? latest - first : 0
   const cutoff = getCompany(companyId).cutoffPRI
-  const percentile = Math.max(5, Math.min(95, Math.round(50 + (best - cutoff) * 1.8)))
+  // This is an estimated band from score vs cutoff — NOT a real cohort percentile.
+  const scoreBand = best >= cutoff + 10 ? "Above cutoff" : best >= cutoff ? "At cutoff" : "Below cutoff"
+  const scoreBandColor = best >= cutoff + 10 ? "text-[color:var(--success)]" : best >= cutoff ? "text-warning-foreground" : "text-destructive"
 
   return (
     <Card>
@@ -277,8 +279,14 @@ function MockTrendCard({ companyId }: { companyId: CompanyId }) {
             <div className="grid grid-cols-3 gap-2 text-center">
               <MiniMetric label="Latest" value={`${latest}%`} />
               <MiniMetric label="Trend" value={`${delta >= 0 ? "+" : ""}${delta}`} />
-              <MiniMetric label="Mock percentile" value={`P${percentile}`} />
+              <div className="rounded-xl border border-border p-3">
+                <p className={`font-heading text-base font-bold ${scoreBandColor}`}>{scoreBand}</p>
+                <p className="text-xs text-muted-foreground">vs cutoff</p>
+              </div>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Cutoff comparison is estimated from your scores vs {getCompany(companyId).short}&apos;s typical threshold. Not real cohort data.
+            </p>
             <div className="flex h-28 items-end gap-2 rounded-xl bg-muted/40 p-3">
               {scores.map((score, index) => (
                 <div key={`${score}-${index}`} className="flex flex-1 flex-col items-center gap-1">

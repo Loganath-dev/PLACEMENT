@@ -5,7 +5,11 @@ import { notFound, useParams } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Icon } from "@/components/app/icon"
 import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
-import { getSection } from "@/lib/data/content"
+import { getSection, getSections } from "@/lib/data/content"
+import {
+  canAccessLearningChapter,
+  canAccessLearningSection,
+} from "@/lib/access"
 import { EMPTY_PROGRESS } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
 import type { CompanyId, SectionId } from "@/lib/types"
@@ -19,9 +23,41 @@ export default function SectionPage() {
   if (!COMPANY_BY_ID[companyId]) notFound()
   const section = getSection(companyId, sectionId)
   if (!section) notFound()
+  const sectionIndex = getSections(companyId).findIndex((item) => item.id === sectionId)
 
   const company = getCompany(companyId)
   const progress = state.progress[companyId] ?? EMPTY_PROGRESS
+  const sectionPaywalled = !canAccessLearningSection(sectionIndex, state.premium)
+
+  if (sectionPaywalled) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-5">
+        <Link
+          href={`/learn/${companyId}`}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <Icon name="ChevronRight" className="size-4 rotate-180" /> {company.short} track
+        </Link>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+            <span className="grid size-16 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Icon name="Lock" className="size-8" />
+            </span>
+            <div>
+              <h1 className="font-heading text-2xl font-bold">{section.name}</h1>
+              <p className="mx-auto mt-1 max-w-md text-muted-foreground">
+                Free users can open the first section and first chapter in each track.
+                Upgrade to continue into this section.
+              </p>
+            </div>
+            <Link href="/settings" className="text-sm font-medium text-primary hover:underline">
+              Go Premium
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -47,7 +83,7 @@ export default function SectionPage() {
           const cp = progress.chapters[ch.id]
           const prev = i === 0 ? null : section.chapters[i - 1]
           const prevDone = prev ? !!progress.chapters[prev.id]?.passed : true
-          const paywalled = !state.premium && i > 0
+          const paywalled = !canAccessLearningChapter(sectionIndex, i, state.premium)
           const gateLocked = !prevDone
           const clickable = !gateLocked && !paywalled
           const href = `/learn/${companyId}/${sectionId}/${ch.id}`
@@ -120,17 +156,19 @@ export default function SectionPage() {
       </div>
 
       <p className="rounded-xl bg-muted/50 p-3 text-center text-sm text-muted-foreground">
-        Chapters open step by step as you complete the current one.
+        Free users can open Section 1, Chapter 1 in every track.
         {!state.premium ? (
           <>
             {" "}
-            Upgrade when you are ready to continue deeper into each section.{" "}
+            Chapter 2 and deeper sections require Premium.{" "}
             <Link href="/settings" className="text-primary hover:underline">
               Go Premium
             </Link>{" "}
-            for all of them.
+            to unlock the full track.
           </>
-        ) : null}
+        ) : (
+          <> Premium is active, so every chapter in this section is unlocked.</>
+        )}
       </p>
     </div>
   )

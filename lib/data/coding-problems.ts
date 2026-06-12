@@ -155,6 +155,78 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     sourceId: "codechef-placement-prep",
   }),
   cp({
+    id: "code-tcs-002",
+    companyId: "tcs",
+    title: "Balanced Bracket Validator",
+    level: "medium",
+    difficulty: "medium",
+    topics: ["stack", "strings", "validation"],
+    prompt:
+      "Given a string of brackets containing '(', ')', '{', '}', '[' and ']', determine if the bracket sequence is balanced. A sequence is balanced if every opening bracket has a matching closing bracket in the correct order.",
+    inputFormat: "One string s on a single line.",
+    outputFormat: "Print balanced or not balanced.",
+    constraints: ["1 <= |s| <= 10^5", "s contains only (, ), {, }, [, ]"],
+    starterCode: "function solve(s) {\n  // use a stack to validate brackets\n}\n",
+    testCases: [
+      { input: "()[]{}", output: "balanced" },
+      { input: "([)]", output: "not balanced" },
+      { input: "{[]}", output: "balanced", hidden: true },
+      { input: "(", output: "not balanced", hidden: true },
+    ],
+    editorial:
+      "Use a stack. For each character: if it is an opening bracket, push it. If it is a closing bracket, check the top of the stack — if it matches the corresponding opener, pop; otherwise the sequence is not balanced. After the full scan, the stack must be empty for a balanced result.",
+    estimatedMinutes: 20,
+    sourceId: "studybench-curriculum",
+  }),
+  cp({
+    id: "code-zoho-002",
+    companyId: "zoho",
+    title: "Sliding Window Maximum",
+    level: "machine-round",
+    difficulty: "hard",
+    topics: ["arrays", "sliding-window", "deque"],
+    prompt:
+      "Given an array of n integers and a window size k, find the maximum value in each contiguous window of size k as the window slides from left to right.",
+    inputFormat: "First line n k. Second line n integers.",
+    outputFormat: "Print the maximum of each window, separated by spaces.",
+    constraints: ["1 <= k <= n <= 10^5", "-10^9 <= ai <= 10^9"],
+    starterCode: "function solve(arr, k) {\n  // return array of window maximums\n}\n",
+    testCases: [
+      { input: "8 3\n1 3 -1 -3 5 3 6 7", output: "3 3 5 5 6 7" },
+      { input: "4 2\n4 3 2 1", output: "4 3 2" },
+      { input: "5 1\n9 4 7 2 5", output: "9 4 7 2 5", hidden: true },
+      { input: "3 3\n1 2 3", output: "3", hidden: true },
+    ],
+    editorial:
+      "Use a monotonic deque that stores indices in decreasing value order. For each element: (1) remove indices that have left the window from the front; (2) remove indices from the back whose values are smaller than the current element (they can never be a maximum while the current element is in the window); (3) push the current index; (4) the front of the deque is the maximum of the current window. O(n) time.",
+    estimatedMinutes: 35,
+    sourceId: "gfg-dsa",
+  }),
+  cp({
+    id: "code-infosys-002",
+    companyId: "infosys",
+    title: "Palindrome Number Check",
+    level: "easy",
+    difficulty: "easy",
+    topics: ["math", "number-logic", "loops"],
+    prompt:
+      "Given an integer n, determine if it is a palindrome without converting it to a string. A palindrome reads the same forwards and backwards. Negative numbers are not palindromes.",
+    inputFormat: "A single integer n.",
+    outputFormat: "Print palindrome or not palindrome.",
+    constraints: ["-10^9 <= n <= 10^9"],
+    starterCode: "function solve(n) {\n  // determine if n is a palindrome numerically\n}\n",
+    testCases: [
+      { input: "121", output: "palindrome" },
+      { input: "-121", output: "not palindrome" },
+      { input: "1221", output: "palindrome", hidden: true },
+      { input: "10", output: "not palindrome", hidden: true },
+    ],
+    editorial:
+      "Negative numbers are immediately not palindromes. For non-negatives: reverse the number by extracting digits with %10 and building the reverse with *10. Compare the reversed number to the original. Caution: numbers ending in 0 (except 0 itself) are not palindromes.",
+    estimatedMinutes: 14,
+    sourceId: "studybench-curriculum",
+  }),
+  cp({
     id: "code-general-001",
     companyId: "general",
     title: "First Non-Repeating Character",
@@ -394,6 +466,27 @@ const CODING_TEMPLATES: CodingTemplate[] = [
     editorial: "Two closed intervals overlap when max(start values) <= min(end values).",
     estimatedMinutes: 14,
   },
+  {
+    title: "Longest Consecutive Sequence",
+    level: "medium",
+    difficulty: "hard",
+    topics: ["arrays", "hash-set", "sequences"],
+    prompt:
+      "Given an unsorted array of integers, find the length of the longest consecutive elements sequence. The sequence does not need to be contiguous in the array, only consecutive in value (e.g., 1,2,3 is consecutive).",
+    inputFormat: "First line n. Second line n integers.",
+    outputFormat: "Print one integer: the length of the longest consecutive sequence.",
+    constraints: ["1 <= n <= 10^5", "-10^9 <= ai <= 10^9"],
+    starterCode: "function solve(arr) {\n  // return the length of the longest consecutive sequence\n}\n",
+    testCases: [
+      { input: "6\n100 4 200 1 3 2", output: "4" },
+      { input: "5\n0 3 7 2 5", output: "1" },
+      { input: "8\n1 2 3 4 5 6 7 8", output: "8", hidden: true },
+      { input: "1\n42", output: "1", hidden: true },
+    ],
+    editorial:
+      "Insert all elements into a HashSet. For each element x, only start a new count if x-1 is NOT in the set (x is a sequence start). Count upward from x while the next element exists. This gives O(n) time overall because each element is visited at most twice.",
+    estimatedMinutes: 28,
+  },
 ]
 
 function generatedCodingProblem(companyId: CompanyId, index: number): CodingProblem {
@@ -438,5 +531,3 @@ const CODING_PROBLEMS_BY_COMPANY = (Object.keys(COMPANY_FOCUS) as CompanyId[]).r
 export function codingProblemsForCompany(companyId: CompanyId): CodingProblem[] {
   return CODING_PROBLEMS_BY_COMPANY[companyId] ?? []
 }
-
-

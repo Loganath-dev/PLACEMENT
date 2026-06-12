@@ -4,7 +4,7 @@
 // Errors are logged but not thrown so the UI stays responsive offline.
 
 import { createClient } from "@/lib/supabase/client"
-import type { AppState, CompanyId, CompanyProgress, Profile } from "@/lib/types"
+import type { AppState, CompanyId, CompanyProgress, Mistake, Profile } from "@/lib/types"
 
 // ─── row shapes ──────────────────────────────────────────────────────────────
 // Hand-typed mirrors of the `supabase/migrations` tables. `select("*")` otherwise
@@ -50,6 +50,19 @@ interface DailyRow {
   coding: boolean | null
 }
 
+interface MistakeRow {
+  user_id: string
+  question_id: string
+  prompt: string
+  options: Mistake["options"]
+  answer: number
+  chosen: number
+  explanation: string
+  topic: string
+  difficulty: string
+  ts: number
+}
+
 const SYNC_ERROR_EVENT = "studybench:sync-error"
 
 async function safe(label: string, fn: () => PromiseLike<unknown> | unknown) {
@@ -66,17 +79,19 @@ async function safe(label: string, fn: () => PromiseLike<unknown> | unknown) {
 export async function loadUserState(userId: string): Promise<Partial<AppState> | null> {
   const sb = createClient()
 
-  const [profRes, stRes, cpRes, dailyRes] = await Promise.all([
+  const [profRes, stRes, cpRes, dailyRes, mistakesRes] = await Promise.all([
     sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
     sb.from("user_state").select("*").eq("id", userId).maybeSingle(),
     sb.from("company_progress").select("*").eq("user_id", userId),
     sb.from("daily_challenges").select("*").eq("id", userId).maybeSingle(),
+    sb.from("mistakes").select("*").eq("user_id", userId).order("ts", { ascending: false }).limit(60),
   ])
 
   const prof = profRes.data as ProfileRow | null
   const st = stRes.data as UserStateRow | null
   const cpRows = (cpRes.data ?? []) as CompanyProgressRow[]
   const daily = dailyRes.data as DailyRow | null
+  const mistakeRows = (mistakesRes.data ?? []) as MistakeRow[]
 
   if (!st) return null
 
@@ -87,6 +102,18 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
       mockScores: row.mock_scores ?? [],
     }
   }
+
+  const mistakes: AppState["mistakes"] = mistakeRows.map((r) => ({
+    questionId: r.question_id,
+    prompt: r.prompt,
+    options: r.options,
+    answer: r.answer,
+    chosen: r.chosen,
+    explanation: r.explanation,
+    topic: r.topic,
+    difficulty: r.difficulty as AppState["mistakes"][number]["difficulty"],
+    ts: r.ts,
+  }))
 
   return {
     onboarded: st.onboarded,
@@ -99,6 +126,7 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
     badges: st.badges ?? [],
     topicStats: st.topic_stats ?? {},
     codingAttempts: st.coding_attempts ?? [],
+    mistakes,
     progress,
     ...(prof
       ? {
@@ -218,6 +246,54 @@ export function syncDaily(userId: string, s: AppState) {
         aptitude: s.daily.aptitude,
         coding: s.daily.coding,
       }),
+  )
+}
+
+/**
+ * Upsert a single mistake. Called immediately after recordMistake() so the DB
+ * stays in sync even if the user closes the tab before a full syncAll() fires.
+ */
+export function syncOneMistake(userId: string, m: Mistake) {
+  void safe("syncOneMistake", () =>
+    createClient()
+      .from("mistakes")
+      .upsert(
+        {
+          user_id: userId,
+          question_id: m.questionId,
+          prompt: m.prompt,
+          options: m.options,
+          answer: m.answer,
+          chosen: m.chosen,
+          explanation: m.explanation,
+          topic: m.topic,
+          difficulty: m.difficulty,
+          ts: m.ts,
+        },
+        { onConflict: "user_id,question_id" },
+      ),
+  )
+}
+
+/**
+ * Delete a single mistake row. Called when the student clears one mistake.
+ */
+export function deleteMistake(userId: string, questionId: string) {
+  void safe("deleteMistake", () =>
+    createClient()
+      .from("mistakes")
+      .delete()
+      .eq("user_id", userId)
+      .eq("question_id", questionId),
+  )
+}
+
+/**
+ * Delete all mistakes for a user. Called on clearMistakes() and account reset.
+ */
+export function deleteAllMistakes(userId: string) {
+  void safe("deleteAllMistakes", () =>
+    createClient().from("mistakes").delete().eq("user_id", userId),
   )
 }
 

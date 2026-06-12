@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
+import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,8 +13,8 @@ import {
   ProbabilityStat,
   SectionProgressBar,
   ToneBadge,
-  UpgradeBanner,
 } from "@/components/app/ui-bits"
+import { UpgradeBanner } from "@/components/app/upgrade-prompt"
 import { getCompany } from "@/lib/data/companies"
 import { getSections } from "@/lib/data/content"
 import {
@@ -25,9 +26,11 @@ import {
   sectionMastery,
   weakestTopics,
 } from "@/lib/scoring"
-import { useStore } from "@/lib/store"
+import { useStoreActions, useStoreState } from "@/lib/store"
 import type { CompanyId } from "@/lib/types"
 import { cn } from "@/lib/utils"
+
+const ALL_TRACK_IDS = ["general", "tcs", "infosys", "wipro", "accenture", "zoho", "cognizant"] as const
 
 function nextChapter(companyId: CompanyId, progress = EMPTY_PROGRESS) {
   for (const section of getSections(companyId)) {
@@ -41,19 +44,40 @@ function nextChapter(companyId: CompanyId, progress = EMPTY_PROGRESS) {
 }
 
 export default function DashboardPage() {
-  const { state, setPrimary } = useStore()
+  const { state } = useStoreState()
+  const { setPrimary } = useStoreActions()
   const primary = state.primary
   const company = getCompany(primary)
   const progress = state.progress[primary] ?? EMPTY_PROGRESS
-  const pri = computePRI(primary, progress)
-  const next = nextChapter(primary, progress)
-  const weakest = weakestTopics(state, 1)[0]
-  const nextMinutes = next
-    ? next.chapter.lessons.reduce((m, l) => m + l.minutes, 0) + next.chapter.quiz.length
-    : 0
-  const nextGain = next ? expectedPriGain(primary, next.chapter.id, progress) : 0
 
-  const others = state.interested.filter((id) => id !== primary)
+  const pri = React.useMemo(() => computePRI(primary, progress), [primary, progress])
+  const next = React.useMemo(() => nextChapter(primary, progress), [primary, progress])
+  const weakest = React.useMemo(() => weakestTopics(state, 1)[0], [state])
+  const nextMinutes = React.useMemo(
+    () => (next ? next.chapter.lessons.reduce((m, l) => m + l.minutes, 0) + next.chapter.quiz.length : 0),
+    [next],
+  )
+  const nextGain = React.useMemo(
+    () => (next ? expectedPriGain(primary, next.chapter.id, progress) : 0),
+    [primary, next, progress],
+  )
+
+  const others = React.useMemo(
+    () => state.interested.filter((id) => id !== primary),
+    [state.interested, primary],
+  )
+
+  // Memoize PRI for each "other" company so the list doesn't recompute on unrelated state changes.
+  const otherPRIs = React.useMemo(
+    () => Object.fromEntries(others.map((id) => [id, computePRI(id, state.progress[id] ?? EMPTY_PROGRESS)])),
+    [others, state.progress],
+  )
+
+  // Memoize "All tracks" PRIs — 7 companies, called every render without this.
+  const trackPRIs = React.useMemo(
+    () => Object.fromEntries(ALL_TRACK_IDS.map((id) => [id, computePRI(id, state.progress[id] ?? EMPTY_PROGRESS)])),
+    [state.progress],
+  )
 
   return (
     <div className="space-y-6">
@@ -63,8 +87,12 @@ export default function DashboardPage() {
             {greeting()}, {state.profile.name?.split(" ")[0] || "there"}
           </p>
           <h1 className="font-heading text-2xl font-bold md:text-3xl">
-            Your placement command center
+            Your placement plan for today
           </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Start with the three actions below. They are picked from your target company,
+            weakest areas and mock progress.
+          </p>
         </div>
         <Button asChild variant="outline" size="sm">
           <Link href="/readiness">
@@ -76,8 +104,6 @@ export default function DashboardPage() {
       {!state.premium && <UpgradeBanner />}
 
       <TodayTasksCard />
-
-      <PlacementRoadmap />
 
       {/* Primary focus */}
       <Card className="overflow-hidden duration-500 animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none">
@@ -192,8 +218,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               others.map((id) => {
-                const p = state.progress[id] ?? EMPTY_PROGRESS
-                const cp = computePRI(id, p)
+                const cp = otherPRIs[id] ?? 0
                 return (
                   <button
                     key={id}
@@ -231,6 +256,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <PlacementRoadmap />
+
       {/* All tracks */}
       <div>
         <div className="mb-3 flex items-center justify-between">
@@ -242,10 +269,9 @@ export default function DashboardPage() {
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(["general", "tcs", "infosys", "wipro", "accenture", "zoho", "cognizant"] as CompanyId[]).map(
+          {(ALL_TRACK_IDS as unknown as CompanyId[]).map(
             (id) => {
-              const p = state.progress[id] ?? EMPTY_PROGRESS
-              const cp = computePRI(id, p)
+              const cp = trackPRIs[id] ?? 0
               return (
                 <Link
                   key={id}
@@ -273,10 +299,10 @@ export default function DashboardPage() {
 }
 
 function TodayTasksCard() {
-  const { state } = useStore()
+  const { state } = useStoreState()
   const progress = state.progress[state.primary] ?? EMPTY_PROGRESS
-  const next = nextChapter(state.primary, progress)
-  const weak = weakestTopics(state, 1)[0]
+  const next = React.useMemo(() => nextChapter(state.primary, progress), [state.primary, progress])
+  const weak = React.useMemo(() => weakestTopics(state, 1)[0], [state])
   const mockDone = progress.mockScores.length > 0
   const tasks = [
     next
@@ -295,15 +321,15 @@ function TodayTasksCard() {
     weak
       ? {
           label: `Repair ${weak.topic}`,
-          detail: `${weak.accuracy}% accuracy - revise mistakes first`,
-          href: "/mistakes",
+          detail: `${weak.accuracy}% accuracy - practise this before broad revision`,
+          href: "/analytics",
           icon: "Wrench",
         }
       : {
-          label: "Take a mixed challenge",
+          label: "Practise PYQs",
           detail: "Build weak-topic data for better recommendations",
-          href: "/challenges",
-          icon: "ClipboardCheck",
+          href: "/practice",
+          icon: "BookOpen",
         },
     mockDone
       ? {
@@ -321,17 +347,17 @@ function TodayTasksCard() {
   ]
 
   return (
-    <Card className="border-primary/25 bg-primary/[0.04]">
+    <Card className="border-primary/25 bg-primary/[0.04] shadow-[0_22px_70px_-42px_oklch(0.25_0.12_260_/_45%)]">
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <div>
-          <CardTitle className="font-heading text-base">Today&apos;s 3 tasks</CardTitle>
+          <CardTitle className="font-heading text-lg">Do these 3 things first</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Do these before exploring anything else.
+            Completing this set is the shortest path to a better readiness score today.
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/sprint">
-            7-day sprint <Icon name="ArrowRight" className="size-4" />
+          <Link href="/readiness">
+            Why these? <Icon name="ArrowRight" className="size-4" />
           </Link>
         </Button>
       </CardHeader>
@@ -348,7 +374,7 @@ function TodayTasksCard() {
               </span>
               <span className="text-xs font-medium text-muted-foreground">Task {index + 1}</span>
             </div>
-            <p className="mt-3 font-medium">{task.label}</p>
+            <p className="mt-3 font-semibold">{task.label}</p>
             <p className="mt-1 text-xs text-muted-foreground">{task.detail}</p>
           </Link>
         ))}
@@ -358,7 +384,7 @@ function TodayTasksCard() {
 }
 
 function DailyCard() {
-  const { state } = useStore()
+  const { state } = useStoreState()
   const t = new Date().toISOString().slice(0, 10)
   const daily = state.daily.date === t ? state.daily : { general: false, aptitude: false, coding: false }
   const cats = [
@@ -408,12 +434,18 @@ function DailyCard() {
 }
 
 function PlacementRoadmap() {
-  const { state } = useStore()
+  const { state } = useStoreState()
   const progress = state.progress[state.primary] ?? EMPTY_PROGRESS
-  const sections = getSections(state.primary)
-  const passed = Object.values(progress.chapters).filter((chapter) => chapter.passed).length
-  const total = sections.reduce((sum, section) => sum + section.chapters.length, 0)
-  const weak = weakestTopics(state, 1)[0]
+  const sections = React.useMemo(() => getSections(state.primary), [state.primary])
+  const passed = React.useMemo(
+    () => Object.values(progress.chapters).filter((chapter) => chapter.passed).length,
+    [progress.chapters],
+  )
+  const total = React.useMemo(
+    () => sections.reduce((sum, section) => sum + section.chapters.length, 0),
+    [sections],
+  )
+  const weak = React.useMemo(() => weakestTopics(state, 1)[0], [state])
 
   const steps = [
     {
@@ -528,5 +560,3 @@ function greeting() {
   if (h < 17) return "Good afternoon"
   return "Good evening"
 }
-
-

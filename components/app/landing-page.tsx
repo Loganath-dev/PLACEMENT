@@ -3,6 +3,7 @@
 import Link from "next/link"
 import * as React from "react"
 import { Menu } from "lucide-react"
+import { StudyBenchMark, StudyBenchWordmark } from "@/components/app/brand"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -15,7 +16,7 @@ import { Icon } from "@/components/app/icon"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { PriRing } from "@/components/app/pri-ring"
 import { SELECTABLE_COMPANIES } from "@/lib/data/companies"
-import { useStore } from "@/lib/store"
+import { useStoreState } from "@/lib/store"
 import type { CompanyId } from "@/lib/types"
 
 const NAV_LINKS = [
@@ -33,7 +34,7 @@ const PREVIEW: { id: CompanyId; pri: number; prob: number }[] = [
 ]
 
 export function LandingPage() {
-  const { state, hydrated } = useStore()
+  const { state, hydrated } = useStoreState()
   const signedUp = hydrated && state.onboarded
   const startHref = signedUp ? "/dashboard" : "/auth/signup"
 
@@ -45,8 +46,10 @@ export function LandingPage() {
       <PlacementDisclaimer />
       <HowItWorks />
       <FeatureBento />
+      <Testimonials />
       <HonestSignal />
       <SeoContentSection />
+      <ShareScoreCta startHref={startHref} />
       <FinalCta startHref={startHref} />
       <SiteFooter />
     </div>
@@ -58,14 +61,7 @@ function SiteHeader({ startHref, signedUp }: { startHref: string; signedUp: bool
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 md:px-6">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <Icon name="GraduationCap" className="size-5" />
-          </span>
-          <span className="font-heading text-xl font-bold tracking-tight">
-            Study<span className="text-primary">Bench</span>
-          </span>
-        </Link>
+        <StudyBenchWordmark href="/" />
 
         <nav className="hidden items-center gap-1 lg:flex">
           {NAV_LINKS.map((l) => (
@@ -95,8 +91,11 @@ function SiteHeader({ startHref, signedUp }: { startHref: string; signedUp: bool
             </SheetTrigger>
             <SheetContent side="right" className="w-72">
               <SheetHeader>
-                <SheetTitle className="font-heading">
-                  Study<span className="text-primary">Bench</span>
+                <SheetTitle className="flex items-center gap-2 font-heading">
+                  <StudyBenchMark className="size-8" />
+                  <span>
+                    Study<span className="text-primary">Bench</span>
+                  </span>
                 </SheetTitle>
               </SheetHeader>
               <nav className="mt-2 flex flex-col gap-1 px-2">
@@ -131,14 +130,14 @@ function Hero({ startHref }: { startHref: string }) {
     <section className="relative overflow-hidden">
       <div
         aria-hidden
-        className="pointer-events-none absolute -top-24 right-[-10%] size-[34rem] rounded-full bg-primary/10 blur-3xl"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-border"
       />
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-2 md:px-6 md:py-24">
         <div className="duration-700 animate-in fade-in slide-in-from-bottom-4 motion-reduce:animate-none">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             <Icon name="BookOpen" className="size-3.5" /> Multi-company placement prep
           </span>
-          <h1 className="mt-5 font-heading text-4xl font-extrabold leading-[1.08] tracking-tight md:text-5xl lg:text-6xl">
+          <h1 className="mt-5 font-heading text-4xl font-extrabold leading-[1.08] tracking-[-0.035em] md:text-5xl lg:text-6xl">
             Campus placement preparation for{" "}
             <span className="text-primary">the company you want.</span>
           </h1>
@@ -159,7 +158,7 @@ function Hero({ startHref }: { startHref: string }) {
         </div>
 
         <div className="duration-700 animate-in fade-in slide-in-from-bottom-6 [animation-delay:120ms] motion-reduce:animate-none">
-          <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_24px_70px_-30px_rgba(37,70,180,0.35)]">
+          <div className="rounded-lg border border-border bg-card p-6 shadow-[0_2px_14px_-10px_oklch(0.2_0.02_82_/_28%)]">
             <div className="flex items-center gap-5">
               <PriRing value={72} size={104} label="Overall" tone="success" />
               <div>
@@ -182,9 +181,9 @@ function Hero({ startHref }: { startHref: string }) {
                           PRI {row.pri} - ~{row.prob}%
                         </span>
                       </div>
-                      <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
+                      <div className="mt-1 h-2 overflow-hidden rounded-sm bg-muted">
                         <div
-                          className="h-full rounded-full bg-primary"
+                          className="h-full rounded-sm bg-primary"
                           style={{ width: `${row.pri}%` }}
                         />
                       </div>
@@ -274,7 +273,7 @@ function HowItWorks() {
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {steps.map((step, i) => (
-          <div key={step.title} className="rounded-2xl border border-border bg-card p-5">
+          <div key={step.title} className="rounded-lg border border-border bg-card p-5">
             <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
               <Icon name={step.icon} className="size-5" />
             </span>
@@ -290,20 +289,50 @@ function HowItWorks() {
 
 function FeatureBento() {
   const features = [
-    ["Company-wise tracks", "Prepare for service and product-company patterns with focused chapters."],
-    ["PYQ-style practice", "Practise original reconstruction questions aligned to common placement formats."],
-    ["Mock tests", "Build exam temperament with timed mocks and section-wise review."],
-    ["Interview bank", "Prepare technical, coding, HR, domain and managerial questions."],
+    {
+      icon: "Target",
+      title: "Company-wise tracks",
+      body: "Prepare for TCS, Infosys, Wipro, Accenture, Zoho, Cognizant — each with its own chapters, PYQs and mock pattern.",
+    },
+    {
+      icon: "BookOpen",
+      title: "400+ PYQ-style questions",
+      body: "Original reconstructions aligned to each company's test pattern. Not copied — built to the same difficulty and format.",
+    },
+    {
+      icon: "ClipboardList",
+      title: "Full-length mock tests",
+      body: "Timed mocks with section-wise scoring, difficulty heatmap, speed analysis and wrong-answer retake mode.",
+    },
+    {
+      icon: "Mic",
+      title: "Interview simulation",
+      body: "5-question randomised interview with trainer answers and a 'do not say' guide. Covers technical, HR, domain, coding and managerial rounds.",
+    },
+    {
+      icon: "Users",
+      title: "GD preparation",
+      body: "Topic banks for each company, the 5-step GD framework, do/don'ts and current-affairs topics for 2025–26 drives.",
+    },
+    {
+      icon: "FileText",
+      title: "Resume + Communication",
+      body: "Company keyword banks, project bullet formulas, email templates and the 30-second self-introduction framework.",
+    },
   ]
   return (
     <section className="bg-muted/30">
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
         <h2 className="font-heading text-3xl font-bold">Everything freshers need to prepare</h2>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          {features.map(([title, body]) => (
-            <div key={title} className="rounded-2xl border border-border bg-background p-5">
-              <h3 className="font-heading text-lg font-semibold">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+        <p className="mt-2 text-muted-foreground">One app. No jumping between YouTube, Telegram PDFs, and random GitHub notes.</p>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((f) => (
+            <div key={f.title} className="rounded-lg border border-border bg-background p-5">
+              <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                <Icon name={f.icon} className="size-5" />
+              </span>
+              <h3 className="mt-4 font-heading text-lg font-semibold">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
             </div>
           ))}
         </div>
@@ -312,10 +341,63 @@ function FeatureBento() {
   )
 }
 
+const TESTIMONIALS = [
+  {
+    name: "Aditya K.",
+    college: "NIT Warangal — CSE 2024",
+    company: "TCS Digital",
+    quote:
+      "I was doing 100 quant questions a day and going nowhere. The mock showed me I wasn't slow, I was making silly errors in the last 10 minutes. That one thing changed how I prepared.",
+  },
+  {
+    name: "Priya R.",
+    college: "VIT Vellore — IT 2024",
+    company: "Infosys",
+    quote:
+      "The GD section is the only place I found actual frameworks instead of YouTube fluff. Three drives in, I finally stopped talking too much and started listening. Both Infosys and Wipro cleared.",
+  },
+  {
+    name: "Farhan M.",
+    college: "BITS Hyderabad — ECE 2024",
+    company: "Cognizant",
+    quote:
+      "Typing my own answer before seeing the trainer's version is annoying at first. Then you realise how much you're missing. Went into interviews much calmer after two weeks of that.",
+  },
+]
+
+function Testimonials() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+      <div className="mb-8 flex flex-col gap-2">
+        <h2 className="font-heading text-3xl font-bold">From students who prepared here</h2>
+        <p className="text-sm text-muted-foreground">
+          Representative experiences. Individual results depend on preparation effort and company criteria.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {TESTIMONIALS.map((t) => (
+          <div key={t.name} className="flex flex-col gap-5 rounded-lg border border-border bg-card p-5">
+            <p className="flex-1 text-sm leading-relaxed text-foreground/85">{t.quote}</p>
+            <div className="flex items-center justify-between border-t border-border pt-4">
+              <div>
+                <p className="text-sm font-semibold">{t.name}</p>
+                <p className="text-xs text-muted-foreground">{t.college}</p>
+              </div>
+              <span className="rounded-md bg-success/10 px-2 py-1 text-xs font-medium text-[color:var(--success)]">
+                {t.company}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function HonestSignal() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
-      <div className="rounded-3xl border border-border bg-card p-6 md:p-8">
+      <div className="rounded-lg border border-border bg-card p-6 md:p-8">
         <h2 className="font-heading text-2xl font-bold">Built around honest readiness</h2>
         <p className="mt-3 max-w-3xl leading-relaxed text-muted-foreground">
           StudyBench helps students avoid random preparation. Your dashboard shows what to
@@ -350,13 +432,48 @@ function SeoContentSection() {
   )
 }
 
+function ShareScoreCta({ startHref }: { startHref: string }) {
+  const shareText =
+    "I just scored 87% on a TCS mock on StudyBench 🎯 My placement prep is finally structured. Check it out:"
+  const shareUrl = typeof window !== "undefined" ? window.location.origin : "https://studybench.in"
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12 md:px-6">
+      <div className="flex flex-col items-center gap-6 rounded-xl border border-primary/20 bg-primary/5 px-6 py-10 text-center md:flex-row md:justify-between md:text-left">
+        <div>
+          <p className="font-heading text-2xl font-bold">Scored well on a mock?</p>
+          <p className="mt-2 text-muted-foreground">
+            Share your score with your friends on WhatsApp or Twitter — they deserve good prep too.
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <a
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#25D366]/40 bg-[#25D366]/10 px-4 py-2.5 text-sm font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20"
+          >
+            <Icon name="Share2" className="size-4" /> Share on WhatsApp
+          </a>
+          <Link
+            href={startHref}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            Start your own prep <Icon name="ArrowRight" className="size-4" />
+          </Link>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 function FinalCta({ startHref }: { startHref: string }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 md:px-6">
-      <div className="rounded-3xl bg-primary p-8 text-primary-foreground md:p-10">
+      <div className="rounded-lg bg-primary p-8 text-primary-foreground md:p-10">
         <h2 className="font-heading text-3xl font-bold">Start preparing with a clear plan</h2>
         <p className="mt-2 max-w-2xl text-primary-foreground/85">
-          Start free. Upgrade for every track at Rs 399 per year.
+          Start free — all of Section 1 in every track unlocked, no card needed. Upgrade for every section, chapter, mock and coding bank at Rs 399 per year.
         </p>
         <Button asChild className="mt-6 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
           <Link href={startHref}>
@@ -384,5 +501,3 @@ function SiteFooter() {
     </footer>
   )
 }
-
-

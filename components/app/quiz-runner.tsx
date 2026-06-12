@@ -1,5 +1,6 @@
 ﻿"use client"
 
+import Link from "next/link"
 import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -20,8 +21,16 @@ import type { Question } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 export interface QuizResultItem {
+  questionId?: string
+  questionIndex?: number
+  prompt?: string
   topic: string
+  difficulty?: Question["difficulty"]
   correct: boolean
+  selected?: number | null
+  answer?: number
+  timeSpentSec?: number
+  timedOut?: boolean
 }
 
 function formatTime(seconds: number): string {
@@ -36,6 +45,9 @@ export function QuizRunner({
   timeLimitSec,
   onFinish,
   onMistake,
+  onReturn,
+  returnHref,
+  returnLabel = "Return",
   doneActions,
   showExplanations = true,
   passThresholdLabel = "to continue",
@@ -48,6 +60,11 @@ export function QuizRunner({
   onFinish?: (results: QuizResultItem[], scorePct: number) => void
   /** Called with the question and the chosen index whenever the answer is wrong. */
   onMistake?: (q: Question, chosen: number) => void
+  /** Optional escape hatch for quiz flows embedded inside a page state. */
+  onReturn?: () => void
+  /** Optional route for quiz flows that should return to another page. */
+  returnHref?: string
+  returnLabel?: string
   doneActions?: (scorePct: number, passed: boolean) => React.ReactNode
   showExplanations?: boolean
 }) {
@@ -58,6 +75,11 @@ export function QuizRunner({
   const [finished, setFinished] = React.useState(false)
   const [remaining, setRemaining] = React.useState<number | null>(timeLimitSec ?? null)
   const finishedRef = React.useRef(false)
+  const questionStartRef = React.useRef<number | null>(null)
+
+  React.useEffect(() => {
+    questionStartRef.current = Date.now()
+  }, [])
 
   // Countdown: tick once per second; auto-submit at zero.
   React.useEffect(() => {
@@ -84,7 +106,22 @@ export function QuizRunner({
   function check() {
     if (selected === null || revealed) return
     const isCorrect = selected === current.answer
-    setResults((r) => [...r, { topic: current.topic, correct: isCorrect }])
+    const startedAt = questionStartRef.current ?? Date.now()
+    const timeSpentSec = Math.max(1, Math.round((Date.now() - startedAt) / 1000))
+    setResults((r) => [
+      ...r,
+      {
+        questionId: current.id,
+        questionIndex: index,
+        prompt: current.prompt,
+        topic: current.topic,
+        difficulty: current.difficulty,
+        correct: isCorrect,
+        selected,
+        answer: current.answer,
+        timeSpentSec,
+      },
+    ])
     if (!isCorrect) onMistake?.(current, selected) // auto-save to the Mistake Notebook
     setRevealed(true)
   }
@@ -96,6 +133,7 @@ export function QuizRunner({
       setIndex((i) => i + 1)
       setSelected(null)
       setRevealed(false)
+      questionStartRef.current = Date.now()
     }
   }
 
@@ -107,14 +145,38 @@ export function QuizRunner({
     setResults([])
     setFinished(false)
     setRemaining(timeLimitSec ?? null)
+    questionStartRef.current = Date.now()
   }
+
+  const completedResultsForFinish = React.useCallback((): QuizResultItem[] => {
+    if (results.length >= total) return results
+    const next = [...results]
+    const answered = new Set(results.map((result) => result.questionIndex))
+    for (let i = 0; i < questions.length; i++) {
+      if (answered.has(i)) continue
+      const q = questions[i]
+      next.push({
+        questionId: q.id,
+        questionIndex: i,
+        prompt: q.prompt,
+        topic: q.topic,
+        difficulty: q.difficulty,
+        correct: false,
+        selected: null,
+        answer: q.answer,
+        timeSpentSec: 0,
+        timedOut: true,
+      })
+    }
+    return next.sort((a, b) => (a.questionIndex ?? 0) - (b.questionIndex ?? 0))
+  }, [questions, results, total])
 
   React.useEffect(() => {
     if (finished && !finishedRef.current) {
       finishedRef.current = true
-      onFinish?.(results, scorePct)
+      onFinish?.(completedResultsForFinish(), scorePct)
     }
-  }, [finished, onFinish, results, scorePct])
+  }, [completedResultsForFinish, finished, onFinish, scorePct])
 
   if (finished) {
     return (
@@ -149,6 +211,12 @@ export function QuizRunner({
             </p>
           ) : null}
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <ReturnControl
+              href={returnHref}
+              onReturn={onReturn}
+              label={returnLabel}
+              variant="outline"
+            />
             <Button variant="outline" onClick={retry}>
               <Icon name="TrendingUp" className="size-4" /> Try again
             </Button>
@@ -162,10 +230,13 @@ export function QuizRunner({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>
-          Question <span className="font-semibold text-foreground">{index + 1}</span> /{" "}
-          {total}
-        </span>
+        <div className="flex min-w-0 items-center gap-3">
+          <ReturnControl href={returnHref} onReturn={onReturn} label={returnLabel} />
+          <span>
+            Question <span className="font-semibold text-foreground">{index + 1}</span> /{" "}
+            {total}
+          </span>
+        </div>
         <span className="flex items-center gap-3 tabular-nums">
           {remaining != null ? (
             <span
@@ -255,6 +326,47 @@ export function QuizRunner({
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+function ReturnControl({
+  href,
+  onReturn,
+  label,
+  variant = "ghost",
+}: {
+  href?: string
+  onReturn?: () => void
+  label: string
+  variant?: "ghost" | "outline"
+}) {
+  if (!href && !onReturn) return null
+
+  const className = cn(
+    "inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",
+    variant === "outline"
+      ? "border border-border bg-background text-foreground hover:bg-muted/60"
+      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+  )
+  const content = (
+    <>
+      <Icon name="ArrowLeft" className="size-4" />
+      <span className="hidden sm:inline">{label}</span>
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={className} aria-label={label} title={label}>
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <button type="button" onClick={onReturn} className={className} aria-label={label} title={label}>
+      {content}
+    </button>
   )
 }
 

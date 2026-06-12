@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
+import { PREMIUM_PRICE_INR } from "@/lib/access"
+import { rateLimit } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 
 export const runtime = "edge"
-
-const PREMIUM_AMOUNT_INR = 399
 
 /**
  * Creates a Razorpay order tied to the authenticated user.
@@ -29,6 +29,12 @@ export async function POST() {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 })
   }
 
+  // 5 order attempts per user per hour.
+  const { allowed } = await rateLimit(`order:${user.id}`, 5, 60 * 60 * 1000)
+  if (!allowed) {
+    return NextResponse.json({ error: "Too many requests. Try again later." }, { status: 429 })
+  }
+
   const receipt = `sb_${user.id.slice(0, 8)}_${Date.now()}`
   const response = await fetch("https://api.razorpay.com/v1/orders", {
     method: "POST",
@@ -37,7 +43,7 @@ export async function POST() {
       Authorization: `Basic ${btoa(`${keyId}:${keySecret}`)}`,
     },
     body: JSON.stringify({
-      amount: PREMIUM_AMOUNT_INR * 100,
+      amount: PREMIUM_PRICE_INR * 100,
       currency: "INR",
       receipt,
       notes: { user_id: user.id }, // used by webhook for server-side activation

@@ -33,6 +33,7 @@ export function CompanyPicker({
           key={cc.id}
           type="button"
           aria-pressed={value === cc.id}
+          title={cc.name}
           onClick={() => onChange(cc.id)}
           className={cn(
             "flex min-h-10 shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30",

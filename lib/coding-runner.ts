@@ -42,7 +42,13 @@ export function parseCodingInput(input: string, arity: number): unknown[] {
   return [trimmed]
 }
 
+const MAX_CODE_LENGTH = 8_000
+
 export function executeCodingSubmission(code: string, input: string): CodingExecutionResult {
+  if (typeof code !== "string" || code.length > MAX_CODE_LENGTH) {
+    return { ok: false, error: `Code must be under ${MAX_CODE_LENGTH} characters.` }
+  }
+
   const logs: string[] = []
   const studentConsole = {
     log: (...parts: unknown[]) => {
@@ -57,7 +63,24 @@ export function executeCodingSubmission(code: string, input: string): CodingExec
       "parseCodingInput",
       "normalizeCodingOutput",
       "console",
-      `${code}
+      // Best-effort friction, NOT a security sandbox. Shadowing these names makes
+      // the obvious globals (fetch, setTimeout, process, require) read as undefined,
+      // which catches accidental misuse and most copy-pasted snippets. It is NOT a
+      // real boundary: constructor chains such as [].constructor.constructor(...)
+      // still reach the true global scope. This is acceptable ONLY because the code
+      // runs client-side in the student's own browser, where they already control
+      // the page. Do NOT reuse this runner on the server without a real sandbox
+      // (isolated worker / VM with no network and a hard timeout).
+      // ('eval' is intentionally not shadowed — it cannot be redeclared in strict
+      // mode, but strict mode keeps its declarations out of the surrounding scope.)
+      `"use strict";
+const globalThis = undefined, window = undefined, self = undefined,
+      fetch = undefined, XMLHttpRequest = undefined,
+      Function = undefined, setTimeout = undefined, setInterval = undefined,
+      clearTimeout = undefined, clearInterval = undefined,
+      process = undefined, require = undefined, module = undefined,
+      exports = undefined, __dirname = undefined, __filename = undefined;
+${code}
 if (typeof solve !== 'function') throw new Error('Define function solve(...) first.');
 const args = parseCodingInput(input, solve.length);
 const value = solve.apply(null, args);

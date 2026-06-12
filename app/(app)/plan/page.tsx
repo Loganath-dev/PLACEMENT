@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
+import { DeadlineBoard } from "@/components/app/deadline-board"
 import { WEEKLY_PLANS } from "@/lib/data/prep-guides"
 
 const LEVEL_LABEL = {
@@ -29,6 +30,8 @@ export default function PlanPage() {
           </Button>
         }
       />
+
+      <DeadlineBoard variant="calendar" />
 
       <div className="grid gap-4">
         {WEEKLY_PLANS.map((plan) => (

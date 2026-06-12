@@ -29,6 +29,11 @@ export async function POST(request: Request) {
   const event = JSON.parse(rawBody)
   const eventName: string = event.event ?? ""
 
+  // Note: we do NOT reject "old" events. The HMAC signature already guarantees
+  // authenticity, and Razorpay legitimately retries a signed delivery for hours
+  // with backoff. Re-applying a signed activation is harmless because the update
+  // below is idempotent (it never shortens an entitlement).
+
   if (eventName === "payment.captured" || eventName === "order.paid") {
     // Extract user ID from order notes (embedded at order creation).
     const userId: string | undefined =
@@ -36,21 +41,37 @@ export async function POST(request: Request) {
       event.payload?.order?.entity?.notes?.user_id
 
     if (userId) {
-      const premiumUntil = new Date()
-      premiumUntil.setFullYear(premiumUntil.getFullYear() + 1)
+      const oneYearOut = new Date()
+      oneYearOut.setFullYear(oneYearOut.getFullYear() + 1)
 
       const admin = createAdminClient()
+
+      // Grant one year from now, but never shorten an existing, longer entitlement
+      // (a promo grant or a still-valid prior purchase). Using max() also makes
+      // retries safe: a re-delivered event recomputes the same value and never
+      // downgrades the user.
+      const { data: existing } = await admin
+        .from("user_state")
+        .select("premium_until")
+        .eq("id", userId)
+        .single()
+
+      const existingUntil = existing?.premium_until ? new Date(existing.premium_until) : null
+      const premiumUntil =
+        existingUntil && existingUntil > oneYearOut ? existingUntil : oneYearOut
+
       const { error } = await admin
         .from("user_state")
         .update({ premium: true, premium_until: premiumUntil.toISOString() })
         .eq("id", userId)
 
       if (error) {
-        console.error("[webhook] Failed to activate premium for", userId, error)
+        console.error("[webhook] Failed to activate premium:", error.message)
         // Return 200 so Razorpay doesn't retry indefinitely.
         return NextResponse.json({ ok: false, error: error.message })
       }
-      console.info("[webhook] Premium activated for user", userId)
+
+      console.info("[webhook] Premium activation handled for event:", eventName)
     }
   }
 

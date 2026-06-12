@@ -1,13 +1,17 @@
 "use client"
 
 import * as React from "react"
+import type { Session } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import {
+  deleteAllMistakes,
+  deleteMistake,
   ensureUserState,
   loadUserState,
   syncAll,
   syncCompanyProgress,
   syncDaily,
+  syncOneMistake,
   syncProfile,
   syncUserState,
 } from "@/lib/supabase/db"
@@ -53,7 +57,16 @@ function yesterday(d: string): string {
 }
 
 function ensureProgress(state: AppState, id: CompanyId) {
-  if (!state.progress[id]) state.progress[id] = { chapters: {}, mockScores: [] }
+  const existing = state.progress[id]
+  if (!existing) {
+    state.progress[id] = { chapters: {}, mockScores: [] }
+  } else {
+    // Shallow-clone this company's progress so mutations don't bleed into prev state.
+    state.progress[id] = {
+      chapters: { ...existing.chapters },
+      mockScores: [...existing.mockScores],
+    }
+  }
   return state.progress[id]
 }
 
@@ -76,10 +89,12 @@ function applyTopics(
   results: { topic: string; correct: boolean }[],
 ) {
   for (const r of results) {
-    const s = state.topicStats[r.topic] ?? { correct: 0, total: 0 }
-    s.total += 1
-    if (r.correct) s.correct += 1
-    state.topicStats[r.topic] = s
+    const prev = state.topicStats[r.topic]
+    // Always create a new object so shallow-cloned topicStats doesn't share refs with prev state.
+    state.topicStats[r.topic] = {
+      correct: (prev?.correct ?? 0) + (r.correct ? 1 : 0),
+      total: (prev?.total ?? 0) + 1,
+    }
   }
 }
 
@@ -191,7 +206,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient()
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setUserId(session?.user?.id ?? null)
     })
     return () => subscription.unsubscribe()
@@ -233,7 +248,22 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       let out!: T
       let next!: AppState
       setState((prev) => {
-        const draft: AppState = structuredClone(prev)
+        // Targeted shallow clone: top-level primitives copy by spread; every mutable
+        // nested collection gets its own new reference so prev state is never mutated.
+        // ensureProgress() deep-clones individual company progress on first touch.
+        // applyTopics() always writes new { correct, total } objects.
+        const draft: AppState = {
+          ...prev,
+          streak: { ...prev.streak },
+          profile: { ...prev.profile },
+          progress: { ...prev.progress },
+          topicStats: { ...prev.topicStats },
+          daily: { ...prev.daily },
+          mistakes: prev.mistakes ? [...prev.mistakes] : [],
+          codingAttempts: prev.codingAttempts ? [...prev.codingAttempts] : [],
+          badges: [...prev.badges],
+          interested: [...prev.interested],
+        }
         out = fn(draft)
         next = draft
         return draft
@@ -411,11 +441,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         }, syncUserState),
 
       recordMistake: (qn, chosen) =>
-        mutate((d) => {
-          // De-dupe by question id (keep the latest attempt), newest first, capped.
-          const without = (d.mistakes ?? []).filter((m) => m.questionId !== qn.id)
-          d.mistakes = [
-            {
+        mutate(
+          (d) => {
+            const without = (d.mistakes ?? []).filter((m) => m.questionId !== qn.id)
+            const entry = {
               questionId: qn.id,
               prompt: qn.prompt,
               options: qn.options,
@@ -425,17 +454,29 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
               topic: qn.topic,
               difficulty: qn.difficulty,
               ts: Date.now(),
-            },
-            ...without,
-          ].slice(0, MISTAKE_CAP)
-        }),
+            }
+            d.mistakes = [entry, ...without].slice(0, MISTAKE_CAP)
+          },
+          (uid, s) => {
+            // Sync only the new/updated entry — cheaper than a full syncAll.
+            const entry = s.mistakes.find((m) => m.questionId === qn.id)
+            if (entry) syncOneMistake(uid, entry)
+          },
+        ),
 
       clearMistake: (questionId) =>
-        mutate((d) => {
-          d.mistakes = (d.mistakes ?? []).filter((m) => m.questionId !== questionId)
-        }),
+        mutate(
+          (d) => {
+            d.mistakes = (d.mistakes ?? []).filter((m) => m.questionId !== questionId)
+          },
+          (uid) => deleteMistake(uid, questionId),
+        ),
 
-      clearMistakes: () => mutate((d) => void (d.mistakes = [])),
+      clearMistakes: () =>
+        mutate(
+          (d) => void (d.mistakes = []),
+          (uid) => deleteAllMistakes(uid),
+        ),
 
       reset: () => {
         setState(DEFAULT_STATE)
@@ -520,7 +561,10 @@ export function useStoreActions(): StoreActionsValue {
 export function useStore(): StoreContextValue {
   const stateCtx = useStoreState()
   const actionsCtx = useStoreActions()
-  return { ...stateCtx, ...actionsCtx }
+  // actionsCtx identity is permanently stable after mount; stateCtx only changes
+  // when state/hydrated/userId actually change. Memoize the spread so consumers
+  // don't receive a new object reference on unrelated parent renders.
+  return React.useMemo(() => ({ ...stateCtx, ...actionsCtx }), [stateCtx, actionsCtx])
 }
 
 export function useLevel() {

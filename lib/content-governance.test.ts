@@ -3,7 +3,7 @@ import { COMPANIES } from "@/lib/data/companies"
 import { ALL_CODING_PROBLEMS, codingProblemsForCompany } from "@/lib/data/coding-problems"
 import { CHAPTER_PRACTICE_TARGET, chapterPracticeQuestions, getSections } from "@/lib/data/content"
 import { INTERVIEW_QUESTIONS } from "@/lib/data/interview"
-import { MOCK_TESTS, buildMockQuestions } from "@/lib/data/mocks"
+import { MOCKS_PER_COMPANY, MOCK_TESTS, buildMockQuestions } from "@/lib/data/mocks"
 import { ALL_PYQS, PYQS, pyqsForCompany } from "@/lib/data/pyqs"
 import { SOURCES, sourceById } from "@/lib/data/sources"
 import type { Question } from "@/lib/types"
@@ -134,8 +134,8 @@ describe("content source governance", () => {
 
     for (const company of COMPANIES) {
       const mocks = MOCK_TESTS.filter((mock) => mock.companyId === company.id)
-      expect(mocks.length, `${company.id} should have 10 mock tests`).toBe(10)
-      expect(new Set(mocks.map((mock) => mock.id)).size, `${company.id} mock IDs should be unique`).toBe(10)
+      expect(mocks.length, `${company.id} should have ${MOCKS_PER_COMPANY} mock tests`).toBe(MOCKS_PER_COMPANY)
+      expect(new Set(mocks.map((mock) => mock.id)).size, `${company.id} mock IDs should be unique`).toBe(MOCKS_PER_COMPANY)
     }
   })
 
@@ -144,12 +144,12 @@ describe("content source governance", () => {
       const codingMin = company.id === "zoho" ? 70 : company.id === "general" ? 25 : 40
       expect(codingProblemsForCompany(company.id).length, `${company.id} needs more coding practice`).toBeGreaterThanOrEqual(codingMin)
 
-        const commPyqs = pyqsForCompany(company.id).filter((q) => q.section === "comm-interview")
-        expect(commPyqs.length, `${company.id} needs communication/interview PYQs`).toBeGreaterThanOrEqual(70)
-        expect(
-          commPyqs.filter((q) => q.difficulty === "hard").length,
-          `${company.id} needs harder communication/interview scenarios`,
-        ).toBeGreaterThanOrEqual(10)
+      const commPyqs = pyqsForCompany(company.id).filter((q) => q.section === "comm-interview")
+      expect(commPyqs.length, `${company.id} needs communication/interview PYQs`).toBeGreaterThanOrEqual(70)
+      expect(
+        commPyqs.filter((q) => q.difficulty === "hard").length,
+        `${company.id} needs harder communication/interview scenarios`,
+      ).toBeGreaterThanOrEqual(10)
 
       const interviewQuestions = INTERVIEW_QUESTIONS.filter((q) => q.company === company.id)
       const interviewMin = company.id === "zoho" || company.id === "general" ? 100 : 90

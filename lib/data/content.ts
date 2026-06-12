@@ -1,6 +1,7 @@
 import type { Chapter, CompanyId, Lesson, Question, Section, SectionId } from "@/lib/types"
 import { getCompany } from "@/lib/data/companies"
 import { generateDrills } from "@/lib/data/question-bank"
+import { createStableIdFactory, idKey } from "@/lib/data/stable-id"
 
 /**
  * Seeded curriculum. Content is ORIGINAL, authored in our own words by the
@@ -29,7 +30,7 @@ export const SECTION_META: {
   { id: "comm-interview", name: "Communication & Interview", short: "Comm & Interview", icon: "MessagesSquare", blurb: "Self-intro, GD, HR answers & the final round." },
 ]
 
-let qc = 0
+const nextQuestionId = createStableIdFactory("q")
 function q(
   topic: string,
   difficulty: Question["difficulty"],
@@ -39,8 +40,10 @@ function q(
   explanation: string,
   sourceId: string,
 ): Question {
-  qc += 1
-  return { id: `q${qc}`, topic, difficulty, prompt, options, answer, explanation, sourceId }
+  // Id derives from the question's own text, so inserting or reordering entries
+  // never shifts another question's id (see lib/data/stable-id.ts).
+  const id = nextQuestionId(idKey(topic, prompt, options.join("|")))
+  return { id, topic, difficulty, prompt, options, answer, explanation, sourceId }
 }
 
 // ============================================================================
@@ -59,7 +62,7 @@ const quant: Section = {
           title: "Think in percentages",
           minutes: 6,
           body:
-            "A percentage is simply a fraction out of 100. So **30% = 30/100 = 0.30**, and \"x% of N\" just means multiply: x% of N = (x/100) x N.\n\n**Memorise these fraction-percent pairs** so you can compute in your head:\n- 1/2 = 50%   - 1/4 = 25%   - 1/5 = 20%\n- 1/8 = 12.5%   - 1/3 ~ 33.33%   - 1/10 = 10%\n\n**Worked example:** 12.5% of 800. Since 12.5% = 1/8, just do 800 / 8 = **100**. Much faster than long multiplication.\n\n**To find \"what percent A is of B\"**, use A/B x 100. Example: 18 is what % of 72? -> 18/72 x 100 = **25%**.\n\n**Exam tip:** convert every \"% of\" into a multiplication, and reach for the fraction shortcut before multiplying.",
+            "**Why recruiters test this:** Percentages quietly power 8-10 of the ~25 quant questions in TCS NQT, Infosys and Cognizant papers — profit-loss, interest, mixtures and data interpretation are all percentage arithmetic in disguise. Master this one chapter and a third of the quant section opens up.\n\nA percentage is just a fraction with denominator 100. So **30% = 30/100 = 0.30**. When a question says \"x% of N\", the word **of means multiply**: x% of N = (x/100) x N.\n\nThe three-step method — use it every time:\n1. Convert the percentage to a fraction or decimal.\n2. Replace the word \"of\" with multiplication.\n3. Look for a fraction shortcut BEFORE multiplying.\n\nMemorise these pairs until they are instant:\n- 1/2 = 50%, 1/4 = 25%, 3/4 = 75%\n- 1/5 = 20%, 2/5 = 40%, 3/5 = 60%\n- 1/8 = 12.5%, 1/3 = 33.33%, 1/6 = 16.67%, 1/10 = 10%\n\n**Worked example:** Find 12.5% of 800. Recognise 12.5% = 1/8, so the answer is 800 / 8 = **100**. Three seconds, no long multiplication.\n\n**Worked example:** 18 is what percent of 72? Use A/B x 100 = 18/72 x 100 = **25%**. The number after the word \"of\" (here 72) ALWAYS goes in the denominator.\n\n**Common mistake:** Taking the wrong base. \"A is what % of B\" divides by B, but \"B is what % of A\" divides by A. Underline the number that follows \"of\" — that is your denominator, every single time.\n\n**Exam tip:** Toppers finish percentage questions in under 30 seconds because they translate 12.5% -> 1/8 and 16.67% -> 1/6 on sight. Drill the table above until conversion is automatic — speed here buys you time for the hard questions later in the paper.",
           sourceIds: ["rs-aggarwal-quant"],
         },
         {
@@ -67,7 +70,7 @@ const quant: Section = {
           title: "Percentage change, successive change & ratios",
           minutes: 6,
           body:
-            "**Percentage change = (new - old) / old x 100.** The base is always the OLD value, which is why a rise and a fall of the same percent are NOT symmetric.\n\n**Two successive changes of a% then b%** combine as: net = a + b + (a x b)/100 (keep the signs).\n\n**Worked example:** a price rises 20% then falls 20%. net = 20 - 20 + (20 x -20)/100 = **-4%**. So Rs 100 -> Rs 120 -> Rs 96, not back to Rs 100.\n\n**Ratios:** a : b just means the fraction a/b. To combine a : b and b : c, scale them so the common term b matches, then read a : c directly.\n\n**Common mistake:** averaging two percentages that sit on different bases. You cannot. Always bring them to a common base first.",
+            "Percentage change has exactly one formula: **change% = (new - old) / old x 100**. The base is ALWAYS the old value. This is why a 20% rise followed by a 20% fall does NOT return to the start — the fall acts on a bigger base.\n\nFor two successive changes of a% then b%, use the one-line shortcut:\n1. Write both changes with their signs (increase +, decrease -).\n2. Apply **net = a + b + (a x b)/100**.\n3. The sign of the result tells you net increase or decrease.\n\n**Worked example:** A price rises 20% then falls 20%. Net = 20 - 20 + (20 x -20)/100 = **-4%**. In rupees: Rs 100 -> Rs 120 -> Rs 96. The money does NOT come back to 100 — this exact trap appears in nearly every TCS and Cognizant paper.\n\n**Worked example:** A value rises 10% then rises another 20%. Net = 10 + 20 + (10 x 20)/100 = **+32%**, not 30%. Successive increases compound.\n\nRatios are just fractions: a : b means a/b. To chain a : b and b : c into a : c:\n1. Scale both ratios so the shared term b becomes the same number (use the LCM).\n2. Read a : c directly from the scaled ratios.\n\n**Worked example:** a : b = 2 : 3 and b : c = 4 : 5. Make b = 12 in both: a : b = 8 : 12 and b : c = 12 : 15. So a : c = **8 : 15**.\n\n**Common mistake:** Averaging two percentages that sit on different bases — you cannot. 10% of the class and 20% of the school do not average to 15% of anything. Recover the actual counts first, then compute.\n\n**Exam tip:** Whenever you see \"successive\", reach for a + b + ab/100 instantly. It works for any two changes — two increases, two decreases, or one of each. For three changes, apply it twice.",
           sourceIds: ["rs-aggarwal-quant"],
         },
       ],
@@ -90,7 +93,7 @@ const quant: Section = {
           title: "The core relation and units",
           minutes: 6,
           body:
-            "Everything comes from one relation: **Distance = Speed x Time.** Rearrange as needed (Speed = D/T, Time = D/S). The only trap is mixing units, so fix them first.\n\n**Unit conversion:** km/h -> m/s, multiply by **5/18**; m/s -> km/h, multiply by **18/5**. Example: 72 km/h x 5/18 = **20 m/s**.\n\n**Average speed (equal distances)** at speeds u and v is the **harmonic mean 2uv/(u+v)**, NOT the simple average (u+v)/2.\n\n**Worked example:** half a trip at 40 km/h, half at 60 km/h. Average = 2 x 40 x 60 / (40 + 60) = 4800/100 = **48 km/h** (not 50).\n\n**Common mistake:** averaging speeds directly. Only works when the TIME is equal, not the distance.",
+            "**Why recruiters test this:** Every company's aptitude paper has 2-4 speed questions — plain journeys, trains, or boats. They all come from ONE relation, so this is the best effort-to-marks ratio in quant.\n\nThe single formula: **Distance = Speed x Time**. Rearrange as needed: Speed = D/T, Time = D/S. Nothing else exists in this topic — every \"hard\" question is this formula plus a units trick or a relative-speed twist.\n\nSolve any question in this order:\n1. Write down what you know: D, S or T (two of the three).\n2. Fix the units FIRST — never mix km/h with metres and seconds.\n3. Apply the formula and sanity-check the size of the answer.\n\nUnit conversion you must know cold:\n- km/h -> m/s: multiply by **5/18**\n- m/s -> km/h: multiply by **18/5**\n\n**Worked example:** Convert 72 km/h to m/s: 72 x 5/18 = **20 m/s**. (Check: 72 km in 3600 s = 72000/3600 = 20. The shortcut is just this division pre-done.)\n\nAverage speed over EQUAL DISTANCES at speeds u and v is the **harmonic mean 2uv/(u + v)** — never the simple average. Why: the slower half takes longer, so it drags the average below the midpoint.\n\n**Worked example:** Half a trip at 40 km/h, half at 60 km/h. Average = 2 x 40 x 60 / (40 + 60) = 4800/100 = **48 km/h**, not 50. The exam will offer 50 as a trap option — recognise it and smile.\n\n**Common mistake:** Averaging speeds directly. (u + v)/2 only works when the TIMES are equal, not the distances. Read which one the question fixes.\n\n**Exam tip:** The moment a question mentions metres or seconds alongside km/h, convert before doing anything else. Most wrong answers in this topic are unit errors, not logic errors.",
           sourceIds: ["rs-aggarwal-quant", "careerride-yt"],
         },
         {
@@ -98,7 +101,7 @@ const quant: Section = {
           title: "Relative speed: trains and boats",
           minutes: 6,
           body:
-            "When two bodies move in the **same direction**, their relative speed is the **difference** of speeds; in **opposite directions**, it is the **sum**.\n\n**Trains:** crossing a pole or person, a train covers its **own length**. Crossing a platform/bridge, it covers **train length + platform length**. Then time = total length / speed.\n\n**Worked example:** a 120 m train at 36 km/h crosses a pole. 36 km/h = 10 m/s, time = 120/10 = **12 s**.\n\n**Boats and streams:** downstream speed = boat + stream; upstream speed = boat - stream.\n\n**Exam tip:** convert km/h to m/s the moment a question mentions metres and seconds.",
+            "Two moving bodies have a **relative speed** — the speed at which the gap between them changes:\n- **Same direction:** relative speed = DIFFERENCE of speeds (the faster one slowly gains).\n- **Opposite directions:** relative speed = SUM of speeds (they close the gap from both sides).\n\nTrain questions are about WHAT LENGTH gets covered:\n1. Crossing a pole, a person, or a tree -> the train covers its **own length** only.\n2. Crossing a platform or bridge -> the train covers **its length + the platform length**.\n3. Crossing another train -> **sum of both lengths**, at their relative speed.\n4. Then: time = total length / speed (in m/s!).\n\n**Worked example:** A 120 m train at 36 km/h crosses a pole. Convert: 36 km/h = 10 m/s. Time = 120/10 = **12 s**. The platform version: same train crosses a 80 m platform -> (120 + 80)/10 = **20 s**.\n\nBoats and streams — two lines to memorise:\n- **Downstream** (with the current): speed = boat + stream\n- **Upstream** (against the current): speed = boat - stream\n\nGiven downstream speed d and upstream speed u, recover the parts: **boat = (d + u)/2** and **stream = (d - u)/2**.\n\n**Worked example:** A man rows 20 km downstream in 2 h (so 10 km/h) and 12 km upstream in 3 h (so 4 km/h). Boat speed = (10 + 4)/2 = **7 km/h**; stream = (10 - 4)/2 = **3 km/h**.\n\n**Common mistake:** Forgetting the train's own length when it crosses a platform. \"Crosses the platform\" means the LAST coach clears the FAR end — the engine travels platform + train length.\n\n**Exam tip:** TCS and Wipro love the train-crosses-man-then-platform combo: two equations, two unknowns (length and speed). Set L = (time1) x v and L + platform = (time2) x v, subtract, and v falls out instantly.",
           sourceIds: ["rs-aggarwal-quant"],
         },
       ],
@@ -120,7 +123,7 @@ const quant: Section = {
           title: "Profit, loss and discount",
           minutes: 6,
           body:
-            "The whole topic is about **which base a percentage sits on**.\n\n**Profit% and Loss% are always on the COST PRICE (CP).** Profit% = (SP - CP)/CP x 100. So SP = CP x (1 + profit%/100).\n\n**Discount is always on the MARKED PRICE (MP).** SP = MP x (1 - discount%/100). Shops mark up high, then \"discount\", and still profit.\n\n**Worked example:** CP = Rs 400 at 25% profit -> SP = 400 x 1.25 = **Rs 500**. A Rs 1200 item at 10% discount -> SP = 1200 x 0.90 = **Rs 1080**.\n\n**To find CP from SP:** if SP = Rs 575 at 15% profit, CP = 575 / 1.15 = **Rs 500**.\n\n**Common mistake:** taking profit% on the selling price. It is on cost price.",
+            "**Why recruiters test this:** Profit-loss is the most reliably present topic in service-company papers — TCS, Wipro and Cognizant each carry 2-3 of these. Every single question reduces to one skill: knowing **which base the percentage sits on**.\n\nThe two base rules — tattoo these on your memory:\n1. **Profit% and Loss% always sit on the COST PRICE (CP).** Profit% = (SP - CP)/CP x 100, so SP = CP x (1 + profit%/100).\n2. **Discount always sits on the MARKED PRICE (MP).** SP = MP x (1 - discount%/100).\n\nWhy shops survive \"sales\": they mark UP from cost first, then discount from the marked price. A 40% markup followed by a 15% discount still leaves 1.40 x 0.85 = 1.19 -> **19% profit**.\n\n**Worked example:** CP = Rs 400, sold at 25% profit. SP = 400 x 1.25 = **Rs 500**.\n\n**Worked example:** A shirt marked Rs 1200 with a 10% discount sells at 1200 x 0.90 = **Rs 1080**. The discount acted on 1200 (marked price) — the shopkeeper's cost never entered the calculation.\n\n**Worked example (reverse direction):** Sold at Rs 575 with 15% profit — what was the cost? CP = 575 / 1.15 = **Rs 500**. To go backwards, DIVIDE by the multiplier; never subtract 15% of 575.\n\n**Common mistake:** Computing profit% on the selling price. If CP = 80 and SP = 100, profit% = 20/80 = 25%, NOT 20/100 = 20%. The exam always offers both numbers as options.\n\n**Exam tip:** Convert every percentage into a multiplier the moment you read it: 25% profit -> x1.25, 10% discount -> x0.90, 15% loss -> x0.85. Chain multipliers for multi-step problems and you will never lose track of the base.",
           sourceIds: ["rs-aggarwal-quant"],
         },
         {
@@ -128,7 +131,7 @@ const quant: Section = {
           title: "Simple vs compound interest",
           minutes: 6,
           body:
-            "**Simple Interest (SI)** earns only on the original principal: **SI = P x R x T / 100.**\n\n**Compound Interest (CI)** earns interest on interest: **CI = P x (1 + R/100)^T - P.** For the same P, R, T, CI is always >= SI, and the gap grows with time.\n\n**Handy shortcut for 2 years:** CI - SI = P x (R/100)^2.\n\n**Worked example:** P = Rs 1000, R = 10%, T = 2 years. SI = 1000 x 10 x 2 / 100 = Rs 200. CI - SI = 1000 x (0.1)^2 = **Rs 10**, so CI = Rs 210.\n\n**Exam tip:** if T = 2 or 3 years, the (R/100)^2 shortcut saves you the full power calculation.",
+            "Interest is rent paid on money. The two flavours differ in ONE word: what the interest is calculated on.\n\n**Simple Interest (SI)** earns only on the original principal, every year: **SI = P x R x T / 100**. The interest is identical each year — a flat line.\n\n**Compound Interest (CI)** earns interest on the interest too: **Amount = P x (1 + R/100)^T**, so CI = Amount - P. The interest grows each year — a curve bending upward.\n\nFor the same P, R, T: CI >= SI always, and the gap widens with time.\n\n**Worked example:** P = Rs 1000, R = 10%, T = 2 years.\n- SI = 1000 x 10 x 2 / 100 = **Rs 200** (a flat Rs 100 per year).\n- CI: year 1 earns Rs 100; year 2 earns 10% of Rs 1100 = Rs 110. Total CI = **Rs 210**.\n- The Rs 10 gap is exactly interest-on-interest: 10% of year 1's Rs 100.\n\n**Shortcut:** For exactly 2 years, **CI - SI = P x (R/100)^2**. Check: 1000 x (0.1)^2 = Rs 10. This one line answers every \"difference between CI and SI\" question instantly.\n\n**Worked example (doubling):** A sum doubles in 4 years at CI. When does it become 8 times? 8 = 2^3, so three doubling periods: 4 x 3 = **12 years**. Count doublings — no formula needed.\n\n**Common mistake:** Using the SI formula on a CI question because it is easier. The words \"compounded\", \"compound interest\" or \"interest is reinvested\" force the power formula — no exceptions.\n\n**Exam tip:** Memorise the 2-year multipliers: 10% -> 1.21, 5% -> 1.1025, 20% -> 1.44. They cover most papers and save the full expansion every time.",
           sourceIds: ["rs-aggarwal-quant", "indiabix-aptitude"],
         },
       ],
@@ -150,7 +153,7 @@ const quant: Section = {
           title: "Divisibility and unit digits",
           minutes: 6,
           body:
-            "**Divisibility shortcuts:** a number is divisible by\n- 3 or 9 - if its digit sum is\n- 4 - if its last two digits are\n- 8 - if its last three digits are\n- 11 - if the alternating digit sum is\n\n**Worked example:** is 729 divisible by 9? Digit sum = 7 + 2 + 9 = 18, divisible by 9, so **yes**.\n\n**Unit digit of powers** repeats in a cycle of length <= 4. For 7 the cycle is **7, 9, 3, 1**. Take the exponent mod 4 (treat a remainder of 0 as the 4th term).\n\n**Worked example:** unit digit of 7^35. 35 mod 4 = 3 -> third term in the cycle = **3**.\n\n**Exam tip:** use the unit digit to eliminate wrong options before doing any heavy multiplication.",
+            "**Why recruiters test this:** Divisibility and unit-digit questions look scary (7^35!) but take under 20 seconds with the right rule — which is exactly why companies use them: they separate students who know the patterns from those who try to brute-force.\n\nDivisibility rules — check without dividing:\n- **By 2:** last digit is even.\n- **By 3:** digit sum is divisible by 3.\n- **By 4:** the last TWO digits form a number divisible by 4.\n- **By 5:** last digit is 0 or 5.\n- **By 8:** the last THREE digits form a number divisible by 8.\n- **By 9:** digit sum is divisible by 9.\n- **By 11:** the alternating sum of digits (units - tens + hundreds - ...) is 0 or divisible by 11.\n\n**Worked example:** Is 729 divisible by 9? Digit sum = 7 + 2 + 9 = 18, and 18 is divisible by 9 -> **yes**.\n\n**Worked example:** Is 1936 divisible by 4? Look at the last two digits only: 36 / 4 = 9 -> **yes**. The 19 in front is irrelevant.\n\nUnit digits of powers repeat in cycles of length at most 4:\n1. Write the cycle for the base's last digit (for 7: **7, 9, 3, 1**; for 3: 3, 9, 7, 1; for 2: 2, 4, 8, 6).\n2. Take the exponent mod 4.\n3. Pick that position in the cycle (a remainder of 0 means the 4th term).\n\n**Worked example:** Unit digit of 7^35. Cycle of 7 is 7, 9, 3, 1. Now 35 mod 4 = 3, so take the 3rd term -> **3**.\n\n**Common mistake:** Treating remainder 0 as the 1st term of the cycle. Exponent mod 4 = 0 means the FOURTH term. Unit digit of 7^36 is 1, not 7.\n\n**Exam tip:** Use the unit digit to eliminate options before any heavy work. If the answer must end in 3, kill every option that does not — often only one survives and you never multiply at all.",
           sourceIds: ["rs-aggarwal-quant"],
         },
         {
@@ -158,7 +161,7 @@ const quant: Section = {
           title: "HCF and LCM the easy way",
           minutes: 6,
           body:
-            "Write each number as a product of primes.\n\n**HCF (greatest common factor)** takes the **lowest** power of each common prime. **LCM (least common multiple)** takes the **highest** power of every prime that appears.\n\n**Worked example:** 36 = 2^2 x 3^2, 48 = 2^4 x 3. HCF = 2^2 x 3 = **12**; LCM = 2^4 x 3^2 = **144**.\n\n**The identity you must remember (two numbers only):** HCF x LCM = product of the two numbers. Check: 12 x 144 = 1728 = 36 x 48. \n\n**Common mistake:** swapping the rules. HCF takes the smaller powers, LCM the larger ones.",
+            "HCF answers \"what is the largest piece that divides BOTH numbers?\" LCM answers \"what is the smallest number BOTH divide into?\" Real questions hide these in words: equal-sized groups and largest tile sizes are HCF; bells ringing together and traffic lights syncing are LCM.\n\nThe prime-factor method:\n1. Write each number as a product of primes.\n2. **HCF:** take the LOWEST power of each COMMON prime.\n3. **LCM:** take the HIGHEST power of EVERY prime that appears.\n\n**Worked example:** 36 = 2^2 x 3^2 and 48 = 2^4 x 3.\n- HCF = 2^2 x 3 = **12** (lowest powers of the shared primes 2 and 3).\n- LCM = 2^4 x 3^2 = **144** (highest power of each prime seen anywhere).\n\n**The identity (two numbers only):** HCF x LCM = product of the numbers. Check: 12 x 144 = 1728 = 36 x 48. Exams use this constantly — given any three of the four values, you can find the fourth in one division.\n\n**Worked example:** Two numbers have HCF 6 and LCM 72, and one number is 24. The other = (6 x 72)/24 = **18**.\n\n**Common mistake:** Swapping the rules — HCF takes the SMALLER powers, LCM the LARGER. Sanity check every time: HCF must be <= both numbers, LCM must be >= both. If your \"HCF\" is bigger than either number, you computed the LCM.\n\n**Exam tip:** Word problems: \"largest size/divides exactly/equal groups\" -> HCF. \"Smallest number/together again/common multiple\" -> LCM. Underline the keyword first and half the battle is over.",
           sourceIds: ["gfg-dsa", "rs-aggarwal-quant"],
         },
       ],
@@ -189,7 +192,7 @@ const reasoning: Section = {
           title: "A checklist for any series",
           minutes: 6,
           body:
-            "Run this checklist in order and you will spot the rule in seconds:\n1. **Constant difference?** (add the same number)\n2. **Constant ratio?** (multiply by the same number)\n3. **Differences of differences?** (the gaps themselves form a pattern)\n4. **Alternating?** (two series interleaved)\n5. **Squares / cubes / primes / Fibonacci?**\n\n**Worked example:** 2, 6, 12, 20, 30, ? The gaps are 4, 6, 8, 10, so the next gap is 12 -> 30 + 12 = **42**.\n\n**For letter series**, map A = 1 ... Z = 26 and apply the same number checks to the positions.\n\n**Exam tip:** always write the gaps under the numbers. The pattern usually jumps out from the second row.",
+            "**Why recruiters test this:** Series questions open nearly every reasoning section — TCS, Infosys and Cognizant each carry 3-5. They are pure pattern recognition under time pressure, and a fixed checklist beats raw cleverness every time.\n\nRun this checklist IN ORDER and the rule reveals itself within seconds:\n1. **Constant difference?** Same number added each time (5, 8, 11, 14 -> +3).\n2. **Constant ratio?** Same number multiplied (4, 12, 36 -> x3).\n3. **Differences of differences?** The gaps themselves form a pattern.\n4. **Alternating?** Two separate series interleaved — check the odd terms and even terms separately.\n5. **Famous families?** Squares, cubes, primes, Fibonacci, factorials.\n\n**Worked example:** 2, 6, 12, 20, 30, ? Write the gaps underneath: 4, 6, 8, 10. The gaps grow by 2, so the next gap is 12 -> 30 + 12 = **42**. (Bonus: these are n^2 + n — both views give the same answer.)\n\n**Worked example (alternating):** 1, 10, 3, 20, 5, 30, ? The odd positions are 1, 3, 5 and the even positions are 10, 20, 30. The next term sits in the odd-position series: **7**.\n\n**For letter series:** convert letters to positions (A=1 ... Z=26) and run the same checklist on the numbers. AZ, BY, CX is just (1,26), (2,25), (3,24) — first letter +1, second letter -1.\n\n**Common mistake:** Forcing a single rule onto an interleaved series. If the gaps look chaotic but every SECOND gap looks clean, split the series into two and test each half.\n\n**Exam tip:** Physically write the gaps under the numbers — do not do it in your head. The pattern usually jumps out from the second row, and for hard series, from the third row (gaps of gaps).",
           sourceIds: ["rs-aggarwal-reasoning"],
         },
         {
@@ -197,7 +200,7 @@ const reasoning: Section = {
           title: "Patterns worth memorising",
           minutes: 5,
           body:
-            "A few families show up again and again:\n- **Perfect squares:** 1, 4, 9, 16, 25, ... (n^2)\n- **Primes:** 2, 3, 5, 7, 11, 13, ... (no factors but 1 and itself)\n- **Fibonacci-style:** each term is the sum of the previous two (1, 1, 2, 3, 5, 8, ...)\n- **Mixed rule:** x2 then +1, or x3 then -2, etc.\n\n**Worked example:** 3, 6, 11, 18, 27, ? Gaps are 3, 5, 7, 9 (odd numbers), next is 11 -> 27 + 11 = **38**.\n\n**Common mistake:** forcing a single arithmetic rule when the series is actually two interleaved series. If alternate terms look related, split them.",
+            "Certain number families appear in every placement season. Recognising them on sight converts a 90-second question into a 10-second one.\n\nThe families to know cold:\n- **Perfect squares:** 1, 4, 9, 16, 25, 36, 49, 64, 81, 100 ... (know them to 25^2 = 625)\n- **Perfect cubes:** 1, 8, 27, 64, 125, 216 ...\n- **Primes:** 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 ...\n- **Fibonacci-style:** each term = sum of the previous two (1, 1, 2, 3, 5, 8, 13 ...)\n- **Factorials:** 1, 2, 6, 24, 120, 720 ...\n- **Mixed rules:** x2 then +1, or x3 then -2 — applied repeatedly.\n\n**Worked example:** 3, 6, 11, 18, 27, ? Gaps: 3, 5, 7, 9 — consecutive odd numbers, so the next gap is 11 -> 27 + 11 = **38**. (Equivalently each term is n^2 + 2.)\n\n**Worked example (mixed rule):** 5, 11, 23, 47, ? Test x2+1: 5 -> 11 ✓, 11 -> 23 ✓, 23 -> 47 ✓. Next: 47 x 2 + 1 = **95**. Always verify the rule on EVERY given transition before trusting it.\n\n**Worked example (near-family):** 2, 5, 10, 17, 26, ? Each term is n^2 + 1. Next: 36 + 1 = **37**. When numbers sit 1 or 2 away from squares or cubes, test the offset family.\n\n**Common mistake:** Verifying the rule on the first transition only. A rule that fits one step but not all steps is a coincidence, not a pattern — exams deliberately plant these.\n\n**Exam tip:** When a series grows FAST (roughly doubling or worse), think multiplication, powers or factorials. When it grows steadily, think addition and gap patterns. Growth speed is the quickest filter.",
           sourceIds: ["rs-aggarwal-reasoning", "indiabix-aptitude"],
         },
       ],
@@ -219,7 +222,7 @@ const reasoning: Section = {
           title: "Solve relations by drawing",
           minutes: 6,
           body:
-            "Never solve blood relations in your head. **Draw a quick family tree.** Use + for male, - for female, a horizontal line for spouse/sibling, and a vertical line for parent-child.\n\n**Decode statements from the speaker outward.** \"The only daughter of my mother\" - the only daughter of the speaker's mother is the **speaker herself** (assuming the speaker is female).\n\n**Worked example:** A woman says, \"His mother is the only daughter of my mother.\" The only daughter of her mother is the woman herself, so the man's mother is the woman -> she is **his mother**.\n\n**Exam tip:** replace every phrase with the simplest relation before drawing (\"father's father\" = grandfather).",
+            "**Why recruiters test this:** Blood relations measure whether you can hold a chain of facts steady under pressure — the same skill as tracing code or requirements. Students who solve these in their head get them wrong; students who draw get them right. It is that simple.\n\nThe drawing system — 20 seconds to set up, saves minutes:\n1. **+ for male, - for female** next to each name.\n2. **Horizontal double line** for spouses, **single horizontal line** for siblings.\n3. **Vertical line downward** for parent -> child.\n4. Decode the statement from the speaker OUTWARD, one phrase at a time.\n\nSimplify each phrase before drawing:\n- \"father's father\" = grandfather\n- \"mother's brother\" = maternal uncle\n- \"the only daughter of my mother\" = the speaker herself (if the speaker is female)\n- \"my father's only son\" = the speaker himself (if the speaker is male)\n\n**Worked example:** A woman points to a man and says, \"His mother is the only daughter of my mother.\" Decode the inner phrase first: the only daughter of her mother is the woman herself. Substitute: \"his mother is ME.\" So she is **his mother**. Most students answer \"sister\" because they never substituted — the substitution IS the method.\n\n**Worked example:** A is B's father; B is C's sister. A is the parent of both B and C, so A is **C's father**. (Note: C's gender is unknown, but A's relation to C does not depend on it.)\n\n**Common mistake:** Assuming gender. \"B is C's sister\" tells you B is female — it tells you NOTHING about C. Exams hang wrong options on exactly this.\n\n**Exam tip:** For \"pointing to a photograph\" questions, write the speaker at the bottom of your diagram and build upward. The phrase between \"pointing to\" and the verb is always the person you must identify.",
           sourceIds: ["rs-aggarwal-reasoning"],
         },
         {
@@ -227,7 +230,7 @@ const reasoning: Section = {
           title: "Directions and turns",
           minutes: 5,
           body:
-            "Redraw the journey on a compass. **Each left or right turn rotates your facing by 90 degrees.** North -> right = East -> right = South, and so on.\n\n**Shortest distance** from start to finish is the straight line: if you went a units along one axis and b along the perpendicular axis, the distance is **sqrt(a^2 + b^2)** (Pythagoras).\n\n**Worked example:** walk 3 km North, then turn right and walk 4 km East. Distance from start = sqrt(3^2 + 4^2) = sqrt25 = **5 km**.\n\n**Common mistake:** confusing the person's left/right with the page's left/right. Rotate the page if it helps.",
+            "Direction questions are coordinate geometry wearing a story. Redraw the journey on a small compass sketch and the answer falls out.\n\nThe method:\n1. Draw a + with N at the top, E to the right. Mark the start point.\n2. Trace each move, drawing the path segment by segment.\n3. **Each left or right turn rotates the facing by 90 degrees:** facing North, a right turn faces East; another right faces South.\n4. At the end, measure the straight line from start to finish.\n\nShortest distance from start: if the net displacement is a units along one axis and b along the perpendicular axis, distance = **sqrt(a^2 + b^2)** (Pythagoras). Opposite moves cancel first: 5 km North then 2 km South nets to 3 km North.\n\n**Worked example:** Walk 3 km North, turn right, walk 4 km. You are 3 N and 4 E of the start: sqrt(9 + 16) = sqrt(25) = **5 km**. The 3-4-5 triangle is the most common exam triple — recognise it instantly (also 6-8-10 and 5-12-13).\n\n**Worked example (cancelling):** Walk 4 km North, 3 km East, then 4 km South. North and South cancel; you are exactly **3 km East** of the start. No Pythagoras needed when one axis nets to zero.\n\n**Common mistake:** Confusing the WALKER'S left/right with YOUR left/right on the page. Left and right are relative to the direction currently being faced. If it helps, physically rotate the page as the person turns.\n\n**Exam tip:** Sunrise/shadow variants: in the morning the sun is in the East, so shadows point West; in the evening shadows point East. A person facing North in the morning has their shadow on their LEFT (West).",
           sourceIds: ["rs-aggarwal-reasoning"],
         },
       ],
@@ -249,7 +252,7 @@ const reasoning: Section = {
           title: "The three code types",
           minutes: 6,
           body:
-            "Almost every coding question is one of three types:\n\n**1. Letter-shift:** each letter moves a fixed amount. CAT -> DBU is +1 (C->D, A->B, T->U). Find the shift on one pair, then apply it.\n\n**2. Number coding:** letters map to positions A = 1 ... Z = 26. The code may be a sum, a product, or just the positions.\n\n**3. Reversal / substitution:** the word is reversed (WORD -> DROW) or each word is replaced by another word (track the mapping).\n\n**Worked example:** if CAT -> DBU (shift +1), then DOG -> **EPH** (D->E, O->P, G->H).",
+            "**Why recruiters test this:** Coding-decoding is pattern-matching at speed — Wipro, Accenture and Cognizant use 2-4 of these per paper. Almost every question is one of just three machine types, so identification is 90% of the work.\n\nThe three code types:\n1. **Letter-shift:** every letter moves a fixed amount along the alphabet. CAT -> DBU is +1 (C->D, A->B, T->U). Find the shift from ONE letter pair, verify on the rest, then apply.\n2. **Number coding:** letters map to positions A=1 ... Z=26. The code may be the positions themselves, their sum, or their product.\n3. **Reversal / substitution:** the word is written backwards (WORD -> DROW), or whole words swap meanings (\"sky is blue\" puzzles — track the mapping word by word).\n\n**Worked example:** If CAT -> DBU (+1 shift), then DOG -> D+1, O+1, G+1 = **EPH**.\n\n**Worked example (number code):** If CAT = 24, test the sum: C=3, A=1, T=20 -> 3+1+20 = 24 ✓. Then DOG = 4+15+7 = **26**.\n\n**Worked example (wrap-around):** With a +2 shift, Y -> A and Z -> B. The alphabet is a circle — count past Z back to A. Exams love putting Y or Z in the word precisely to catch students who forget this.\n\n**Common mistake:** Finding the shift from the first letter only and applying it blindly. If C->D is +1 but A->C is +2, the shift is positional (1st letter +1, 2nd letter +2 ...) — a different machine entirely. Verify EVERY letter before answering.\n\n**Exam tip:** Write the alphabet with positions at the top of your rough sheet the moment the section starts: A1 B2 C3 ... Z26. Every coding question for the next 20 minutes becomes simple arithmetic against that one line.",
           sourceIds: ["rs-aggarwal-reasoning", "indiabix-aptitude"],
         },
         {
@@ -257,7 +260,7 @@ const reasoning: Section = {
           title: "A systematic method",
           minutes: 5,
           body:
-            "Write the alphabet with positions once at the top of your rough sheet: A1 B2 C3 ... Z26. Now every code becomes arithmetic.\n\n**Check the shift is consistent** across all letters before trusting it. If one letter shifts +1 but another shifts +2, the rule is positional, not a fixed shift.\n\n**Worked example:** if FACE is coded 6-1-3-5, the code is simply the letter positions (F=6, A=1, C=3, E=5). So HEAD = H8, E5, A1, D4 = **8-5-1-4**.\n\n**Exam tip:** for reversal codes, just write the word backwards. Do not overthink it.",
+            "A systematic 4-step routine cracks any code without guessing:\n1. Line up the word and its code letter-by-letter, vertically.\n2. Compute the shift for EACH position (code letter position minus original letter position).\n3. Read the shift pattern: all equal (+2, +2, +2) = fixed shift; increasing (+1, +2, +3) = positional shift; mirrored = reversal.\n4. Apply the confirmed pattern to the question word.\n\n**Worked example:** If FACE is coded 6-1-3-5, check the positions: F=6, A=1, C=3, E=5 — the code IS the letter positions. So HEAD = H8, E5, A1, D4 = **8-5-1-4**.\n\n**Worked example (positional shift):** If DOG -> EQJ, compute per position: D->E is +1, O->Q is +2, G->J is +3. The shift grows by position. Then CAT -> C+1, A+2, T+3 = **DCW**.\n\n**Worked example (mirror code):** A=Z, B=Y, C=X (position k maps to 27-k). Then CAB -> X, Z, Y = **XZY**. If shifts look like wild jumps that sum to 27, test the mirror.\n\n**Common mistake:** Overthinking reversal codes. If WORD -> DROW, the rule is \"write it backwards\" — nothing deeper. Spend 5 seconds checking reversal FIRST because it is instant to verify and exams use it more than students expect.\n\n**Exam tip:** When the question gives TWO coded examples, decode the rule from the first and VERIFY on the second before answering. A rule consistent across two examples is almost certainly the intended one.",
           sourceIds: ["rs-aggarwal-reasoning"],
         },
       ],
@@ -279,7 +282,7 @@ const reasoning: Section = {
           title: "Seating arrangements",
           minutes: 6,
           body:
-            "Draw the seats first. **Place the absolute clues (extreme ends, fixed seats) before the relative ones** (\"X is to the left of Y\").\n\n**Linear vs circular:** in a circle, note whether people face the **centre** or **outward** - it flips left and right. In a circle of n people, the person directly opposite seat k is seat **k + n/2**.\n\n**Worked example:** 6 people sit around a circular table facing the centre. Opposite seat 2 is seat 2 + 6/2 = seat **5**.\n\n**Exam tip:** keep two diagrams if facing direction is unclear, and discard the one that breaks a clue.",
+            "**Why recruiters test this:** Seating puzzles simulate requirement-juggling — holding 5-6 constraints simultaneously and finding the arrangement that satisfies all of them. Infosys and Accenture place these as their medium-hard reasoning anchors.\n\nThe order of operations:\n1. **Draw the seats first** — boxes for a row, a circle with positions for a round table.\n2. **Place absolute clues first:** \"A sits at the extreme left\", \"B is third from the right\" — these are fixed pins.\n3. **Then relative clues:** \"X is immediately left of Y\" — these attach to the pins.\n4. **Use negative clues last** (\"C is not adjacent to D\") to eliminate among remaining cases.\n\nLinear vs circular — the key differences:\n- In a circle, check whether people face the **centre** or **outward** — facing outward FLIPS everyone's left and right.\n- In a circle of n people, the seat directly opposite seat k is seat **k + n/2** (wrapping around).\n\n**Worked example:** 6 people around a circular table facing the centre. Opposite seat 2 = 2 + 3 = seat **5**. Facing the centre, seat 2's LEFT neighbour is seat 3 (clockwise) — left for the sitter is clockwise when facing inward.\n\n**Worked example (linear):** Five seats, A at the extreme left, C immediately right of A, B at the extreme right. Layout: A C _ _ B — the two flexible people fill seats 3 and 4 according to any remaining clue.\n\n**Common mistake:** Treating \"immediately right\" and \"somewhere to the right\" as the same clue. Immediately right = the very next seat. To the right = any later seat. Mixing these collapses valid cases or creates false contradictions.\n\n**Exam tip:** When a clue allows two placements, draw BOTH diagrams side by side and keep applying clues to both. The wrong one will contradict a later clue and die on its own — this is faster and safer than agonising over which branch is right.",
           sourceIds: ["rs-aggarwal-reasoning"],
         },
         {
@@ -287,7 +290,7 @@ const reasoning: Section = {
           title: "Ranking and ordering",
           minutes: 5,
           body:
-            "**The ranking identity:** in a row of N, position-from-top + position-from-bottom = **N + 1**. So if you know two of the three, you know the third.\n\n**Worked example:** Ravi is 7th from the top and 26th from the bottom. Total = 7 + 26 - 1 = **32**. (Subtract 1 because Ravi is counted in both.)\n\n**For \"taller/older than\" puzzles**, build a single ordered line from the comparisons, e.g. C > A > B > D, then read off the answer.\n\n**Common mistake:** forgetting the -1 when both counts include the same person.",
+            "Ranking questions all run on one identity. Lock it in and every variant becomes substitution.\n\n**The ranking identity:** in a row of N people, position-from-top + position-from-bottom = **N + 1**. Know any two of the three values and the third is forced.\n\nThe two question shapes:\n1. **Find the total:** both positions given for ONE person -> Total = posTop + posBottom - 1 (subtract 1 because that person is counted from both ends).\n2. **Find the other position:** total and one position given -> other position = N + 1 - known position.\n\n**Worked example:** Ravi is 7th from the top and 26th from the bottom. Total = 7 + 26 - 1 = **32** students.\n\n**Worked example:** In a row of 40, a boy is 15th from the left. From the right he is 40 - 15 + 1 = **26th**.\n\n**Worked example (between two people):** In a row of 50, A is 18th from the left, B is 20th from the right. B from the left = 50 - 20 + 1 = 31. People between them = 31 - 18 - 1 = **12** (subtract 1 to exclude both endpoints).\n\nFor \"taller/older than\" comparison puzzles:\n1. Convert every sentence into a > relation.\n2. Chain them into ONE ordered line (C > A > B > D).\n3. Read the answer (tallest = leftmost, shortest = rightmost).\n\n**Common mistake:** Forgetting the -1 when one person is counted from both ends, or forgetting the +1 when flipping a position. Run a tiny sanity check: in a row of 3, the middle person is 2nd from both ends — 2 + 2 - 1 = 3 ✓.\n\n**Exam tip:** \"People between A and B\" ALWAYS excludes A and B themselves. Exams bank on students forgetting the second -1 — double-check that step before marking the answer.",
           sourceIds: ["rs-aggarwal-reasoning"],
         },
       ],
@@ -318,7 +321,7 @@ const verbal: Section = {
           title: "Subject-verb agreement",
           minutes: 6,
           body:
-            "The verb must agree with the **subject**, not the nearest noun. \"The **list** of items **is** on the desk\" (list is singular, even though \"items\" sits next to the verb).\n\n**Singular by rule:** each, every, one of, either, neither -> take a singular verb. \"**Each** of the boys **has** a book.\"\n\n**Neither ... nor / either ... or:** the verb agrees with the **nearer** subject. \"Neither the manager nor the **employees were** present.\"\n\n**Common mistake:** letting a long phrase between subject and verb pull the agreement. Cover the phrase and check subject-to-verb directly.",
+            "**Why recruiters test this:** Error-spotting is the highest-frequency verbal question in Wipro, Cognizant and Accenture papers, and 60-70% of all planted errors are subject-verb agreement. One rule family, huge mark share.\n\nThe master rule: **the verb agrees with the SUBJECT, not the nearest noun.** Exams deliberately park a plural noun right before the verb to mislead your ear.\n\nThe checking method:\n1. Find the verb.\n2. Ask \"who or what is doing this?\" — that is the subject.\n3. Mentally DELETE everything between subject and verb (usually an \"of the ...\" phrase).\n4. Match: singular subject -> singular verb.\n\n**Worked example:** \"The list of items IS on the desk.\" Delete \"of items\": the LIST is on the desk. 'Items' was bait — the subject is 'list', singular.\n\nSingular by rule — these ALWAYS take a singular verb:\n- each, every, either, neither, anyone, everyone, nobody\n- \"Each of the boys HAS a book\" — 'each' rules, not 'boys'.\n- 'The number of' is singular (\"The number of students IS rising\") but 'A number of' is plural (\"A number of students ARE absent\").\n\n**Worked example:** \"Neither the manager nor the employees WERE present.\" With neither...nor / either...or, the verb agrees with the NEARER subject — here 'employees' (plural) sits next to the verb, so 'were'.\n\n**Common mistake:** Trusting your ear instead of the rule. \"The quality of these products are good\" SOUNDS fine because 'products are' is a natural pair — but the subject is 'quality', so it must be 'IS good'. When ear and rule disagree, the rule wins.\n\n**Exam tip:** In error-spotting questions, jump straight to the verb and run the 4-step check before reading anything else. If agreement is clean, then look at tense and prepositions — in that order of likelihood.",
           sourceIds: ["high-agg-verbal"],
         },
         {
@@ -326,7 +329,7 @@ const verbal: Section = {
           title: "Tenses and confusable words",
           minutes: 5,
           body:
-            "Keep tense consistent within a sentence unless time genuinely changes.\n\n**Confusables that recruiters love to test:**\n- its (possessive) vs it's (it is)\n- their / there / they're\n- affect (verb, to influence) vs effect (noun, a result)\n- fewer (countable) vs less (uncountable)\n- since (a point in time) vs for (a duration)\n\n**Worked example:** \"He has worked here **since** 2015\" (a point in time), but \"for five years\" (a duration).\n\n**Exam tip:** when two options differ by only one word, the test is almost always one of these confusables.",
+            "Tense errors and confusable word pairs are the second-biggest mark source in verbal sections — and they are fully learnable, unlike vocabulary luck.\n\nThe tense principle: **keep tense consistent within a sentence unless the time genuinely changes.** \"He SAID that he IS coming\" mixes past and present without reason — \"he said that he WAS coming.\"\n\nThe high-frequency tense patterns:\n1. **Present perfect + since/for:** \"He HAS WORKED here SINCE 2015\" (point in time) / \"FOR five years\" (duration).\n2. **Past perfect for the earlier of two past events:** \"The train HAD LEFT before I reached.\"\n3. **No 'will' in if-clauses:** \"If it RAINS, we will cancel\" — never \"if it will rain.\"\n\nConfusables recruiters love — drill this list:\n- **its** (possessive) vs **it's** (= it is)\n- **their / there / they're**\n- **affect** (verb: to influence) vs **effect** (noun: a result)\n- **fewer** (countable: fewer questions) vs **less** (uncountable: less time)\n- **since** (point in time) vs **for** (duration)\n- **between** (two things) vs **among** (three or more)\n\n**Worked example:** \"The new policy will ___ all employees.\" The blank is a VERB (to influence) -> **affect**. \"The ___ of the policy was immediate\" needs a NOUN -> **effect**. Verb = affect, noun = effect — the a/e initials match action/end-result.\n\n**Worked example:** \"There are ___ students this year than last.\" Students are countable -> **fewer**, not less. Supermarket signs say \"10 items or less\" — and they are wrong.\n\n**Common mistake:** Choosing by sound in its/it's questions. Expand the contraction aloud: \"the dog wagged IT IS tail\" is obviously wrong -> 'its'. The expansion test never fails.\n\n**Exam tip:** When two answer options differ by a single word, the question is almost certainly testing one of the confusable pairs above. Identify WHICH pair, recall the rule, and ignore how the options sound.",
           sourceIds: ["high-agg-verbal"],
         },
       ],
@@ -445,7 +448,7 @@ const coding: Section = {
           title: "Big-O in plain English",
           minutes: 6,
           body:
-            "Big-O describes **how the running time grows as the input n grows** - it ignores constants and focuses on the shape.\n\nFrom fastest to slowest: **O(1) < O(log n) < O(n) < O(n log n) < O(n^2)**.\n- O(1): one step regardless of n (array access by index).\n- O(n): one pass over the data (a single loop).\n- O(n^2): a loop inside a loop over n (compare every pair).\n\n**Worked example:** two nested loops each running n times do n x n = n^2 work -> **O(n^2)**.\n\n**Exam tip:** count the deepest level of nested loops over n. That exponent is usually your Big-O.",
+            "**Why recruiters test this:** Every technical interviewer — Zoho, TCS Digital, Infosys — asks \"what is the complexity of your solution?\" within the first five minutes. Stating Big-O confidently, unprompted, is the cheapest way to sound like an engineer instead of a student.\n\nBig-O describes **how running time GROWS as the input n grows**. It ignores constants and machine speed — it captures the SHAPE of the growth.\n\nThe ladder, fastest to slowest:\n- **O(1)** — constant: same work regardless of n (array access by index, hash lookup).\n- **O(log n)** — halving: each step cuts the problem in half (binary search). For n = 1,000,000 that is only ~20 steps.\n- **O(n)** — linear: one pass over the data (a single loop, finding a max).\n- **O(n log n)** — the sorting tier (merge sort, quicksort average, built-in sorts).\n- **O(n^2)** — quadratic: a loop inside a loop (comparing every pair). Fine for n = 1,000; fatal for n = 1,000,000.\n\nHow to read complexity off code:\n1. A loop over n -> O(n).\n2. A loop INSIDE a loop, both over n -> O(n^2).\n3. Two loops one AFTER the other -> n + n = still O(n). Sequence adds; nesting multiplies.\n4. A loop that halves the range each step -> O(log n).\n\n**Worked example:** Two nested loops each running n times do n x n = **O(n^2)** work. But a loop over n containing a CONSTANT inner loop of 10 does 10n work = **O(n)** — the constant disappears.\n\n**Worked intuition:** Constraints tell you the required complexity. If n can be 10^5, an O(n^2) solution does 10^10 operations — far too slow (~1 second buys you about 10^8). You NEED O(n log n) or better. Read the constraints before choosing your approach.\n\n**Common mistake:** Calling two sequential loops O(n^2). Only nesting multiplies. Trace whether the second loop runs INSIDE each iteration of the first, or after it finishes.\n\n**Exam tip:** State complexity as part of your answer before being asked: \"This is O(n) time and O(1) space.\" Then offer the trade-off: \"I could trade memory for speed with a hash map.\" That one habit upgrades the whole interview.",
           sourceIds: ["gfg-dsa"],
         },
         {
@@ -453,7 +456,7 @@ const coding: Section = {
           title: "Hashing: trade memory for speed",
           minutes: 6,
           body:
-            "A **hash set / hash map** answers \"have I seen this value?\" in **O(1) average** time. That single idea turns many O(n^2) brute-force solutions into O(n).\n\n**Two-Sum example:** to find two numbers that add to a target, loop once and keep seen values in a set. For each x, check if (target - x) is already in the set. That is **O(n)** time and O(n) space, versus the O(n^2) double loop.\n\n**The trade-off:** you spend extra memory (the set) to save time. That is usually a good deal in interviews.\n\n**Common mistake:** using nested loops when a single pass with a hash set would do.",
+            "One idea upgrades more brute-force solutions than any other: a **hash set / hash map answers \"have I seen this value?\" in O(1) average time**. Nested loops that exist only to SEARCH can almost always be replaced by one pass plus a hash structure.\n\nThe recognition pattern — reach for hashing when the problem says:\n1. \"Find duplicates / find the first repeated element\"\n2. \"Count the frequency of each ...\"\n3. \"Do two numbers sum to a target?\"\n4. \"Has this element appeared before?\"\n\n**Worked example (Two-Sum):** Find two numbers adding to target 10 in [3, 8, 5, 2, 7].\n- Brute force: check every pair — O(n^2).\n- Hash way: walk once, storing seen values in a set. At each x, ask \"is (10 - x) already in the set?\" At 3: need 7, not seen. At 8: need 2, not seen. At 5: need 5, not seen. At 2: need 8 — SEEN ✓. Answer: (8, 2) in **O(n)** time, O(n) space.\n\n**Worked example (first repeated character):** For \"placement\": build counts in one pass {p:1, l:1, a:2, c:1, e:2, m:1, n:1, t:1}, then a second pass finds the first char with count > 1 -> **a**. Two linear passes = O(n), versus O(n^2) comparing every pair of positions.\n\nThe trade-off stated plainly: **you spend O(n) extra memory to delete a factor of n from the time.** For n = 100,000 that turns 10 billion operations into 200,000 — the interview answer is almost always \"worth it\", but SAY the trade-off aloud to show you see it.\n\n**Common mistake:** Writing a nested loop whose inner loop only checks \"does this value exist elsewhere?\" That inner loop IS a search — replace it with a set lookup and the solution drops a complexity tier.\n\n**Exam tip:** In Zoho and Infosys coding rounds, the brute-force version usually passes the visible test cases but times out on hidden large inputs. If your solution has nested loops over n, assume there is a hash (or sorting or two-pointer) version they expect — find it before submitting.",
           sourceIds: ["gfg-dsa"],
         },
       ],
@@ -985,7 +988,7 @@ const quantPermutations: Chapter = {
   ],
   quiz: [
     q("Factorials", "easy", "The value of 5! is:", ["60", "100", "120", "24"], 2, "5! = 5 x 4 x 3 x 2 x 1 = 120.", "rs-aggarwal-quant"),
-    q("Combinations", "medium", "The value of 4C2 (choose 2 from 4) is:", ["4", "6", "8", "12"], 1, "4C2 = 4! / (2! - 2!) = 6.", "rs-aggarwal-quant"),
+    q("Combinations", "medium", "The value of 4C2 (choose 2 from 4) is:", ["4", "6", "8", "12"], 1, "4C2 = 4! / (2! x 2!) = 24 / (2 x 2) = 6.", "rs-aggarwal-quant"),
     q("Permutations", "easy", "Number of ways to arrange the 3 letters of 'CAT':", ["3", "6", "9", "12"], 1, "All letters differ -> 3! = 6.", "indiabix-aptitude"),
     q("Probability", "medium", "A fair die is rolled. Probability of getting an even number:", ["1/6", "1/3", "1/2", "2/3"], 2, "Even numbers are 2, 4, 6 -> 3/6 = 1/2.", "rs-aggarwal-quant"),
     q("Probability", "medium", "Two fair coins are tossed. Probability of two heads:", ["1/2", "1/4", "1/3", "1/8"], 1, "Independent events: 1/2 x 1/2 = 1/4.", "rs-aggarwal-quant"),
@@ -1429,12 +1432,436 @@ const csSystemDesignBasics: Chapter = {
   ],
 }
 
+// ---- NEW QUANT CHAPTERS ----
+
+const quantMensuration: Chapter = {
+  id: "quant-mensuration",
+  title: "Mensuration: Areas, Perimeters & Volumes",
+  summary: "The exact formulas, when to use which, and how to spot unit traps fast.",
+  lessons: [
+    {
+      id: "l-men-1",
+      title: "2-D shapes: area and perimeter",
+      minutes: 6,
+      body:
+        "**Step-by-step method for any 2-D problem:**\n1. Identify the shape.\n2. Write the exact formula.\n3. Check units (if the question mixes cm and m, convert first).\n4. Calculate.\n\n**Formulas to memorise:**\n- Rectangle: Area = l x b, Perimeter = 2(l + b).\n- Square: Area = s^2, Perimeter = 4s.\n- Circle: Area = π r^2, Circumference = 2πr (use π ≈ 22/7 or 3.14).\n- Triangle: Area = (1/2) x base x height. Right triangle: Pythagoras a^2 + b^2 = c^2.\n\n**Worked example:** A rectangle is 8 cm long and 5 cm wide. Area = 8 x 5 = **40 cm²**. Perimeter = 2(8 + 5) = **26 cm**.\n\n**Speed shortcut for circles:** Area of circle = (22/7) x r x r. If the radius doubles, area becomes **4 times** (because r^2 quadruples).\n\n**Exam trap:** Perimeter uses the boundary length; area uses square units. Never confuse them — examiners swap the two in wrong options.",
+      sourceIds: ["rs-aggarwal-quant"],
+    },
+    {
+      id: "l-men-2",
+      title: "3-D shapes: volume and surface area",
+      minutes: 5,
+      body:
+        "**Step-by-step method for any 3-D problem:**\n1. Identify the shape (cube, cuboid, cylinder, cone, sphere).\n2. Decide: total surface area or volume?\n3. Write the formula, substitute, calculate.\n\n**Formulas to memorise:**\n- Cube (side s): Volume = s^3, TSA = 6s^2.\n- Cuboid: Volume = l x b x h, TSA = 2(lb + bh + hl).\n- Cylinder (radius r, height h): Volume = π r^2 h, CSA = 2πrh.\n- Sphere: Volume = (4/3)πr^3, SA = 4πr^2.\n\n**Worked example:** A cube with side 4 cm. Volume = 4^3 = **64 cm³**. TSA = 6 x 4^2 = **96 cm²**.\n\n**Key insight:** Volume is measured in cm³ (cubed units), surface area in cm² (squared units). Examiners often include both in one question to test if you use the right formula.\n\n**Company context:** Mensuration appears in TCS NQT, Wipro and Cognizant aptitude sections, usually as 1-2 questions per test.",
+      sourceIds: ["rs-aggarwal-quant", "indiabix-aptitude"],
+    },
+  ],
+  quiz: [
+    q("Mensuration", "easy", "The area of a rectangle with length 10 cm and breadth 6 cm is:", ["60 cm", "32 cm²", "60 cm²", "16 cm²"], 2, "Area = l x b = 10 x 6 = 60 cm².", "rs-aggarwal-quant"),
+    q("Mensuration", "easy", "The perimeter of a square with side 7 cm is:", ["28 cm", "49 cm", "14 cm", "21 cm"], 0, "Perimeter = 4 x 7 = 28 cm.", "rs-aggarwal-quant"),
+    q("Mensuration", "medium", "The area of a circle with radius 7 cm is (use π = 22/7):", ["44 cm²", "154 cm²", "22 cm²", "132 cm²"], 1, "Area = (22/7) x 7 x 7 = 154 cm².", "indiabix-aptitude"),
+    q("Mensuration", "medium", "The volume of a cube with side 5 cm is:", ["25 cm³", "75 cm³", "125 cm³", "150 cm³"], 2, "Volume = 5^3 = 125 cm³.", "rs-aggarwal-quant"),
+    q("Mensuration", "medium", "A cylinder has radius 7 cm and height 10 cm. Its volume is (π = 22/7):", ["1540 cm³", "440 cm³", "770 cm³", "1070 cm³"], 0, "Volume = (22/7) x 7^2 x 10 = 22 x 7 x 10 = 1540 cm³.", "rs-aggarwal-quant"),
+    q("Mensuration", "hard", "If the radius of a circle doubles, its area becomes:", ["Twice", "Three times", "Four times", "Half"], 2, "Area = πr²; when r becomes 2r, area = π(2r)² = 4πr² = 4 times the original.", "rs-aggarwal-quant"),
+  ],
+}
+
+const quantAlgebra: Chapter = {
+  id: "quant-algebra",
+  title: "Algebra, Equations & Word Problems",
+  summary: "Translate words into one equation, solve in one step. No guess-and-check needed.",
+  lessons: [
+    {
+      id: "l-alg-1",
+      title: "Translate words into algebra",
+      minutes: 6,
+      body:
+        "**The single most important skill:** convert the sentence into an equation BEFORE calculating anything.\n\n**Translation guide:**\n- 'a number' = let it be x\n- 'twice a number' = 2x\n- 'five more than x' = x + 5\n- 'five less than x' = x - 5\n- 'the sum of two numbers is 30' -> a + b = 30\n- 'one number is 4 more than the other' -> b = a + 4\n\n**Step-by-step method:**\n1. Read the full problem.\n2. Assign a variable (x) to the unknown.\n3. Write one equation from the given condition.\n4. Solve for x.\n5. Re-read to check if the answer makes sense.\n\n**Worked example:** 'A number added to 3 times itself is 40.' Let the number = x. Then x + 3x = 40 -> 4x = 40 -> x = **10**.\n\n**Exam trap:** Examiners say 'exceeds by' to mean subtraction. 'A exceeds B by 5' means A - B = 5, or A = B + 5.",
+      sourceIds: ["rs-aggarwal-quant"],
+    },
+    {
+      id: "l-alg-2",
+      title: "Two-variable systems and age problems",
+      minutes: 6,
+      body:
+        "**Two-variable problems need two equations.** Look for two conditions in the problem and write one equation each.\n\n**Worked example:** 'The sum of two numbers is 14 and their difference is 4.' \n-> a + b = 14 and a - b = 4. Add both: 2a = 18 -> a = 9, b = 5.\n\n**Age problems — the golden rule:** Write present ages as variables first. 'n years ago' = subtract n; 'after n years' = add n.\n\n**Worked example:** 'Father is 4 times the son's age. In 8 years he will be twice the son's age.'\nLet son = x, father = 4x.\nIn 8 years: 4x + 8 = 2(x + 8) -> 4x + 8 = 2x + 16 -> 2x = 8 -> x = 4.\nSon is **4**, father is **16**.\n\n**Inequalities:** If the problem says 'at least k', use ≥ k; 'at most k', use ≤ k. Solve like an equation but flip the sign when multiplying/dividing by a negative.\n\n**Exam tip:** For two-number problems, adding and subtracting the two equations is almost always faster than substitution.",
+      sourceIds: ["rs-aggarwal-quant", "indiabix-aptitude"],
+    },
+  ],
+  quiz: [
+    q("Algebra", "easy", "If 3x = 18, then x =", ["3", "5", "6", "9"], 2, "x = 18 / 3 = 6.", "rs-aggarwal-quant"),
+    q("Algebra", "easy", "The sum of two numbers is 20 and one is 4 more than the other. The larger number is:", ["10", "12", "14", "8"], 1, "a + b = 20, a = b + 4 -> 2b + 4 = 20 -> b = 8, a = 12.", "rs-aggarwal-quant"),
+    q("Algebra", "medium", "A number added to 5 times itself is 48. The number is:", ["6", "7", "8", "9"], 2, "x + 5x = 48 -> 6x = 48 -> x = 8.", "indiabix-aptitude"),
+    q("Ages", "medium", "A father is 3 times his son's age. In 12 years, he will be twice his son's age. The son's age now is:", ["10", "12", "14", "15"], 1, "3x + 12 = 2(x + 12) -> x + 12 = 24 -> x = 12.", "rs-aggarwal-quant"),
+    q("Algebra", "medium", "The difference of two numbers is 8 and their sum is 32. The larger number is:", ["18", "20", "22", "24"], 1, "Add equations: 2a = 40 -> a = 20.", "rs-aggarwal-quant"),
+    q("Ages", "hard", "Asha is 5 years older than Priya. Three years ago Asha was twice Priya's age. Asha's present age is:", ["11", "13", "15", "17"], 1, "Let Priya = x, Asha = x+5. Three years ago: x+5-3 = 2(x-3) -> x+2 = 2x-6 -> x = 8. Asha = 13.", "rs-aggarwal-quant"),
+  ],
+}
+
+// ---- NEW REASONING CHAPTERS ----
+
+const reasonInputOutput: Chapter = {
+  id: "reason-input-output",
+  title: "Input-Output & Machine Operations",
+  summary: "Find the rule from step 1 to step 2. Apply it consistently to crack the rest.",
+  lessons: [
+    {
+      id: "l-io-1",
+      title: "How input-output machines work",
+      minutes: 6,
+      body:
+        "Input-Output questions give you a 'machine' that transforms a word or number sequence step by step. Your job is to find the rule.\n\n**Step-by-step method:**\n1. Look at the INPUT (the original sequence).\n2. Look at Step 1 and find WHAT changed — a number moved, a word is sorted alphabetically, something is reversed.\n3. Confirm the same rule applies from Step 1 to Step 2.\n4. Apply that rule to find the next step, or trace backwards to find the input.\n\n**Common machine rules in placement exams:**\n- **Number rearrangement:** largest/smallest number moves to one end at each step.\n- **Alphabetical sort:** words are arranged A-Z from left or right in each step.\n- **Shift by position:** each element shifts one/two places.\n- **Interchange:** every two adjacent elements swap.\n\n**Worked example:** Input: 71 35 48 20 13. Step 1: 71 48 35 20 13. Step 2: 71 48 35 20 13. Rule: numbers are being sorted in descending order, one number fixed from the left at each step.\n\n**Exam tip:** always check BOTH the start and the end — machines in placement tests almost always end in ascending or descending order.",
+      sourceIds: ["rs-aggarwal-reasoning"],
+    },
+    {
+      id: "l-io-2",
+      title: "Solving word-arrangement machines",
+      minutes: 5,
+      body:
+        "**Word machines** rearrange words in a sentence or list by a fixed rule, often alphabetical or by word length.\n\n**Common rules:**\n1. Sort words alphabetically from left → right (one word fixed per step).\n2. Sort by length (shortest to longest or vice versa).\n3. Reverse the whole sequence every step.\n4. Move a specific-pattern word (e.g. all words starting with a vowel) to one end.\n\n**Worked example:**\nInput: blue red orange green pink\nStep 1: blue green orange pink red (sort A-Z from right — only 'red' is last now).\nStep 2: blue green orange pink red (already A-Z — done in one step if just alphabetical sort).\n\n**For 'find the input' questions:** reverse the machine's steps. If Step 3 moves the smallest to the left, then the 'input' had that element somewhere else.\n\n**Common mistake:** assuming the same number of steps always. Count the steps shown and confirm the rule holds for every transition, not just the first one.",
+      sourceIds: ["rs-aggarwal-reasoning", "indiabix-aptitude"],
+    },
+  ],
+  quiz: [
+    q("Input-Output", "easy", "A machine sorts numbers in ascending order, one per step from the left. Input: 9 3 7 1 5. After Step 1, the sequence is:", ["1 3 7 9 5", "1 9 3 7 5", "3 9 7 1 5", "1 3 9 7 5"], 1, "Step 1 moves the smallest (1) to position 1: 1 9 3 7 5.", "rs-aggarwal-reasoning"),
+    q("Input-Output", "easy", "After Step 2, the above sequence becomes:", ["1 3 9 7 5", "1 3 7 9 5", "1 9 3 5 7", "3 1 7 9 5"], 0, "Step 2 moves next smallest (3) to position 2: 1 3 9 7 5.", "rs-aggarwal-reasoning"),
+    q("Input-Output", "medium", "A machine rearranges words alphabetically from the left one step at a time. Input: red blue pink. After Step 1, the sequence is:", ["red pink blue", "blue red pink", "pink red blue", "blue pink red"], 1, "Step 1 places the first alphabetically ('blue') at position 1: blue red pink.", "indiabix-aptitude"),
+    q("Input-Output", "medium", "Input: 5 2 8 4 1. A machine moves the largest number to the right end each step. After Step 1:", ["5 2 4 1 8", "1 2 4 5 8", "2 5 4 1 8", "5 2 8 1 4"], 0, "Largest (8) moves to the right end: 5 2 4 1 8.", "rs-aggarwal-reasoning"),
+    q("Input-Output", "hard", "After Step 2 of the above (largest to right each time), the sequence is:", ["1 2 4 5 8", "5 2 4 1 8", "2 4 1 5 8", "5 4 2 1 8"], 2, "Step 2 moves next largest (5) to second from right: 2 4 1 5 8.", "rs-aggarwal-reasoning"),
+  ],
+}
+
+const reasonStatements: Chapter = {
+  id: "reason-statements",
+  title: "Statement-Assumption & Statement-Argument",
+  summary: "Two specific rules decide everything: implicit vs explicit, and strong vs weak arguments.",
+  lessons: [
+    {
+      id: "l-stmt-1",
+      title: "Statement-Assumption: what is taken for granted",
+      minutes: 6,
+      body:
+        "An **assumption** is something not stated in the sentence but that MUST be true for the statement to make sense.\n\n**The golden rule:** An assumption is IMPLICIT (hidden but necessary). If it is already stated in the sentence, it is NOT an assumption — it is a given fact.\n\n**Step-by-step method:**\n1. Read the statement.\n2. Ask: 'For this statement to be true, what must the speaker silently believe?'\n3. Check: is it mentioned explicitly? If yes, NOT an assumption.\n4. Check: could the statement exist without it? If yes, NOT an assumption.\n\n**Worked example:**\nStatement: 'A sign outside a shop says — Apply sunscreen before going outdoors.'\nAssumption I: People go outdoors. ✓ **Implicit and necessary** — the sign would make no sense if no one went outside.\nAssumption II: Sunscreen protects from the sun. ✓ **Implicit and necessary** — otherwise why recommend it?\nAssumption III: People do not apply sunscreen. ✗ **Not necessarily assumed** — the sign could be a reminder even for people who sometimes do.\n\n**Exam trap:** Do not confuse an assumption with an inference. An assumption is what you MUST believe before you act; an inference is what you conclude AFTER reading the facts.",
+      sourceIds: ["rs-aggarwal-reasoning"],
+    },
+    {
+      id: "l-stmt-2",
+      title: "Statement-Argument: strong vs weak",
+      minutes: 5,
+      body:
+        "In Statement-Argument questions, a policy or idea is stated, and two arguments (for or against) are given. You must judge whether each is **strong** or **weak**.\n\n**A STRONG argument:**\n- Is directly relevant to the statement.\n- Is based on solid reasoning or established fact.\n- Would actually change a reasonable person's decision.\n\n**A WEAK argument:**\n- Is based on emotion, personal feeling, or vague claims ('it has always been done this way').\n- Is irrelevant to the core issue.\n- Is a very minor point that does not affect the main decision.\n\n**Worked example:**\nStatement: Should school uniforms be made compulsory?\nArgument I: Yes, it reduces visible inequality among students. → **STRONG** (directly addresses a real social concern).\nArgument II: No, it is uncomfortable in summer. → **WEAK** (a minor practical complaint, not a fundamental objection).\nArgument III: No, children have always worn different clothes. → **WEAK** (tradition alone is not a reason; examiners consider 'it has always been done' weak).\n\n**Exam tip:** In competitive exams, arguments based on facts and social/economic impact are almost always strong; arguments based on feelings or tradition are almost always weak.",
+      sourceIds: ["rs-aggarwal-reasoning"],
+    },
+  ],
+  quiz: [
+    q("Statement-Assumption", "medium", "Statement: 'Buy fresh fruits from our store — they are delivered daily.' Which assumption is implicit? A: People prefer fresh fruits. B: The store makes a profit.", ["Only A", "Only B", "Both A and B", "Neither"], 0, "A is implicit — the sign only makes sense if people value freshness. B is irrelevant to the statement's meaning.", "rs-aggarwal-reasoning"),
+    q("Statement-Assumption", "medium", "Statement: 'Use stairs instead of the lift for better health.' Assumption: People use lifts regularly.", ["Implicit", "Not implicit", "Cannot say", "Partially implicit"], 0, "The advice only makes sense if people currently use lifts; the assumption that they do is implicit.", "rs-aggarwal-reasoning"),
+    q("Statement-Argument", "medium", "Statement: Should exams be made open-book? Argument: Yes, it tests understanding rather than memory. Is the argument strong or weak?", ["Strong", "Weak", "Neither", "Cannot say"], 0, "It directly addresses the purpose of assessment — a relevant, reasoned point. Strong.", "rs-aggarwal-reasoning"),
+    q("Statement-Argument", "medium", "Statement: Should public transport be free? Argument: No, people have always paid for transport. Is the argument strong or weak?", ["Strong", "Weak", "Neither", "Both"], 1, "Tradition is not a reasoned objection. The argument is weak.", "rs-aggarwal-reasoning"),
+    q("Statement-Assumption", "hard", "Statement: 'Read this guide carefully before installing the software.' Assumption I: Users can read. Assumption II: The software requires special steps to install.", ["Only I", "Only II", "Both I and II", "Neither"], 2, "I is implicit (addressing someone who can read) and II is implicit (otherwise the guide would be unnecessary). Both follow.", "rs-aggarwal-reasoning"),
+  ],
+}
+
+// ---- NEW VERBAL CHAPTER ----
+
+const verbalCriticalReasoning: Chapter = {
+  id: "verbal-critical",
+  title: "Critical Reasoning: Inference & Conclusion",
+  summary: "Three rules that decide if a conclusion is valid — no guesswork needed.",
+  lessons: [
+    {
+      id: "l-cr-1",
+      title: "What a valid inference looks like",
+      minutes: 6,
+      body:
+        "A **valid inference** is a conclusion that MUST be true if the given statements are true. It cannot go beyond the information given.\n\n**Three rules for a valid inference:**\n1. **It must be supported by the passage** — not by your outside knowledge.\n2. **It must be definite, not speculative** — 'probably' and 'might' are warning signs.\n3. **It must not be too broad** — never infer a universal (all, always, never) from a limited example.\n\n**Step-by-step method:**\n1. Read the passage for its one main claim.\n2. For each conclusion option, ask: 'Can I prove this directly from the passage?'\n3. If yes and only yes → valid inference.\n4. If you need outside knowledge or it could be false → not valid.\n\n**Worked example:**\nPassage: 'Studies show that students who read daily perform better in language tests.'\nConclusion A: All good readers pass language tests. ✗ Too broad — 'better performance' ≠ 'all pass'.\nConclusion B: Reading daily is associated with better language test scores. ✓ Directly supported, stays within the passage.\nConclusion C: Students who do not read will fail. ✗ Not stated — we do not know about non-readers from this passage.",
+      sourceIds: ["high-agg-verbal", "rs-aggarwal-reasoning"],
+    },
+    {
+      id: "l-cr-2",
+      title: "Strengthening and weakening arguments",
+      minutes: 5,
+      body:
+        "Some questions ask you to pick the statement that **strengthens** (supports) or **weakens** (attacks) a given argument.\n\n**To strengthen an argument:** find the option that provides extra evidence in favour of the conclusion, or removes a potential objection.\n\n**To weaken an argument:** find the option that provides a reason to doubt the conclusion, or shows that the cause–effect link does not hold.\n\n**Worked example:**\nArgument: 'People who exercise daily are healthier, so companies should mandate daily exercise for all employees.'\nStrengthen: 'Studies show employee healthcare costs drop 30% in companies with mandatory exercise programmes.' ✓ Direct supporting evidence.\nWeaken: 'Many employees report injury from mandatory exercise programmes.' ✓ Shows a downside that undermines the policy.\n\n**Exam tip:** In strengthen/weaken questions, always pick the option that is DIRECTLY related to the link between the cause and conclusion, not something loosely related to the general topic.",
+      sourceIds: ["high-agg-verbal"],
+    },
+  ],
+  quiz: [
+    q("Critical Reasoning", "medium", "Passage: 'Our city planted 5,000 trees last year and air quality improved.' Which inference is valid?", ["Trees alone caused the improvement.", "Tree planting and quality improvement happened together in this city.", "All cities should plant trees.", "More trees always improve air quality."], 1, "The passage only says both things happened; it does not prove causation, make universal claims, or recommend policy.", "high-agg-verbal"),
+    q("Critical Reasoning", "medium", "Passage: 'No employee was late this month.' Valid inference:", ["All employees are punctual by nature.", "No employee was late this month.", "The company has strict attendance rules.", "Employees fear punishment."], 1, "Only option B exactly restates what is given — the only safe inference is what the passage says directly.", "rs-aggarwal-reasoning"),
+    q("Critical Reasoning", "medium", "Argument: 'Students who sleep 8 hours score higher.' Which statement STRENGTHENS this?", ["Sleep is enjoyable.", "A study of 10,000 students shows consistent high scores with 8-hour sleep across age groups.", "Some students sleep 6 hours and do fine.", "Sleeping more is always better."], 1, "Broad multi-study evidence directly supports the link claimed in the argument.", "high-agg-verbal"),
+    q("Critical Reasoning", "medium", "The same argument ('Students who sleep 8 hours score higher') is WEAKENED by:", ["Exams are getting harder.", "A controlled study shows similar scores among students sleeping 6 or 8 hours.", "More students study at night.", "Schools start too early."], 1, "It directly challenges the assumed link between 8-hour sleep and higher scores.", "high-agg-verbal"),
+    q("Critical Reasoning", "hard", "Passage: 'Only engineers who pass the ethics exam are promoted.' Inference: 'Some engineers who passed the ethics exam are not promoted.'", ["True", "False", "Cannot say", "True only if stated"], 2, "The passage says passing is required for promotion, but does not say it guarantees promotion. Some passers may or may not be promoted — we cannot say from the passage alone.", "high-agg-verbal"),
+  ],
+}
+
+// ---- CODING: Sorting & Searching ----
+const codingSearchSort: Chapter = {
+  id: "coding-search-sort",
+  title: "Searching, Sorting & Complexity Analysis",
+  summary: "Master binary search, the core sorting algorithms, and Big-O analysis used in every coding interview.",
+  lessons: [
+    {
+      id: "l-ss-1",
+      title: "Linear search vs binary search",
+      minutes: 6,
+      body:
+        "**Linear search:** scan every element one by one until you find the target or exhaust the array. O(n) time, O(1) space. Works on any array.\n\n**Binary search:** requires a **sorted** array. Compare the target with the middle element. If equal, done. If target is smaller, discard the right half; if larger, discard the left half. Repeat on the remaining half.\n\n**Worked example on [2, 5, 8, 12, 16, 23, 38], target=23:**\n1. mid = index 3, value 12. 23 > 12 → search right half [16, 23, 38].\n2. mid = index 5, value 23. Found!\n\n**Why O(log n)?** Each step halves the remaining space. After k steps, only n/2^k elements remain. When that equals 1, k = log₂n.\n\n**Exam tip:** Binary search is only valid on sorted data. If the array is unsorted, sort it first (O(n log n)) — the combined cost is still better than O(n²) brute force for large inputs.",
+      sourceIds: ["gfg-dsa"],
+    },
+    {
+      id: "l-ss-2",
+      title: "Sorting algorithms: bubble, selection, insertion, merge, quick",
+      minutes: 8,
+      body:
+        "**Step-by-step comparison (know each one):**\n\n**Bubble Sort:** Repeatedly compare adjacent elements and swap if out of order. Largest 'bubbles' to the end each pass. O(n²) worst/average, O(n) best (with early-exit flag). Stable. Easy to code, not practical for large inputs.\n\n**Selection Sort:** Find the minimum in the unsorted part, swap it to the front. O(n²) always — but only n-1 swaps total (useful when write cost is high). Not stable.\n\n**Insertion Sort:** Take each element and insert it into its correct position in the sorted prefix. O(n²) worst, O(n) best (nearly sorted). Stable. Best choice for small or nearly-sorted arrays.\n\n**Merge Sort:** Divide in half, sort each half, merge. O(n log n) all cases. Stable. Uses O(n) extra space. Best for linked lists and external sorting.\n\n**Quick Sort:** Pick a pivot, partition so that smaller elements are left and larger are right, recurse on both sides. O(n log n) average, O(n²) worst (sorted array with bad pivot). Not stable. Fastest in practice due to cache-friendliness.\n\n**Summary table:**\n- Merge sort: guaranteed O(n log n), stable, O(n) space.\n- Quick sort: O(n log n) average, not stable, O(log n) space.\n- For production code: use the language's built-in sort (TimSort = merge+insertion, O(n log n), stable).\n\n**Exam tip:** Know the worst case of each. 'Quick sort worst case' is O(n²) — this comes up in every company's assessment.",
+      sourceIds: ["gfg-dsa", "rs-aggarwal-quant"],
+    },
+  ],
+  quiz: [
+    q("Sorting", "easy", "Binary search requires the array to be:", ["Random", "Sorted", "Reversed", "Empty"], 1, "Binary search works by halving the remaining search space, which only works if the array is sorted.", "gfg-dsa"),
+    q("Sorting", "easy", "The worst-case time complexity of bubble sort is:", ["O(n)", "O(n log n)", "O(n²)", "O(log n)"], 2, "Bubble sort compares every pair in the worst case → O(n²).", "gfg-dsa"),
+    q("Sorting", "medium", "Merge sort has O(n log n) time in:", ["Best case only", "Worst case only", "All cases", "Average case only"], 2, "Merge sort always divides and merges in O(n log n) regardless of input order.", "gfg-dsa"),
+    q("Sorting", "medium", "Which sorting algorithm is generally fastest in practice due to cache performance?", ["Bubble sort", "Merge sort", "Quick sort", "Selection sort"], 2, "Quick sort has better cache locality than merge sort, making it faster in practice despite the same average O(n log n).", "gfg-dsa"),
+    q("Searching", "medium", "Binary search on 128 elements requires at most how many comparisons?", ["128", "64", "7", "14"], 2, "log₂(128) = 7. Binary search halves the space each step.", "gfg-dsa"),
+    q("Sorting", "hard", "Which algorithm is preferred when sorting a singly linked list?", ["Quick sort", "Merge sort", "Bubble sort", "Heap sort"], 1, "Merge sort needs no random access — ideal for linked lists. Quick sort relies on O(1) random access for partitioning.", "gfg-dsa"),
+    q("Sorting", "medium", "Insertion sort is most efficient when:", ["The array is random", "The array is nearly sorted", "The array is reversed", "The array is very large"], 1, "Nearly sorted input gives insertion sort O(n) performance — each element moves very few positions.", "gfg-dsa"),
+    q("Sorting", "hard", "The worst case of quick sort (O(n²)) occurs when:", ["All elements are equal", "The pivot is always the median", "The pivot is always the smallest or largest element", "The array is random"], 2, "Choosing the min or max as pivot results in maximally unbalanced partitions, degrading to O(n²).", "gfg-dsa"),
+  ],
+}
+
+// ---- CODING: Stacks, Queues & Hash Tables ----
+const codingStacksQueues: Chapter = {
+  id: "coding-stacks-queues",
+  title: "Stacks, Queues & Hash Tables",
+  summary: "Three data structures every software engineer uses daily — understand them deeply before your first coding interview.",
+  lessons: [
+    {
+      id: "l-sq-1",
+      title: "Stack (LIFO) and Queue (FIFO): operations and real uses",
+      minutes: 7,
+      body:
+        "**Stack — Last In, First Out (LIFO):**\n- Operations: push (add to top), pop (remove from top), peek (view top without removing). O(1) each.\n- Implementation: array with a top index, or a linked list.\n- Real uses:\n  - **Browser back button** (visited pages form a stack — go back = pop).\n  - **Undo/redo** in text editors.\n  - **Function call stack** — every time you call a function, a frame is pushed; when it returns, the frame is popped.\n  - **Balanced parentheses check** — push opening brackets, pop when a closing bracket matches.\n\n**Queue — First In, First Out (FIFO):**\n- Operations: enqueue (add to rear), dequeue (remove from front), peek. O(1) each with a circular array or linked list.\n- Real uses:\n  - **Print queue** — first document sent prints first.\n  - **BFS traversal** — explore level by level.\n  - **Task schedulers** — OS process scheduling.\n\n**Worked example (parentheses check):**\nInput: \"([{}])\"\nStack walk: push '(', push '[', push '{' → see '}' → pop '{' matches → see ']' → pop '[' matches → see ')' → pop '(' matches → stack empty → balanced ✓.\n\n**Common mistake:** Using a list where pop(0) is O(n). For a real queue, use a deque (collections.deque in Python) or a circular buffer for O(1) dequeue.",
+      sourceIds: ["gfg-dsa"],
+    },
+    {
+      id: "l-sq-2",
+      title: "Hash tables: key-value, collisions and O(1) lookup",
+      minutes: 7,
+      body:
+        "**What is a hash table?**\nA hash table stores key-value pairs. A **hash function** converts the key to an array index. Look up, insert and delete are **O(1) average** — the fastest lookup structure.\n\n**How it works:**\n1. Call hash(key) → index.\n2. Store value at arr[index].\n3. Lookup: compute index again → read value.\n\n**Collision:** Two different keys produce the same index.\n- **Chaining:** each index holds a linked list. O(n) worst case if all keys collide.\n- **Open addressing:** probe to the next available slot.\n\n**Load factor** = number of entries / capacity. Above ~0.7, resize (double the array and rehash). This keeps average O(1).\n\n**Worked example — count character frequencies:**\n```\nfreq = {}\nfor c in \"apple\":\n    freq[c] = freq.get(c, 0) + 1\n# freq = {'a':1, 'p':2, 'l':1, 'e':1}\n```\n\n**Real uses:**\n- Caching (DNS cache maps domain → IP).\n- Database indexes (hash indexes for equality queries).\n- Sets (Python set, Java HashSet — same structure, no values).\n\n**When NOT to use a hash table:** when you need sorted order (use a BST/TreeMap), or when memory is extremely limited and a constant collision rate matters.\n\n**Exam tip:** Any problem that asks you to find duplicates, count frequencies, or check membership is almost always solved in O(n) with a hash table. Recognise the pattern early.",
+      sourceIds: ["gfg-dsa"],
+    },
+  ],
+  quiz: [
+    q("Stack", "easy", "A stack follows which order?", ["FIFO", "LIFO", "Random", "Sorted"], 1, "Stack is Last In, First Out — the most recently added element is removed first.", "gfg-dsa"),
+    q("Queue", "easy", "A queue follows which order?", ["LIFO", "FIFO", "Priority", "Reverse"], 1, "Queue is First In, First Out — the earliest added element is removed first.", "gfg-dsa"),
+    q("Stack", "medium", "Which data structure is used to check balanced parentheses?", ["Queue", "Stack", "Array", "Linked list"], 1, "Push opening brackets; pop when a closing bracket matches. Stack's LIFO ensures correct nesting.", "gfg-dsa"),
+    q("Hash Table", "medium", "The average time complexity for lookup in a hash table is:", ["O(n)", "O(log n)", "O(1)", "O(n²)"], 2, "A good hash function distributes keys uniformly, giving O(1) average lookup.", "gfg-dsa"),
+    q("Hash Table", "medium", "A hash collision means:", ["Two keys have the same value", "Two different keys map to the same array index", "The hash table is full", "The key is not found"], 1, "A collision occurs when hash(key1) == hash(key2) for key1 ≠ key2.", "gfg-dsa"),
+    q("Stack", "medium", "BFS traversal of a graph uses:", ["Stack", "Queue", "Hash table", "Sorted array"], 1, "BFS explores level by level — the queue ensures nodes are visited in FIFO order.", "gfg-dsa"),
+    q("Hash Table", "hard", "When the load factor of a hash table exceeds ~0.7, the standard action is to:", ["Delete half the entries", "Resize the table and rehash", "Switch to a linked list", "Stop accepting inserts"], 1, "Resizing (doubling the array and rehashing all entries) keeps the average O(1) performance.", "gfg-dsa"),
+    q("Stack", "hard", "The function call stack grows when a function is called and shrinks when:", ["A loop ends", "The function returns", "A variable is declared", "The program starts"], 1, "Each function call pushes a stack frame; returning pops it and restores the previous context.", "gfg-dsa"),
+  ],
+}
+
+// ---- CS CORE: Programming Fundamentals (1st & 2nd year) ----
+const csProgrammingFundamentals: Chapter = {
+  id: "cs-programming-fundamentals",
+  title: "Programming Fundamentals for Freshers",
+  summary: "Variables, control flow, functions and the mindset to write correct programs — the foundation every 1st and 2nd year student needs before DSA.",
+  lessons: [
+    {
+      id: "l-pf-1",
+      title: "Variables, data types, operators and control flow",
+      minutes: 7,
+      body:
+        "**Variables** are named containers for data. The **data type** tells the compiler/interpreter what kind of value it holds and how much memory to allocate.\n\n**Common data types:**\n- `int` (integer): 32-bit whole number, range roughly -2 billion to +2 billion.\n- `long`: 64-bit integer for large numbers.\n- `float`/`double`: decimal numbers (double has more precision).\n- `char`: a single character ('A', '1').\n- `boolean`/`bool`: true or false.\n- `String`: sequence of characters.\n\n**Operators:**\n- Arithmetic: `+`, `-`, `*`, `/`, `%` (remainder). Note: integer division in most languages truncates — 7/2 = 3, not 3.5.\n- Comparison: `==`, `!=`, `<`, `>`, `<=`, `>=`. These return a boolean.\n- Logical: `&&` (AND), `||` (OR), `!` (NOT).\n\n**Control flow:**\n```\nif (marks >= 90) { grade = 'A'; }\nelse if (marks >= 75) { grade = 'B'; }\nelse { grade = 'C'; }\n```\n**Loops:**\n- `for` loop: when you know the number of iterations.\n- `while` loop: when you iterate until a condition becomes false.\n- `do-while`: execute at least once before checking the condition.\n\n**Worked example — sum of 1 to n:**\n```\nint sum = 0;\nfor (int i = 1; i <= n; i++) {\n    sum += i;   // same as sum = sum + i\n}\n```\n\n**Common mistake 1 (off-by-one):** using `i < n` when you need `i <= n` — the last element is missed.\n**Common mistake 2 (integer overflow):** sum of n numbers for large n overflows int — use long.\n\n**Exam tip:** For aptitude questions, always trace a small example by hand first — substitute n=3 or n=4 and run the loop mentally.",
+      sourceIds: ["gfg-cs-core"],
+    },
+    {
+      id: "l-pf-2",
+      title: "Functions, scope, recursion and the mindset of clean code",
+      minutes: 7,
+      body:
+        "**What is a function?**\nA function packages a reusable block of logic with a name, inputs (parameters) and an output (return value). Good programs are built from small, single-purpose functions.\n\n**Function anatomy (Java/C++ style):**\n```\nreturnType functionName(paramType paramName) {\n    // body\n    return value;\n}\n```\nExample:\n```\nint square(int x) {\n    return x * x;\n}\n```\n\n**Scope:** A variable declared inside a function only exists inside that function (local scope). Variables at the top level exist in the outer scope. This means: two functions can each have their own `int i = 0` without conflict.\n\n**Recursion:** A function that calls itself on a smaller sub-problem.\n- **Base case:** the simplest input that returns directly — do NOT forget this, it is what stops infinite recursion.\n- **Recursive case:** reduce towards the base case.\n\n**Worked example — factorial:**\n```\nint factorial(int n) {\n    if (n == 0) return 1;       // base case\n    return n * factorial(n-1);  // recursive case\n}\n// factorial(3) = 3 * factorial(2) = 3 * 2 * factorial(1) = 3 * 2 * 1 * 1 = 6\n```\n\n**The three rules of clean code (for freshers):**\n1. **One function, one job** — a function should do exactly one thing.\n2. **Meaningful names** — `calculateTotal` is better than `ct`.\n3. **Handle edge cases explicitly** — what if n=0? What if the array is empty?\n\n**Common mistake:** Recursion without a base case → infinite recursion → stack overflow.\n\n**Exam tip:** Any time you see 'write a function to compute X', first write the function signature and the base case. Then the recursive case almost writes itself.",
+      sourceIds: ["gfg-cs-core", "studybench-curriculum"],
+    },
+  ],
+  quiz: [
+    q("Programming", "easy", "What does the % operator compute?", ["Quotient", "Power", "Remainder", "Root"], 2, "% is the modulo (remainder) operator. 7 % 3 = 1.", "gfg-cs-core"),
+    q("Programming", "easy", "Integer division of 7 / 2 in most languages (Java, C) gives:", ["3.5", "4", "3", "2"], 2, "Integer division truncates the decimal part. 7 / 2 = 3.", "gfg-cs-core"),
+    q("Programming", "medium", "An off-by-one error in a loop typically means:", ["The loop never runs", "The loop runs one too many or one too few times", "The loop runs infinitely", "A syntax error"], 1, "Off-by-one: using < instead of <= (or vice versa), causing the loop to skip the last element or run one extra time.", "gfg-cs-core"),
+    q("Recursion", "easy", "In a recursive function, the base case is needed to:", ["Make the function faster", "Stop the recursion from running forever", "Return the largest value", "Declare variables"], 1, "Without a base case, the function calls itself indefinitely, causing a stack overflow.", "gfg-cs-core"),
+    q("Programming", "medium", "A variable declared inside a function is accessible:", ["Everywhere in the program", "Only inside that function", "Only in other functions", "Only at runtime"], 1, "Local scope: variables declared inside a function exist only within that function.", "gfg-cs-core"),
+    q("Recursion", "medium", "factorial(5) using recursion evaluates to:", ["5", "24", "120", "25"], 2, "5! = 5×4×3×2×1 = 120.", "gfg-cs-core"),
+    q("Programming", "medium", "Which loop is guaranteed to execute at least once?", ["for", "while", "do-while", "if"], 2, "do-while checks the condition after executing the body, so the body runs at least once.", "gfg-cs-core"),
+    q("Programming", "hard", "To avoid integer overflow when summing a large array in Java, use:", ["int", "char", "long", "boolean"], 2, "long is a 64-bit integer that can hold much larger values than int's 32-bit range.", "gfg-cs-core"),
+  ],
+}
+
+// ---- CS CORE: Computer Networks ----
+const csNetworksFundamentals: Chapter = {
+  id: "cs-networks-fundamentals",
+  title: "Computer Networks: OSI Model & TCP/IP",
+  summary: "The OSI layers, TCP/IP protocol suite, DNS, HTTP/HTTPS, and common networking interview questions answered clearly.",
+  lessons: [
+    {
+      id: "l-net-1",
+      title: "The OSI model: 7 layers, one sentence each",
+      minutes: 7,
+      body:
+        "The OSI (Open Systems Interconnection) model splits network communication into 7 layers. Each layer has a specific job and talks to the layer directly above and below it.\n\n**Layer 1 — Physical:** Transmits raw bits over a physical medium (copper wire, fibre optic, radio waves). Deals with voltage levels, pin layouts, cables.\n\n**Layer 2 — Data Link:** Groups bits into frames. Handles MAC (hardware) addresses and error detection (CRC). Ethernet and Wi-Fi operate here.\n\n**Layer 3 — Network:** Routes packets across multiple networks. **IP (Internet Protocol) lives here**. Routers operate at this layer. Handles logical addressing (IP addresses).\n\n**Layer 4 — Transport:** Provides end-to-end communication between applications. **TCP and UDP live here**. TCP guarantees delivery and order; UDP is connectionless and fast.\n\n**Layer 5 — Session:** Manages sessions (start, maintain, end a conversation) between two applications.\n\n**Layer 6 — Presentation:** Translates data formats (serialisation, compression, encryption — SSL/TLS). Ensures the data format is understood by both sides.\n\n**Layer 7 — Application:** The user-visible layer. **HTTP, HTTPS, DNS, FTP, SMTP** operate here.\n\n**Memory trick (top to bottom): All People Seem To Need Data Processing**\n(Application, Presentation, Session, Transport, Network, Data Link, Physical)\n\n**Exam trap:** Interviewers love 'at which layer does X operate?' Know:\n- IP → Layer 3 (Network)\n- TCP, UDP → Layer 4 (Transport)\n- HTTP, DNS → Layer 7 (Application)\n- Switch → Layer 2; Router → Layer 3; Gateway → Layer 4-7",
+      sourceIds: ["gfg-cs-core"],
+    },
+    {
+      id: "l-net-2",
+      title: "TCP vs UDP, DNS, HTTP/HTTPS and the request lifecycle",
+      minutes: 7,
+      body:
+        "**TCP (Transmission Control Protocol):**\n- Connection-oriented: establishes a connection with a 3-way handshake (SYN → SYN-ACK → ACK).\n- Reliable: guarantees delivery, retransmits lost packets, delivers in order.\n- Use when correctness matters: web browsing (HTTP), email (SMTP), file transfer (FTP).\n\n**UDP (User Datagram Protocol):**\n- Connectionless: no handshake, no delivery guarantee.\n- Fast and low-latency: no retransmission delay.\n- Use when speed > correctness: live video streaming, online gaming, DNS queries (one request-reply, loss is cheap).\n\n**DNS (Domain Name System):**\nDNS translates human-readable domain names (google.com) to IP addresses (142.250.195.46). Think of it as the internet's phone book. Without DNS, you would need to memorise IP addresses for every website.\n\n**HTTP vs HTTPS:**\n- HTTP (port 80): plaintext — data is readable by anyone on the path.\n- HTTPS (port 443): HTTP over TLS — encrypted. HTTPS = HTTP + TLS handshake.\n- TLS provides: encryption (nobody can read the data), authentication (you are talking to the real server, not an impostor), integrity (data was not altered).\n\n**The full lifecycle of an HTTPS request:**\n1. Browser looks up google.com in DNS cache → asks DNS server if not found → gets IP.\n2. TCP connection opens (3-way handshake) to port 443.\n3. TLS handshake: negotiate cipher, exchange certificates, establish encrypted session.\n4. Browser sends HTTP GET request (inside the encrypted tunnel).\n5. Server sends HTTP response (200 OK + HTML).\n6. Browser parses HTML, fetches linked CSS/JS files (new HTTP requests).\n7. Browser renders the page.\n\n**Common interview question:** What is the difference between a port and a socket?\n- Port: a number (0-65535) that identifies a specific service on a machine (80 = HTTP, 443 = HTTPS, 22 = SSH).\n- Socket: a combination of IP address + port — uniquely identifies one endpoint of a connection.",
+      sourceIds: ["gfg-cs-core", "mdn-http"],
+    },
+  ],
+  quiz: [
+    q("Networks", "easy", "Which OSI layer handles routing of packets between networks?", ["Layer 2 (Data Link)", "Layer 3 (Network)", "Layer 4 (Transport)", "Layer 7 (Application)"], 1, "Layer 3 (Network) is where IP operates and routers make routing decisions.", "gfg-cs-core"),
+    q("Networks", "easy", "TCP and UDP operate at which OSI layer?", ["Layer 2", "Layer 3", "Layer 4", "Layer 7"], 2, "TCP and UDP are Transport layer (Layer 4) protocols.", "gfg-cs-core"),
+    q("Networks", "medium", "The TCP 3-way handshake sequence is:", ["ACK → SYN → SYN-ACK", "SYN → ACK → SYN-ACK", "SYN → SYN-ACK → ACK", "SYN-ACK → SYN → ACK"], 2, "Client sends SYN; server replies SYN-ACK; client confirms ACK.", "gfg-cs-core"),
+    q("Networks", "medium", "DNS is used to:", ["Encrypt web traffic", "Translate domain names to IP addresses", "Route packets", "Establish TCP connections"], 1, "DNS maps human-readable hostnames (google.com) to numeric IP addresses.", "gfg-cs-core"),
+    q("Networks", "medium", "HTTPS differs from HTTP mainly because it:", ["Uses a different port only", "Adds TLS encryption and authentication", "Only works on mobile", "Requires IPv6"], 1, "HTTPS wraps HTTP in TLS, providing encryption, authentication and data integrity.", "gfg-cs-core"),
+    q("Networks", "medium", "UDP is preferred over TCP when:", ["Guaranteed delivery is critical", "Low latency matters more than reliable delivery", "Large files need to transfer", "Authentication is needed"], 1, "UDP's connectionless nature avoids retransmission overhead — ideal for live streaming and gaming.", "gfg-cs-core"),
+    q("Networks", "hard", "A socket is best described as:", ["Only an IP address", "A port number alone", "A combination of IP address and port", "A network cable"], 2, "A socket = IP address + port number, uniquely identifying one endpoint of a network connection.", "gfg-cs-core"),
+    q("Networks", "hard", "The standard port for HTTPS is:", ["21", "80", "443", "8080"], 2, "HTTPS uses port 443 by default. HTTP uses port 80.", "gfg-cs-core"),
+  ],
+}
+
+// ---- COMMUNICATION: Resume, applications and final interview conversion ----
+const commResumeProjects: Chapter = {
+  id: "comm-resume-projects",
+  title: "Resume, Projects & Proof of Work",
+  summary: "Turn your preparation into a resume and project story that an interviewer can trust.",
+  lessons: [
+    {
+      id: "l-rp-1",
+      title: "Build a fresher resume that survives screening",
+      minutes: 7,
+      body:
+        "A fresher resume should prove three things quickly: you can learn, you can build, and you can communicate clearly.\n\n**One-page structure:**\n1. Header: name, phone, email, LinkedIn/GitHub.\n2. Education: degree, branch, college, CGPA, year.\n3. Skills: languages, frameworks, databases, tools. Keep only skills you can answer questions on.\n4. Projects: 2-3 strong projects with problem, tech stack, your role and measurable result.\n5. Achievements: coding contests, internships, certificates, leadership, club work.\n\n**Project bullet formula:** Built + what + using + result. Example: 'Built a placement dashboard using Next.js and Supabase to track company-wise readiness and weak topics.'\n\n**Common mistake:** listing every technology you have seen once. Interviewers ask from your resume. If you cannot explain it, remove it.",
+      sourceIds: ["studybench-curriculum"],
+    },
+    {
+      id: "l-rp-2",
+      title: "Explain a project like an engineer",
+      minutes: 7,
+      body:
+        "Project explanation is where many students lose the interview. Do not start with only the tech stack. Start with the problem.\n\n**Use this order:**\n1. Problem: what issue did the project solve?\n2. Users: who would use it?\n3. Your role: what exactly did you build?\n4. Architecture: frontend, backend, database, APIs, auth, deployment.\n5. Hard part: one bug, trade-off or design decision.\n6. Result: what worked, what improved, what you would add next.\n\n**Worked example:** 'My project helps students track placement preparation. I built the dashboard, scoring logic and practice flow. The hardest part was avoiding fake readiness, so I counted only completed quizzes and mock performance.'\n\n**Exam tip:** prepare a 60-second project pitch and a 3-minute deep version. Most panels start short, then ask deeper follow-ups.",
+      sourceIds: ["studybench-curriculum", "gfg-dsa"],
+    },
+    {
+      id: "l-rp-3",
+      title: "GitHub, LinkedIn and proof signals",
+      minutes: 5,
+      body:
+        "Your proof of work should make the interviewer confident before you speak.\n\n**GitHub checklist:** clean README, setup steps, screenshots, feature list, tech stack, known limitations and future improvements. Pin your best repositories.\n\n**LinkedIn checklist:** clear headline, education, skills, projects, certificates, internship or club work. Use a professional photo and a short 'About' section.\n\n**Proof signals that matter:** deployed project link, demo video, solved problem streak, certificate from a credible course, meaningful README, and clean commit history.\n\n**Common mistake:** adding empty repositories or copied tutorials as proof. One honest, working project is stronger than five unclear repos.",
+      sourceIds: ["studybench-curriculum"],
+    },
+  ],
+  quiz: [
+    q("Resume", "easy", "For a fresher resume, the strongest project bullet should include:", ["Only the project name", "Problem, tech used, your role and result", "Only team size", "Only college name"], 1, "A strong bullet shows what was built, how, your contribution and the outcome.", "studybench-curriculum"),
+    q("Resume", "medium", "Which skill should you remove from your resume?", ["A language you can code basic problems in", "A database used in your project", "A tool you cannot explain if asked", "A framework used in deployment"], 2, "Anything on the resume can become an interview question. Remove skills you cannot defend.", "studybench-curriculum"),
+    q("Project Explanation", "medium", "The best order to explain a project is:", ["Tech stack first, then random features", "Problem, users, role, architecture, challenge, result", "Only screenshots", "Only team members"], 1, "This order shows context, ownership, technical depth and impact.", "studybench-curriculum"),
+    q("Project Explanation", "hard", "If an interviewer asks what you would improve in your project, the best answer is:", ["Nothing, it is perfect", "A specific limitation, why it matters and a practical next step", "I do not remember", "My teammate handled it"], 1, "A realistic improvement answer shows ownership and engineering maturity.", "studybench-curriculum"),
+    q("Proof of Work", "medium", "A GitHub README for a placement project should include:", ["Only the repository title", "Setup steps, screenshots, features and limitations", "Only copied commands", "No explanation"], 1, "A useful README helps others understand, run and evaluate the project.", "studybench-curriculum"),
+    q("Proof of Work", "hard", "Which proof signal is strongest for a fresher?", ["A copied tutorial with no changes", "A deployed project with README and clear ownership", "A long list of buzzwords", "A private empty repository"], 1, "Working proof with ownership is more credible than buzzwords or copied content.", "studybench-curriculum"),
+  ],
+}
+
+const commApplicationsDrive: Chapter = {
+  id: "comm-applications-drive",
+  title: "Applications, Drive Tracking & Recruiter Follow-up",
+  summary: "Stay organized across company drives so no deadline, document or follow-up is missed.",
+  lessons: [
+    {
+      id: "l-ad-1",
+      title: "Application tracker for campus drives",
+      minutes: 6,
+      body:
+        "Placement season becomes confusing when you track everything in memory. Use a simple tracker.\n\n**Columns to maintain:** company, role, eligibility, application link, deadline, test date, rounds, status, documents submitted, prep priority and next action.\n\n**Status stages:** saved, applied, test scheduled, test done, interview scheduled, offer, rejected, follow-up needed.\n\n**Weekly routine:** every Sunday, update statuses, check upcoming deadlines, choose the top two companies for the week and align mocks with them.\n\n**Common mistake:** applying late without checking eligibility or documents. A missed upload or wrong resume version can block a serious opportunity.",
+      sourceIds: ["studybench-curriculum"],
+    },
+    {
+      id: "l-ad-2",
+      title: "Professional emails and recruiter messages",
+      minutes: 6,
+      body:
+        "Recruiter communication should be short, specific and polite.\n\n**Follow-up email structure:**\nSubject: Application for [Role] - [Your Name]\n1. Greeting.\n2. One-line context: role, date, assessment or interview.\n3. One useful detail: your interest or document attached.\n4. Polite request or thanks.\n5. Signature with phone and email.\n\n**Good line:** 'Thank you for the opportunity to interview for the Associate Software Engineer role. I enjoyed discussing my placement readiness dashboard project and would be happy to share any additional details.'\n\n**Common mistake:** sending repeated messages every day. Follow up once after a reasonable gap unless the recruiter asks for more.",
+      sourceIds: ["studybench-curriculum"],
+    },
+    {
+      id: "l-ad-3",
+      title: "Document and test-day checklist",
+      minutes: 5,
+      body:
+        "Before every drive, prepare documents and test setup the previous day.\n\n**Document checklist:** updated resume PDF, college ID, government ID, marksheets, passport photo, certificates, project links and required forms.\n\n**Online test checklist:** stable internet, charger, quiet room, webcam, browser permissions, login credentials and backup hotspot.\n\n**Test-day mindset:** read instructions first, track section time, do easy questions first and review only if time remains.\n\n**Common mistake:** opening the test link at the last minute and discovering browser, camera or login issues.",
+      sourceIds: ["studybench-curriculum"],
+    },
+  ],
+  quiz: [
+    q("Applications", "easy", "A useful placement tracker should include:", ["Only company names", "Company, deadline, status, rounds and next action", "Only salary", "Only rejected companies"], 1, "The tracker should help you know what to do next for every opportunity.", "studybench-curriculum"),
+    q("Applications", "medium", "Which status is most actionable?", ["Maybe", "Test scheduled on 18 June; take one mock before 16 June", "Good company", "Later"], 1, "A status is useful when it includes a date and a next action.", "studybench-curriculum"),
+    q("Recruiter Email", "medium", "A recruiter follow-up email should be:", ["Long and emotional", "Short, specific and polite", "Full of slang", "Sent repeatedly every hour"], 1, "Professional communication is concise, relevant and respectful.", "studybench-curriculum"),
+    q("Recruiter Email", "hard", "The best subject line for a follow-up is:", ["Hiii please reply", "Application for Software Engineer - Priya Kumar", "Important!!!!", "Job"], 1, "A clear subject line helps the recruiter identify the role and candidate quickly.", "studybench-curriculum"),
+    q("Test Day", "medium", "The safest online test setup habit is to:", ["Open the test link at the last minute", "Check internet, charger, camera and login before the test", "Keep all tabs open", "Ignore instructions"], 1, "Setup issues should be solved before the timer starts.", "studybench-curriculum"),
+    q("Documents", "hard", "Which mistake can block an otherwise eligible student?", ["Having a clean resume PDF", "Submitting the wrong resume or missing a required document", "Keeping ID proof ready", "Checking eligibility"], 1, "Administrative misses can prevent shortlisting even when the student is prepared.", "studybench-curriculum"),
+  ],
+}
+
+const commInterviewCapstone: Chapter = {
+  id: "comm-interview-capstone",
+  title: "Mock Interview Capstone & Offer Conversion",
+  summary: "A final-round rehearsal system for turning assessment clearance into an offer.",
+  lessons: [
+    {
+      id: "l-ic-1",
+      title: "The 30-minute mock interview structure",
+      minutes: 7,
+      body:
+        "A realistic mock interview should feel like the final round, not a casual Q&A.\n\n**30-minute structure:**\n1. 2 minutes: greeting and self-introduction.\n2. 8 minutes: project explanation and follow-ups.\n3. 8 minutes: CS core or coding discussion.\n4. 5 minutes: HR and behavioural questions.\n5. 4 minutes: company fit and role interest.\n6. 3 minutes: candidate questions and closing.\n\n**Scoring areas:** clarity, technical correctness, ownership, examples, confidence, honesty and ability to recover when stuck.\n\n**Common mistake:** practising only known answers. Include at least two surprise questions to build recovery skill.",
+      sourceIds: ["studybench-curriculum"],
+    },
+    {
+      id: "l-ic-2",
+      title: "Recovery when you are stuck",
+      minutes: 6,
+      body:
+        "Getting stuck is normal. The panel watches how you recover.\n\n**Recovery script:**\n1. Pause for two seconds.\n2. Repeat the problem in your own words.\n3. State what you know.\n4. Give a brute-force or partial approach.\n5. Ask one clarifying question if needed.\n6. Improve from there.\n\n**Example:** 'I am not fully sure of the optimized approach yet. The brute-force method is to compare every pair, which is O(n^2). I think hashing can reduce lookup time, so I would try a set next.'\n\n**Common mistake:** saying 'I don't know' and stopping. Better: be honest, then reason from basics.",
+      sourceIds: ["studybench-curriculum", "gfg-dsa"],
+    },
+    {
+      id: "l-ic-3",
+      title: "Final-day confidence checklist",
+      minutes: 5,
+      body:
+        "The final day is not for learning everything new. It is for tightening what you already know.\n\n**Final-day checklist:**\n- Read self-intro once.\n- Revise project architecture and your contribution.\n- Revisit mistakes from the last two mocks.\n- Revise DBMS, OOP, OS and CN flash notes.\n- Prepare one company-specific reason.\n- Prepare one thoughtful question for the interviewer.\n\n**Mindset:** the goal is not to sound perfect. The goal is to sound prepared, honest and coachable.\n\n**Common mistake:** binge-studying random topics the night before and entering the interview tired.",
+      sourceIds: ["studybench-curriculum"],
+    },
+  ],
+  quiz: [
+    q("Mock Interview", "easy", "A realistic mock interview should include:", ["Only HR questions", "Self-intro, project, technical/coding, HR, company fit and closing", "Only coding", "Only resume reading"], 1, "Real interviews evaluate multiple signals, so the mock should cover each one.", "studybench-curriculum"),
+    q("Mock Interview", "medium", "Which scoring area matters most when explaining a project?", ["Memorised lines", "Clear ownership and technical understanding", "Speaking fast", "Avoiding follow-ups"], 1, "Project questions test what you personally built and understood.", "studybench-curriculum"),
+    q("Recovery", "medium", "When stuck on a technical question, the best first response is to:", ["Go silent", "Repeat the problem, state what you know and reason from basics", "Guess confidently", "Ask to skip every question"], 1, "Reasoning aloud gives the interviewer something to evaluate and a chance to guide you.", "studybench-curriculum"),
+    q("Recovery", "hard", "Why is a brute-force approach useful in an interview?", ["It is always accepted as final", "It proves a working baseline before optimization", "It avoids thinking", "It hides complexity"], 1, "A brute-force idea shows problem understanding and creates a path toward optimization.", "gfg-dsa"),
+    q("Final Day", "medium", "The final day before an interview should focus on:", ["Random new topics all night", "Self-intro, project, weak mistakes and key flash notes", "Only watching videos", "Skipping sleep"], 1, "Final-day preparation should stabilize recall and confidence.", "studybench-curriculum"),
+    q("Offer Conversion", "hard", "The strongest closing question to ask a panel is:", ["How much leave will I get first?", "What does success look like for a fresher in the first six months?", "Can I leave early daily?", "Do I have to work?"], 1, "A forward-looking question shows seriousness and role awareness.", "studybench-curriculum"),
+  ],
+}
+
 /** Extra chapters appended to every track to broaden real placement coverage. */
 const EXTRA_CHAPTERS: Partial<Record<SectionId, Chapter[]>> = {
-  quant: [quantTimeWork, quantAveragesAges, quantPermutations, quantDataInterpretation],
-  reasoning: [reasonSyllogism, reasonClocksCalendars, reasonSeatingPuzzles],
-  verbal: [verbalWrittenEnglish],
-  coding: [codingTreesGraphs, codingDpGreedy],
+  quant: [quantTimeWork, quantAveragesAges, quantPermutations, quantDataInterpretation, quantMensuration, quantAlgebra],
+  reasoning: [reasonSyllogism, reasonClocksCalendars, reasonSeatingPuzzles, reasonInputOutput, reasonStatements],
+  verbal: [verbalWrittenEnglish, verbalCriticalReasoning],
+  coding: [codingTreesGraphs, codingDpGreedy, codingSearchSort, codingStacksQueues],
   "cs-core": [
     csFundamentals,
     csCloudWeb,
@@ -1443,7 +1870,10 @@ const EXTRA_CHAPTERS: Partial<Record<SectionId, Chapter[]>> = {
     csTestingSdlc,
     csDevopsBasics,
     csSystemDesignBasics,
+    csProgrammingFundamentals,
+    csNetworksFundamentals,
   ],
+  "comm-interview": [commResumeProjects, commApplicationsDrive, commInterviewCapstone],
 }
 
 const CHAPTER_QUIZ_TARGET = 150
@@ -2006,6 +2436,3 @@ export function totalChapters(companyId: CompanyId): number {
 export function companyTagline(companyId: CompanyId): string {
   return getCompany(companyId).blurb
 }
-
-
-

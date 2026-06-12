@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import * as React from "react"
+import { StudyBenchWordmark } from "@/components/app/brand"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -71,16 +72,9 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-svh bg-gradient-to-b from-accent/40 to-background">
+    <div className="min-h-svh bg-background">
       <div className="mx-auto flex min-h-svh max-w-xl flex-col justify-center px-4 py-10">
-        <div className="mb-6 flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-            <Icon name="GraduationCap" className="size-5" />
-          </span>
-          <span className="font-heading text-xl font-bold">
-            Study<span className="text-primary">Bench</span>
-          </span>
-        </div>
+        <StudyBenchWordmark href="/" className="mb-6" />
 
         <Stepper step={step} />
 
@@ -157,7 +151,7 @@ export default function OnboardingPage() {
                   Which companies are you preparing for?
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Pick all that apply - you&apos;ll track readiness for each in parallel.
+                  Pick all that apply. Free gives you all of Section 1 in every track. Premium unlocks every section, deep PYQ banks and mock series.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -169,7 +163,7 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => toggle(c.id)}
                       className={cn(
-                        "flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition-all",
+                        "flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-all",
                         on
                           ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                           : "border-border hover:border-primary/40 hover:bg-muted/50",
@@ -225,7 +219,7 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => setPrimary(id)}
                       className={cn(
-                        "flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-2xl border p-3 text-left transition-all",
+                        "flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-lg border p-3 text-left transition-all",
                         on
                           ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                           : "border-border hover:bg-muted/50",
