@@ -5,7 +5,6 @@ import * as React from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { GettingStartedCard } from "@/components/app/getting-started"
 import { Icon } from "@/components/app/icon"
 import { PriRing } from "@/components/app/pri-ring"
 import {
@@ -103,8 +102,6 @@ export default function DashboardPage() {
       </div>
 
       {!state.premium && <UpgradeBanner />}
-
-      <GettingStartedCard />
 
       <TodayTasksCard />
 

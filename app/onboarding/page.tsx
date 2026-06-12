@@ -308,7 +308,7 @@ export default function OnboardingPage() {
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                 <p className="font-heading font-semibold">Your dashboard will guide you</p>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  After this, you will see a getting-started checklist and three daily tasks so you always know the next action.
+                  After this, your dashboard will show three daily tasks so you always know the next action.
                 </p>
               </div>
 
@@ -402,5 +402,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ArrowRight isn't in the icon registry by default name lookup fallback handles it,
 // but we map it here for crispness.
-
 
