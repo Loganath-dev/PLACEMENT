@@ -5,19 +5,11 @@ import * as React from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
-import { allBookmarks, removeBookmark, type Bookmark } from "@/lib/bookmarks"
+import { removeBookmark, useBookmarks } from "@/lib/bookmarks"
 
 export default function BookmarksPage() {
-  const [items, setItems] = React.useState<Bookmark[]>([])
-
-  React.useEffect(() => {
-    setItems(allBookmarks())
-  }, [])
-
-  function remove(id: string) {
-    removeBookmark(id)
-    setItems((prev) => prev.filter((b) => b.id !== id))
-  }
+  // External store hook — re-renders automatically when a bookmark is removed.
+  const items = useBookmarks()
 
   return (
     <div className="space-y-6">
@@ -72,7 +64,7 @@ export default function BookmarksPage() {
               </Link>
               <button
                 type="button"
-                onClick={() => remove(bm.id)}
+                onClick={() => removeBookmark(bm.id)}
                 className="rounded-md p-1.5 text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                 aria-label="Remove bookmark"
               >

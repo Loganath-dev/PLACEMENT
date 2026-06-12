@@ -206,7 +206,7 @@ export default function CommunicationPage() {
             <p className="font-semibold text-primary">The one rule of professional email</p>
             <p className="mt-1 text-muted-foreground">
               Every email has one job. State it in the subject line and the first sentence. Everything else supports it.
-              If you cannot say what the email is for in one sentence, don't send it yet.
+              If you cannot say what the email is for in one sentence, don&apos;t send it yet.
             </p>
           </div>
           <div className="space-y-3">
@@ -309,7 +309,7 @@ export default function CommunicationPage() {
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
             <p className="font-semibold text-primary">Why vocabulary matters</p>
             <p className="mt-1 text-muted-foreground">
-              Interviewers notice when a candidate says "passionate about" for the fifth time. Replace overused phrases
+              Interviewers notice when a candidate says &ldquo;passionate about&rdquo; for the fifth time. Replace overused phrases
               with specific, evidence-backed language. These sets are ready to use in GDs, interviews and emails.
             </p>
           </div>

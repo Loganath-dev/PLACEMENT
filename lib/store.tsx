@@ -118,7 +118,7 @@ interface StoreActionsValue {
   setPrimary: (id: CompanyId) => void
   addInterested: (id: CompanyId) => void
   removeInterested: (id: CompanyId) => void
-  setPremium: (v: boolean, premiumUntil?: string) => void
+  activatePremium: (premiumUntil?: string) => void
   updateProfile: (p: Partial<Profile>) => void
   submitQuiz: (args: {
     companyId: CompanyId
@@ -326,16 +326,19 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           syncUserState,
         ),
 
-      setPremium: (v, premiumUntil) =>
+      // Local echo after a server-verified payment. The authoritative write
+      // already happened in the verify route / webhook via the service role —
+      // clients can no longer write entitlement columns (DB trigger).
+      activatePremium: (premiumUntil) =>
         mutate((d) => {
           const next = normalizeEntitlement({
             ...d,
-            premium: v,
-            premiumUntil: v ? premiumUntil : undefined,
+            premium: true,
+            premiumUntil,
           })
           d.premium = next.premium
           d.premiumUntil = next.premiumUntil
-        }, syncUserState),
+        }),
 
       updateProfile: (p) =>
         mutate(

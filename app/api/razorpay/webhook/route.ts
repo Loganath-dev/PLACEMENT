@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server"
-import { createAdminClient } from "@/lib/supabase/admin"
+import { PREMIUM_PRICE_INR } from "@/lib/access"
 import { hmacSha256Hex, timingSafeStringEqual } from "@/lib/crypto/edge-hmac"
+import { grantPremiumYear, recordPaymentOnce } from "@/lib/entitlement"
+import { createAdminClient } from "@/lib/supabase/admin"
 
 export const runtime = "edge"
 
 /**
  * Razorpay webhook — server-side reconciliation for premium activation.
  * This fires even if the user's browser tab was closed after payment,
- * guaranteeing premium is activated via the notes.user_id embedded at order creation.
+ * guaranteeing premium is activated via the notes.user_id embedded at order
+ * creation. Shares recordPaymentOnce/grantPremiumYear with the verify route so
+ * both paths are idempotent and never shorten an existing entitlement.
  */
 export async function POST(request: Request) {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET
@@ -31,49 +35,58 @@ export async function POST(request: Request) {
 
   // Note: we do NOT reject "old" events. The HMAC signature already guarantees
   // authenticity, and Razorpay legitimately retries a signed delivery for hours
-  // with backoff. Re-applying a signed activation is harmless because the update
-  // below is idempotent (it never shortens an entitlement).
+  // with backoff. Re-applying a signed activation is harmless because both the
+  // ledger insert and the grant are idempotent.
 
-  if (eventName === "payment.captured" || eventName === "order.paid") {
-    // Extract user ID from order notes (embedded at order creation).
-    const userId: string | undefined =
-      event.payload?.payment?.entity?.notes?.user_id ??
-      event.payload?.order?.entity?.notes?.user_id
-
-    if (userId) {
-      const oneYearOut = new Date()
-      oneYearOut.setFullYear(oneYearOut.getFullYear() + 1)
-
-      const admin = createAdminClient()
-
-      // Grant one year from now, but never shorten an existing, longer entitlement
-      // (a promo grant or a still-valid prior purchase). Using max() also makes
-      // retries safe: a re-delivered event recomputes the same value and never
-      // downgrades the user.
-      const { data: existing } = await admin
-        .from("user_state")
-        .select("premium_until")
-        .eq("id", userId)
-        .single()
-
-      const existingUntil = existing?.premium_until ? new Date(existing.premium_until) : null
-      const premiumUntil =
-        existingUntil && existingUntil > oneYearOut ? existingUntil : oneYearOut
-
-      const { error } = await admin
-        .from("user_state")
-        .update({ premium: true, premium_until: premiumUntil.toISOString() })
-        .eq("id", userId)
-
-      if (error) {
-        console.error("[webhook] Failed to activate premium:", error.message)
-        // Return 200 so Razorpay doesn't retry indefinitely.
-        return NextResponse.json({ ok: false, error: error.message })
-      }
-
-      console.info("[webhook] Premium activation handled for event:", eventName)
-    }
+  if (eventName !== "payment.captured" && eventName !== "order.paid") {
+    return NextResponse.json({ ok: true, event: eventName || "ignored" })
   }
 
-  return NextResponse.json({ ok: true, event: eventName || "ignored" })
+  const payment = event.payload?.payment?.entity
+  const order = event.payload?.order?.entity
+  const userId: string | undefined = payment?.notes?.user_id ?? order?.notes?.user_id
+  const paymentId: string | undefined = payment?.id
+  const orderId: string | undefined = payment?.order_id ?? order?.id
+  const amount: number | undefined = payment?.amount ?? order?.amount
+
+  if (!userId || !paymentId) {
+    // Not one of our premium orders (no embedded user) — acknowledge and skip.
+    return NextResponse.json({ ok: true, event: eventName, skipped: true })
+  }
+
+  if (typeof amount === "number" && amount !== PREMIUM_PRICE_INR * 100) {
+    console.warn("[webhook] Amount mismatch, not granting:", { paymentId, amount })
+    return NextResponse.json({ ok: true, event: eventName, skipped: true })
+  }
+
+  const admin = createAdminClient()
+  try {
+    const recorded = await recordPaymentOnce(admin, {
+      paymentId,
+      orderId: orderId ?? "",
+      userId,
+      amount: amount ?? PREMIUM_PRICE_INR * 100,
+      currency: payment?.currency ?? "INR",
+      source: "webhook",
+    })
+    if (recorded === "replayed-by-other-user") {
+      // Ledger says this payment was consumed by a different account — never
+      // expected from a signed Razorpay delivery; log loudly, don't retry.
+      console.error("[webhook] Payment already consumed by another user:", paymentId)
+      return NextResponse.json({ ok: false, event: eventName, skipped: true })
+    }
+
+    await grantPremiumYear(admin, userId)
+    console.info("[webhook] Premium activation handled for event:", eventName)
+    return NextResponse.json({ ok: true, event: eventName })
+  } catch (error) {
+    // Transient DB failure: return 5xx so Razorpay retries the signed delivery.
+    // Both recordPaymentOnce and grantPremiumYear are idempotent, so a retry
+    // can only complete the activation, never double-grant.
+    console.error("[webhook] Failed to activate premium:", error)
+    return NextResponse.json(
+      { error: "Activation failed, retry expected." },
+      { status: 500 },
+    )
+  }
 }

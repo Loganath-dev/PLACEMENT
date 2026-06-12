@@ -74,12 +74,6 @@ export function StudyTimer() {
     }
   }, [running, mode, preset])
 
-  // Reset when preset changes
-  React.useEffect(() => {
-    setSecondsLeft(mode === "focus" ? preset.focusMin * 60 : preset.breakMin * 60)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [presetIndex])
-
   const circumference = 2 * Math.PI * 26
   const strokeDash = circumference * (1 - progress)
 

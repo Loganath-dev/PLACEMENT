@@ -153,6 +153,12 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
   }
 }
 
+// NOTE: premium / premium_until are intentionally absent from every write
+// below. Entitlement is granted only by the server (verify route + webhook,
+// service role) and a DB trigger rejects client writes to those columns —
+// including the old failure mode where a stale client synced premium=false
+// and silently destroyed a paid entitlement.
+
 export async function ensureUserState(userId: string, s: AppState) {
   await safe("ensureUserState", async () => {
     const sb = createClient()
@@ -161,8 +167,6 @@ export async function ensureUserState(userId: string, s: AppState) {
       xp: s.xp,
       streak_count: s.streak.count,
       streak_last_active: s.streak.lastActive,
-      premium: s.premium,
-      premium_until: s.premiumUntil ?? null,
       primary_company: s.primary,
       interested: s.interested,
       onboarded: s.onboarded,
@@ -205,8 +209,6 @@ export function syncUserState(userId: string, s: AppState) {
         xp: s.xp,
         streak_count: s.streak.count,
         streak_last_active: s.streak.lastActive,
-        premium: s.premium,
-        premium_until: s.premiumUntil ?? null,
         primary_company: s.primary,
         interested: s.interested,
         onboarded: s.onboarded,

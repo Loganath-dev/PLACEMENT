@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import * as React from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
@@ -19,7 +19,7 @@ import {
 } from "@/lib/domain/interview-coaching"
 import { useStore } from "@/lib/store"
 import type { CompanyId, InterviewCategory, InterviewQuestion } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, seededShuffle } from "@/lib/utils"
 
 type DifficultyFilter = "all" | "easy" | "medium" | "hard"
 
@@ -30,7 +30,9 @@ export default function InterviewPage() {
   const [selectedCompany, setSelectedCompany] = React.useState<CompanyId | null>(null)
   const [cat, setCat] = React.useState<InterviewCategory | "all">("all")
   const [difficulty, setDifficulty] = React.useState<DifficultyFilter>("all")
-  const [simMode, setSimMode] = React.useState(false)
+  // Seed picked when the user starts a simulation, so each run gets a fresh
+  // (but render-pure) shuffle. null = not simulating.
+  const [simSeed, setSimSeed] = React.useState<number | null>(null)
   const company = selectedCompany ?? queryCompany ?? state.primary ?? "general"
 
   const c = getCompany(company)
@@ -48,12 +50,13 @@ export default function InterviewPage() {
   )
   const hiddenCount = lockedCount(list.length, visible.length)
 
-  if (simMode) {
+  if (simSeed !== null) {
     return (
       <SimulationMode
         questions={visible}
         company={company}
-        onExit={() => setSimMode(false)}
+        seed={simSeed}
+        onExit={() => setSimSeed(null)}
       />
     )
   }
@@ -66,7 +69,7 @@ export default function InterviewPage() {
         description="Company-wise technical, coding, domain, HR and managerial questions with trainer guidance."
         actions={
           visible.length >= 3 ? (
-            <Button onClick={() => setSimMode(true)}>
+            <Button onClick={() => setSimSeed(Date.now())}>
               <Icon name="PlayCircle" className="size-4" /> Simulate interview
             </Button>
           ) : undefined
@@ -169,17 +172,19 @@ export default function InterviewPage() {
 function SimulationMode({
   questions,
   company,
+  seed,
   onExit,
 }: {
   questions: InterviewQuestion[]
   company: CompanyId
+  seed: number
   onExit: () => void
 }) {
   const c = getCompany(company)
-  const pool = React.useMemo(() => {
-    const shuffled = [...questions].sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, Math.min(5, shuffled.length))
-  }, [questions])
+  const pool = React.useMemo(
+    () => seededShuffle(questions, seed).slice(0, Math.min(5, questions.length)),
+    [questions, seed],
+  )
 
   const [index, setIndex] = React.useState(0)
   const [answer, setAnswer] = React.useState("")

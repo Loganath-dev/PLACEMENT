@@ -25,9 +25,14 @@ export async function POST() {
   const admin = createAdminClient()
   const uid = user.id
 
+  // Intentionally NOT deleted: `payments` (financial ledger retained for
+  // reconciliation/GST; its user_id FK nulls out when the auth user is deleted)
+  // and `question_reports` (anonymized the same way, kept for content QA).
   await Promise.allSettled([
     admin.from("company_progress").delete().eq("user_id", uid),
     admin.from("daily_challenges").delete().eq("id", uid),
+    admin.from("mistakes").delete().eq("user_id", uid),
+    admin.from("coding_attempts").delete().eq("user_id", uid),
     admin.from("user_state").delete().eq("id", uid),
     admin.from("profiles").delete().eq("id", uid),
   ])

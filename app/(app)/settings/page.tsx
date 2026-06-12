@@ -64,7 +64,7 @@ type RazorpaySuccessResponse = {
 export default function SettingsPage() {
   const {
     state,
-    setPremium,
+    activatePremium,
     setPrimary,
     addInterested,
     removeInterested,
@@ -121,7 +121,7 @@ export default function SettingsPage() {
             toast.error(verified.error ?? "Payment verification failed")
             return
           }
-          setPremium(true, verified.premiumUntil)
+          activatePremium(verified.premiumUntil)
           toast.success("Premium activated", {
             description: "Payment verified and your plan is active for one year.",
           })
@@ -152,25 +152,14 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent>
           {state.premium ? (
-            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-              <div>
-                <p className="flex items-center gap-1.5 font-semibold text-[color:var(--success)]">
-                  <Icon name="CircleCheckBig" className="size-4" /> Premium active
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  All chapters, all company depth, full PYQs, mocks and readiness unlocked.
-                  {activeUntil ? ` Valid until ${new Date(activeUntil).toLocaleDateString()}.` : ""}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setPremium(false)
-                  toast("Premium access removed on this device")
-                }}
-              >
-                Remove access
-              </Button>
+            <div>
+              <p className="flex items-center gap-1.5 font-semibold text-[color:var(--success)]">
+                <Icon name="CircleCheckBig" className="size-4" /> Premium active
+              </p>
+              <p className="text-sm text-muted-foreground">
+                All chapters, all company depth, full PYQs, mocks and readiness unlocked.
+                {activeUntil ? ` Valid until ${new Date(activeUntil).toLocaleDateString()}.` : ""}
+              </p>
             </div>
           ) : (
             <div className="flex flex-col items-start justify-between gap-3 rounded-xl bg-primary/5 p-4 sm:flex-row sm:items-center">
