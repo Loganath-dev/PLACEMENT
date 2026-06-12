@@ -3,7 +3,6 @@ import { rateLimit } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 import { buildProductUpdateEmail, sendEmail } from "@/lib/email/resend"
 
-export const runtime = "edge"
 
 const MAX_TITLE_LENGTH = 90
 const MAX_MESSAGE_LENGTH = 800

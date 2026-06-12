@@ -3,8 +3,6 @@ import { PREMIUM_PRICE_INR } from "@/lib/access"
 import { rateLimit } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 
-export const runtime = "edge"
-
 /**
  * Creates a Razorpay order tied to the authenticated user.
  * The user ID is embedded in the `notes` field so the webhook can

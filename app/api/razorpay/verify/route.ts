@@ -3,8 +3,6 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { hmacSha256Hex, timingSafeStringEqual } from "@/lib/crypto/edge-hmac"
 
-export const runtime = "edge"
-
 /**
  * Verifies a Razorpay payment signature and, on success, writes premium=true
  * and premium_until to user_state using the service-role key so the client

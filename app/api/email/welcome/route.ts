@@ -3,7 +3,6 @@ import { rateLimit } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 import { buildWelcomeEmail, sendEmail } from "@/lib/email/resend"
 
-export const runtime = "edge"
 
 export async function POST(request: Request) {
   const supabase = await createClient()
