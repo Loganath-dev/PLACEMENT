@@ -81,8 +81,6 @@ export default function PracticePage() {
         }}
       />
 
-      <TrustNotice company={company} />
-
       <ServedQuiz section={section} company={company} />
 
       {c.eligibility ? (
@@ -101,8 +99,6 @@ export default function PracticePage() {
             <Fact label="Backlogs" value={c.eligibility.backlogs} />
             <Fact label="10th / 12th" value={c.eligibility.tenthTwelfth} />
             <Fact label="Rounds" value={c.eligibility.rounds.join(" -> ")} />
-            <Fact label="Source" value={sourceLabel(c.eligibility.sourceId)} />
-            <Fact label="Last verified" value={formatVerifiedDate(c.eligibility.lastVerified)} />
             <div className="sm:col-span-2">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Test pattern
@@ -206,41 +202,6 @@ export default function PracticePage() {
       ) : null}
     </div>
   )
-}
-
-function TrustNotice({ company }: { company: CompanyId }) {
-  const c = getCompany(company)
-  const verified = c.eligibility?.lastVerified
-  return (
-    <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/80 p-4 text-sm sm:flex-row sm:items-start">
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-success/10 text-[color:var(--success)]">
-        <Icon name="ShieldCheck" className="size-4" />
-      </span>
-      <div>
-        <p className="font-semibold">Content trust note</p>
-        <p className="mt-1 text-muted-foreground">
-          PYQs are original practice reconstructions, not copied exam papers. Eligibility and
-          pattern notes are shown with source context
-          {verified ? ` and were last verified on ${formatVerifiedDate(verified)}` : ""}.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function sourceLabel(sourceId: string) {
-  return sourceId
-    .split("-")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ")
-}
-
-function formatVerifiedDate(value: string) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(`${value}T00:00:00`))
 }
 
 function companyFromParam(value: string | null): CompanyId | null {

@@ -143,11 +143,6 @@ export default async function PrepCompanyPage({
           <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             {company.sector}
           </span>
-          {eligibility?.lastVerified ? (
-            <span className="text-xs text-muted-foreground">
-              Verified {new Date(eligibility.lastVerified).toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
-            </span>
-          ) : null}
         </div>
         <h1 className="font-heading text-3xl font-bold leading-tight md:text-4xl">
           {company.name} Placement Preparation 2026

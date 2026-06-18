@@ -288,7 +288,7 @@ export default function DashboardPage() {
                         </p>
                         <p
                           className="text-xs text-muted-foreground"
-                          title={`Readiness from your in-app practice: PRI ${cp}/100. Not a guarantee of selection.`}
+                          title={`PRI ${cp}/100`}
                         >
                           {readinessBand(cp).label}
                         </p>

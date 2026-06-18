@@ -6,11 +6,6 @@
  * For upgrade prompts use <UpgradeBanner> / <LockedFeatureCard> from ./upgrade-prompt.
  */
 import { Badge } from "@/components/ui/badge"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
 import { Icon } from "@/components/app/icon"
 import { getCompany } from "@/lib/data/companies"
 import { getSections } from "@/lib/data/content"
@@ -19,7 +14,6 @@ import {
   computePRI,
   mockMastery,
   PRI_WEIGHTS,
-  READINESS_DISCLAIMER,
   readinessBand,
   sectionMastery,
 } from "@/lib/scoring"
@@ -93,20 +87,6 @@ export function ProbabilityStat({ pri, compact = false }: { pri: number; compact
         {band.label}
       </span>
       <span className="text-xs text-muted-foreground">readiness</span>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="text-muted-foreground/70 hover:text-foreground"
-            aria-label="About this readiness band"
-          >
-            <Icon name="CircleHelp" className="size-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-56 text-center">
-          {READINESS_DISCLAIMER}
-        </TooltipContent>
-      </Tooltip>
     </div>
   )
 }

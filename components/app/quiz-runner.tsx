@@ -289,23 +289,6 @@ export function QuizRunner({
               {current.prompt}
             </h3>
             <div className="flex shrink-0 items-center gap-1.5">
-              {current.curated ? (
-                current.optionNotes?.length ? (
-                  <span
-                    className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"
-                    title="Flagship question — hand-authored with a rationale for every option"
-                  >
-                    <Icon name="BadgeCheck" className="size-3.5" /> Flagship
-                  </span>
-                ) : (
-                  <span
-                    className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                    title="Hand-authored and reviewed by the StudyBench curriculum team"
-                  >
-                    <Icon name="BadgeCheck" className="size-3.5" /> Curated
-                  </span>
-                )
-              ) : null}
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium capitalize text-muted-foreground">
                 {current.difficulty}
               </span>

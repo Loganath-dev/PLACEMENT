@@ -21,7 +21,6 @@ import {
   overallReadiness,
   priBand,
   readinessBand,
-  READINESS_DISCLAIMER,
   sectionMastery,
 } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
@@ -124,7 +123,7 @@ export default function ReadinessPage() {
                     </span>
                     <span className="text-right text-sm tabular-nums text-muted-foreground">
                       <span
-                        title={`Readiness from your in-app practice: PRI ${pri}/100 (${progress.mockScores.length} saved mock(s)). Not a guarantee of selection.`}
+                        title={`PRI ${pri}/100 (${progress.mockScores.length} saved mock(s))`}
                       >
                         {readinessBand(pri).label}
                       </span>
@@ -201,8 +200,6 @@ export default function ReadinessPage() {
               )
             })}
           </div>
-
-          <p className="text-center text-xs text-muted-foreground">{READINESS_DISCLAIMER}</p>
         </>
       )}
     </div>
