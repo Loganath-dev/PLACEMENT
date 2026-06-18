@@ -33,6 +33,7 @@ import {
   premiumPriceLabel,
 } from "@/lib/access"
 import { SELECTABLE_COMPANIES, getCompany } from "@/lib/data/companies"
+import { referralLink } from "@/lib/referral"
 import { useStore } from "@/lib/store"
 import type { CompanyId, Profile } from "@/lib/types"
 
@@ -64,6 +65,7 @@ type RazorpaySuccessResponse = {
 export default function SettingsPage() {
   const {
     state,
+    userId,
     activatePremium,
     setPrimary,
     addInterested,
@@ -274,6 +276,9 @@ export default function SettingsPage() {
       {/* Profile */}
       <ProfileEditor profile={state.profile} onSave={updateProfile} />
 
+      {/* Refer a friend */}
+      {userId ? <ReferFriendCard userId={userId} /> : null}
+
       {/* Notifications */}
       <NotificationSettings />
 
@@ -367,6 +372,49 @@ function loadRazorpayCheckout() {
     script.onerror = () => reject(new Error("Razorpay checkout failed to load."))
     document.body.appendChild(script)
   })
+}
+
+function ReferFriendCard({ userId }: { userId: string }) {
+  const link = referralLink(userId)
+  const shareText = "I'm prepping for placements on StudyBench — company-wise tracks, mocks and a real readiness score. Free to start:"
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${link}`)}`
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(link)
+      toast.success("Invite link copied")
+    } catch {
+      toast.error("Could not copy link")
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 font-heading text-base">
+          <Icon name="Users" className="size-4 text-primary" /> Refer a friend
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Share your invite link. Friends who sign up start free, same as you did.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input readOnly value={link} className="font-mono text-xs sm:text-sm" onFocus={(e) => e.target.select()} />
+          <div className="flex shrink-0 gap-2">
+            <Button variant="outline" onClick={copyLink}>
+              <Icon name="Copy" className="size-3.5" /> Copy
+            </Button>
+            <Button asChild variant="outline">
+              <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+                <Icon name="Share2" className="size-3.5" /> WhatsApp
+              </a>
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 function DeleteAccountDialog({ onConfirm }: { onConfirm: () => Promise<void> }) {

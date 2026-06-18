@@ -39,10 +39,20 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`
 }
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const out = [...arr]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j]!, out[i]!]
+  }
+  return out
+}
+
 export function QuizRunner({
-  questions,
+  questions: rawQuestions,
   passThreshold,
   timeLimitSec,
+  shuffle = false,
   onFinish,
   onMistake,
   onReturn,
@@ -57,6 +67,8 @@ export function QuizRunner({
   passThresholdLabel?: string
   /** When set, shows a countdown and auto-submits when it reaches zero. */
   timeLimitSec?: number
+  /** Randomise question order. Stable within a single attempt; reshuffles on retry. */
+  shuffle?: boolean
   onFinish?: (results: QuizResultItem[], scorePct: number) => void
   /** Called with the question and the chosen index whenever the answer is wrong. */
   onMistake?: (q: Question, chosen: number) => void
@@ -68,6 +80,14 @@ export function QuizRunner({
   doneActions?: (scorePct: number, passed: boolean) => React.ReactNode
   showExplanations?: boolean
 }) {
+  // Memoize shuffled order so it stays stable during the attempt.
+  // Re-shuffles when `retry()` bumps `shuffleKey`.
+  const [shuffleKey, setShuffleKey] = React.useState(0)
+  const questions = React.useMemo(
+    () => (shuffle ? shuffleArray(rawQuestions) : rawQuestions),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [shuffle, shuffleKey, rawQuestions],
+  )
   const [index, setIndex] = React.useState(0)
   const [selected, setSelected] = React.useState<number | null>(null)
   const [revealed, setRevealed] = React.useState(false)
@@ -146,6 +166,7 @@ export function QuizRunner({
     setFinished(false)
     setRemaining(timeLimitSec ?? null)
     questionStartRef.current = Date.now()
+    if (shuffle) setShuffleKey((k) => k + 1)
   }
 
   const completedResultsForFinish = React.useCallback((): QuizResultItem[] => {
@@ -267,14 +288,35 @@ export function QuizRunner({
             <h3 className="font-heading text-lg font-semibold leading-snug">
               {current.prompt}
             </h3>
-            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium capitalize text-muted-foreground">
-              {current.difficulty}
-            </span>
+            <div className="flex shrink-0 items-center gap-1.5">
+              {current.curated ? (
+                current.optionNotes?.length ? (
+                  <span
+                    className="flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-xs font-medium text-primary"
+                    title="Flagship question — hand-authored with a rationale for every option"
+                  >
+                    <Icon name="BadgeCheck" className="size-3.5" /> Flagship
+                  </span>
+                ) : (
+                  <span
+                    className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                    title="Hand-authored and reviewed by the StudyBench curriculum team"
+                  >
+                    <Icon name="BadgeCheck" className="size-3.5" /> Curated
+                  </span>
+                )
+              ) : null}
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium capitalize text-muted-foreground">
+                {current.difficulty}
+              </span>
+            </div>
           </div>
           <div className="grid gap-2">
             {current.options.map((opt, i) => {
               const isAnswer = i === current.answer
               const isPicked = i === selected
+              // Flagship questions carry a rationale per option — surfaced on reveal.
+              const note = current.optionNotes?.[i]
               return (
                 <button
                   key={i}
@@ -282,7 +324,7 @@ export function QuizRunner({
                   disabled={revealed}
                   onClick={() => setSelected(i)}
                   className={cn(
-                    "flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition-colors",
+                    "flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-colors",
                     !revealed && isPicked && "border-primary bg-primary/5",
                     !revealed && !isPicked && "border-border hover:bg-muted/60",
                     revealed && isAnswer && "border-success/50 bg-success/10",
@@ -290,9 +332,23 @@ export function QuizRunner({
                     revealed && !isAnswer && !isPicked && "border-border opacity-70",
                   )}
                 >
-                  <span>{opt}</span>
+                  <span className="min-w-0 flex-1">
+                    <span>{opt}</span>
+                    {revealed && note ? (
+                      <span
+                        className={cn(
+                          "mt-1 block text-xs leading-snug",
+                          isAnswer
+                            ? "text-[color:var(--success)]"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {note}
+                      </span>
+                    ) : null}
+                  </span>
                   {revealed && isAnswer ? (
-                    <Icon name="Check" className="size-4 text-[color:var(--success)]" />
+                    <Icon name="Check" className="mt-0.5 size-4 shrink-0 text-[color:var(--success)]" />
                   ) : null}
                 </button>
               )
@@ -302,12 +358,41 @@ export function QuizRunner({
           {revealed && showExplanations ? (
             <div className="rounded-xl bg-muted/60 p-3 text-sm">
               <div className="flex items-start justify-between gap-2">
-                <p className="font-medium">
+                <p
+                  className={cn(
+                    "font-medium",
+                    selected === current.answer
+                      ? "text-[color:var(--success)]"
+                      : "text-destructive",
+                  )}
+                >
                   {selected === current.answer ? "Correct" : "Not quite."}
                 </p>
                 <ReportQuestionDialog question={current} />
               </div>
-              <p className="mt-1 text-muted-foreground">{current.explanation}</p>
+
+              {/* On a wrong answer, name the specific error and contrast it with the
+                  right choice — the teaching moment, not just the model solution. */}
+              {selected !== null && selected !== current.answer ? (
+                <div className="mt-2 grid gap-1.5">
+                  <p className="text-muted-foreground">
+                    You chose{" "}
+                    <span className="font-medium text-destructive">
+                      {current.options[selected]}
+                    </span>
+                    , but the answer is{" "}
+                    <span className="font-medium text-[color:var(--success)]">
+                      {current.options[current.answer]}
+                    </span>
+                    .
+                  </p>
+                </div>
+              ) : null}
+
+              <p className="mt-2 text-muted-foreground">
+                <span className="font-medium text-foreground">Why: </span>
+                {current.explanation}
+              </p>
             </div>
           ) : null}
 

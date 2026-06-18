@@ -2,24 +2,32 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Icon } from "@/components/app/icon"
 import { AuthShell, GoogleButton, OrDivider } from "@/components/app/auth-shared"
+import { capturePendingReferral } from "@/lib/referral"
 import { createClient } from "@/lib/supabase/client"
 
 const MIN_PASSWORD = 6
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [sent, setSent] = React.useState(false)
+
+  // Stash ?ref=<uid> from /invite links before the user picks email or Google
+  // signup — attribution is finalised later, once onboarding yields a uid.
+  React.useEffect(() => {
+    capturePendingReferral(searchParams.get("ref"))
+  }, [searchParams])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

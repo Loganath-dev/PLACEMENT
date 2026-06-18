@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BrandedBar, BrandedColumns } from "@/components/app/charts"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
@@ -140,12 +141,7 @@ export default function AnalyticsPage() {
                       PRI {pri} - {done}/{total} chapters{mock ? ` - mock ${mock}%` : ""}
                     </span>
                   </div>
-                  <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary transition-[width] duration-700"
-                      style={{ width: `${pri}%` }}
-                    />
-                  </div>
+                  <BrandedBar value={pri} tone="info" height={10} className="mt-1.5" />
                 </div>
               </div>
             )
@@ -287,18 +283,16 @@ function MockTrendCard({ companyId }: { companyId: CompanyId }) {
             <p className="text-xs text-muted-foreground">
               Cutoff comparison is estimated from your scores vs {getCompany(companyId).short}&apos;s typical threshold. Not real cohort data.
             </p>
-            <div className="flex h-28 items-end gap-2 rounded-xl bg-muted/40 p-3">
-              {scores.map((score, index) => (
-                <div key={`${score}-${index}`} className="flex flex-1 flex-col items-center gap-1">
-                  <div
-                    className="w-full rounded-t-md bg-primary"
-                    style={{ height: `${Math.max(8, score)}%` }}
-                    title={`Mock ${index + 1}: ${score}%`}
-                  />
-                  <span className="text-[10px] text-muted-foreground">{score}</span>
-                </div>
-              ))}
-            </div>
+            <BrandedColumns
+              className="h-28 rounded-xl bg-muted/40"
+              tone={best >= cutoff ? "success" : "warning"}
+              cutoff={cutoff}
+              data={scores.map((score, index) => ({
+                value: score,
+                label: String(score),
+                title: `Mock ${index + 1}: ${score}%`,
+              }))}
+            />
             <p className="text-xs text-muted-foreground">
               Percentile is an estimate from your mock score versus the target, not a public candidate ranking.
             </p>
@@ -336,9 +330,12 @@ function SectionHistoryCard({ companyId }: { companyId: CompanyId }) {
               </span>
               <span className="tabular-nums text-muted-foreground">{mastery}%</span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${mastery}%` }} />
-            </div>
+            <BrandedBar
+              value={mastery}
+              tone={mastery >= 70 ? "success" : mastery >= 40 ? "info" : "warning"}
+              height={8}
+              className="mt-2"
+            />
             <p className="mt-2 text-xs text-muted-foreground">
               {passed}/{section.chapters.length} chapters passed
             </p>
@@ -410,15 +407,7 @@ function TopicCard({
           topics.map((t) => (
             <div key={t.topic} className="flex items-center gap-3">
               <span className="w-24 shrink-0 truncate text-sm font-medium sm:w-40">{t.topic}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn(
-                    "h-full rounded-full",
-                    tone === "danger" ? "bg-destructive" : "bg-success",
-                  )}
-                  style={{ width: `${t.accuracy}%` }}
-                />
-              </div>
+              <BrandedBar value={t.accuracy} tone={tone} height={8} className="flex-1" />
               <span className="w-14 text-right text-sm tabular-nums text-muted-foreground">
                 {t.accuracy}%
               </span>

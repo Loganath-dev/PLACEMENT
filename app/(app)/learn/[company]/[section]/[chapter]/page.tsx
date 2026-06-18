@@ -13,12 +13,16 @@ import { UpgradeBanner } from "@/components/app/upgrade-prompt"
 import { canAccessLearningChapter } from "@/lib/access"
 import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
 import { getSection, getSections } from "@/lib/data/content"
+import { generateDrills, generateDrillsByDifficulty } from "@/lib/data/question-bank"
 import { EMPTY_PROGRESS } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
 import type { CompanyId, Difficulty, Question, SectionId } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import { track } from "@/lib/analytics"
 
-const CHAPTER_QUESTION_COUNT = 20
+// Every chapter serves a balanced 90-question practice bank, split across its
+// lessons so each lesson holds at least ~10 questions with a clear difficulty mix.
+const LESSON_PRACTICE_MIX = { easy: 10, medium: 40, hard: 40 } as const
 
 export default function ChapterPage() {
   const params = useParams<{ company: string; section: string; chapter: string }>()
@@ -43,7 +47,10 @@ export default function ChapterPage() {
   const gateLocked = prevCh ? !progress.chapters[prevCh.id]?.passed : false
   const paywalled = !canAccessLearningChapter(sectionIndex, idx, state.premium)
   const backHref = `/learn/${companyId}/${sectionId}`
-  const lessonPracticeSets = lessonPracticeQuestions(chapter.quiz, chapter.lessons.length)
+  const lessonPracticeSets = React.useMemo(
+    () => lessonPracticeQuestions(chapter, sectionId),
+    [chapter, sectionId],
+  )
   const completedLessonCount = Object.keys(lessonResults).length
   const currentLessonIndex = Math.min(completedLessonCount, chapter.lessons.length - 1)
   const currentLesson = chapter.lessons[currentLessonIndex]
@@ -55,6 +62,11 @@ export default function ChapterPage() {
       )
     : 0
   const chapterComplete = completedLessonCount === chapter.lessons.length
+
+  React.useEffect(() => {
+    if (!paywalled) track("chapter_start", { company: companyId, section: sectionId, chapter: chapter.id })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chapter.id])
 
   if (paywalled) {
     return (
@@ -165,10 +177,16 @@ export default function ChapterPage() {
               <Prose body={currentLesson.body} />
               <div className="flex flex-col gap-2 rounded-xl bg-muted/45 p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-medium">Practice this lesson</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="font-medium">
+                    Practice this lesson
+                    <span className="ml-2 text-sm font-normal text-muted-foreground">
+                      {(lessonPracticeSets[currentLessonIndex] ?? []).length} questions
+                    </span>
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Build confidence on this topic before moving to the next lesson.
                   </p>
+                  <LessonDifficultyBreakdown questions={lessonPracticeSets[currentLessonIndex] ?? []} />
                 </div>
                 <Button onClick={() => setPracticeLessonIndex(currentLessonIndex)}>
                   Start questions <Icon name="ArrowRight" className="size-4" />
@@ -182,6 +200,7 @@ export default function ChapterPage() {
           key={`${chapter.id}-${practiceLessonIndex}`}
           questions={lessonPracticeSets[practiceLessonIndex] ?? []}
           passThreshold={70}
+          shuffle
           passThresholdLabel="for this lesson practice (placement cutoff is 70%)"
           onReturn={() => setPracticeLessonIndex(null)}
           returnLabel="Lesson"
@@ -225,49 +244,175 @@ export default function ChapterPage() {
   )
 }
 
-function lessonPracticeQuestions(questions: Question[], lessonCount: number): Question[][] {
-  const targetCounts = splitChapterCounts(lessonCount)
-  const buckets: Record<Difficulty, Question[]> = {
-    easy: questions.filter((question) => question.difficulty === "easy"),
-    medium: questions.filter((question) => question.difficulty === "medium"),
-    hard: questions.filter((question) => question.difficulty === "hard"),
+function practiceSeed(input: string): number {
+  let hash = 2166136261
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
   }
-  const used = new Set<string>()
-  const order: Difficulty[] = ["easy", "medium", "hard", "medium"]
-
-  return targetCounts.map((targetCount) => {
-    const set: Question[] = []
-    const required: Difficulty[] = targetCount >= 3 ? ["easy", "medium", "hard"] : []
-
-    for (const difficulty of required) {
-      const next = takeQuestion(buckets[difficulty], used)
-      if (next) set.push(next)
-    }
-
-    let guard = 0
-    while (set.length < targetCount && guard < questions.length * 4) {
-      const difficulty = order[guard % order.length]
-      const next = takeQuestion(buckets[difficulty], used) ?? takeQuestion(questions, used)
-      if (next) set.push(next)
-      guard += 1
-    }
-
-    return set
-  })
+  return Math.abs(hash)
 }
 
-function splitChapterCounts(lessonCount: number) {
+/** Even round-robin difficulty order honouring the 10/40/40 target. */
+function chapterDifficultySequence(mix: {
+  easy: number
+  medium: number
+  hard: number
+}): Difficulty[] {
+  const targets: [Difficulty, number][] = [
+    ["easy", mix.easy],
+    ["medium", mix.medium],
+    ["hard", mix.hard],
+  ]
+  const total = mix.easy + mix.medium + mix.hard
+  const counts: Record<Difficulty, number> = { easy: 0, medium: 0, hard: 0 }
+  const out: Difficulty[] = []
+  for (let k = 0; k < total; k++) {
+    let best: Difficulty | null = null
+    let bestScore = Infinity
+    for (const [d, t] of targets) {
+      if (t === 0 || counts[d] >= t) continue
+      const score = (counts[d] + 0.5) / t
+      if (score < bestScore) {
+        bestScore = score
+        best = d
+      }
+    }
+    if (!best) break
+    counts[best] += 1
+    out.push(best)
+  }
+  return out
+}
+
+interface LessonPracticeChapter {
+  id: string
+  quiz: Question[]
+  lessons: { id: string }[]
+}
+
+/**
+ * Builds the chapter's lesson-practice sets: a balanced 90-question bank
+ * (10 easy / 40 medium / 40 hard) drawn from the chapter quiz first and topped
+ * up with computed generators so the difficulty target is always met, then split
+ * across the chapter's lessons so each lesson holds at least ~10 questions with a
+ * representative easy/medium/hard mix.
+ */
+function lessonPracticeQuestions(
+  chapter: LessonPracticeChapter,
+  sectionId: SectionId,
+): Question[][] {
+  const lessonCount = chapter.lessons.length
   if (lessonCount <= 0) return []
-  const base = Math.floor(CHAPTER_QUESTION_COUNT / lessonCount)
-  const remainder = CHAPTER_QUESTION_COUNT % lessonCount
+
+  const seed = practiceSeed(`${sectionId}:${chapter.id}`)
+  const byDifficulty: Record<Difficulty, Question[]> = {
+    easy: chapter.quiz.filter((question) => question.difficulty === "easy"),
+    medium: chapter.quiz.filter((question) => question.difficulty === "medium"),
+    hard: chapter.quiz.filter((question) => question.difficulty === "hard"),
+  }
+
+  const usedIds = new Set<string>()
+  const usedPrompts = new Set<string>()
+  const pool: Record<Difficulty, Question[]> = { easy: [], medium: [], hard: [] }
+
+  function take(question: Question, into: Question[]): boolean {
+    const promptKey = question.prompt.trim().toLowerCase().replace(/\s+/g, " ")
+    if (usedIds.has(question.id) || usedPrompts.has(promptKey)) return false
+    usedIds.add(question.id)
+    usedPrompts.add(promptKey)
+    into.push(question)
+    return true
+  }
+
+  ;(["easy", "medium", "hard"] as Difficulty[]).forEach((difficulty) => {
+    const want = LESSON_PRACTICE_MIX[difficulty]
+    for (const question of byDifficulty[difficulty]) {
+      if (pool[difficulty].length >= want) break
+      take(question, pool[difficulty])
+    }
+    if (pool[difficulty].length < want) {
+      const generated = generateDrillsByDifficulty(
+        sectionId,
+        (want - pool[difficulty].length) * 4,
+        difficulty,
+        seed + difficulty.length,
+      )
+      for (const question of generated) {
+        if (pool[difficulty].length >= want) break
+        take(question, pool[difficulty])
+      }
+    }
+    if (pool[difficulty].length < want) {
+      const generated = generateDrills(sectionId, (want - pool[difficulty].length) * 6, seed + 7)
+      for (const question of generated) {
+        if (pool[difficulty].length >= want) break
+        take(question, pool[difficulty])
+      }
+    }
+  })
+
+  // Interleave the difficulties so the order alternates by the 10/40/40 target.
+  const sequence = chapterDifficultySequence(LESSON_PRACTICE_MIX)
+  const cursors: Record<Difficulty, number> = { easy: 0, medium: 0, hard: 0 }
+  const ordered: Question[] = []
+  for (const difficulty of sequence) {
+    const question = pool[difficulty][cursors[difficulty]]
+    if (question) {
+      cursors[difficulty] += 1
+      ordered.push(question)
+    }
+  }
+  for (const difficulty of ["easy", "medium", "hard"] as Difficulty[]) {
+    for (let i = cursors[difficulty]; i < pool[difficulty].length; i++) {
+      ordered.push(pool[difficulty][i])
+    }
+  }
+
+  // Split into per-lesson chunks (contiguous slices of the interleaved order).
+  const counts = splitChapterCounts(lessonCount, ordered.length)
+  const sets: Question[][] = []
+  let pos = 0
+  for (const count of counts) {
+    sets.push(ordered.slice(pos, pos + count))
+    pos += count
+  }
+  return sets
+}
+
+function splitChapterCounts(lessonCount: number, total: number) {
+  if (lessonCount <= 0) return []
+  const base = Math.floor(total / lessonCount)
+  const remainder = total % lessonCount
   return Array.from({ length: lessonCount }, (_, index) => base + (index < remainder ? 1 : 0))
 }
 
-function takeQuestion(pool: Question[], used: Set<string>) {
-  const next = pool.find((question) => !used.has(question.id))
-  if (!next) return null
-  used.add(next.id)
-  return next
+function LessonDifficultyBreakdown({ questions }: { questions: Question[] }) {
+  if (questions.length === 0) return null
+  const counts: Record<Difficulty, number> = {
+    easy: questions.filter((q) => q.difficulty === "easy").length,
+    medium: questions.filter((q) => q.difficulty === "medium").length,
+    hard: questions.filter((q) => q.difficulty === "hard").length,
+  }
+  const chips: { label: string; value: number; className: string }[] = [
+    { label: "Easy", value: counts.easy, className: "bg-success/15 text-[color:var(--success)]" },
+    { label: "Medium", value: counts.medium, className: "bg-warning/15 text-warning-foreground" },
+    { label: "Hard", value: counts.hard, className: "bg-destructive/10 text-destructive" },
+  ]
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5">
+      {chips
+        .filter((chip) => chip.value > 0)
+        .map((chip) => (
+          <span
+            key={chip.label}
+            className={cn("rounded-full px-2 py-0.5 text-xs font-medium", chip.className)}
+          >
+            {chip.value} {chip.label}
+          </span>
+        ))}
+    </div>
+  )
 }
 
 function LessonStepper({

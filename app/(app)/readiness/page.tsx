@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import Link from "next/link"
+import { DriveOutcomes } from "@/components/app/drive-outcomes"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { PriRing } from "@/components/app/pri-ring"
@@ -63,6 +64,8 @@ export default function ReadinessPage() {
           </div>
         </CardContent>
       </Card>
+
+      <DriveOutcomes />
 
       {!state.premium ? (
         <Card className="border-primary/20 bg-primary/5">
@@ -134,7 +137,7 @@ export default function ReadinessPage() {
 
           <h2 className="font-heading text-lg font-semibold">Per-company detail</h2>
           <div className="space-y-4">
-            {companies.map((id) => {
+            {companies.map((id, i) => {
               const progress = state.progress[id] ?? EMPTY_PROGRESS
               const pri = computePRI(id, progress)
               const sections = getSections(id)
@@ -143,7 +146,11 @@ export default function ReadinessPage() {
                 .sort((a, b) => a.m - b.m)
                 .slice(0, 2)
               return (
-                <Card key={id}>
+                <Card
+                  key={id}
+                  className="animate-rise"
+                  style={{ animationDelay: `${Math.min(i * 60, 360)}ms` }}
+                >
                   <CardHeader className="flex-row items-center gap-3 space-y-0">
                     <CompanyAvatar id={id} size={40} />
                     <div className="flex-1">

@@ -400,7 +400,7 @@ export const TERMS: LegalDoc = {
       blocks: [
         {
           k: "p",
-          text: "Company names and marks referenced on the Platform - including TCS, Infosys, Wipro, Accenture, Zoho and Cognizant - are the **trademarks or registered trademarks of their respective owners**. StudyBench is an **independent** preparation platform and is **not affiliated with, authorised by, endorsed by, or sponsored by** any of these companies. Such names are used only nominatively, to identify the publicly known test patterns for which our independently created preparation material is intended. All preparation content is original and is not sourced from any company's confidential or proprietary materials.",
+          text: "Company names and marks referenced on the Platform - including TCS, Infosys, Wipro, Accenture, Zoho, Cognizant, Capgemini, EPAM, IBM, Unisys, Tech Mahindra and HCLTech - are the **trademarks or registered trademarks of their respective owners**. StudyBench is an **independent** preparation platform and is **not affiliated with, authorised by, endorsed by, or sponsored by** any of these companies. Such names are used only nominatively, to identify the publicly known test patterns for which our independently created preparation material is intended. All preparation content is original and is not sourced from any company's confidential or proprietary materials.",
         },
       ],
     },

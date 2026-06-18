@@ -11,9 +11,10 @@ import {
   sectionMastery,
   overallReadiness,
   expectedPriGain,
+  outcomeCalibration,
 } from "@/lib/scoring"
 import { getSections } from "@/lib/data/content"
-import type { AppState, CompanyProgress } from "@/lib/types"
+import type { AppState, CompanyProgress, DriveOutcome } from "@/lib/types"
 
 describe("PRI weights", () => {
   it("sum to exactly 1", () => {
@@ -147,9 +148,53 @@ describe("overallReadiness", () => {
     daily: { date: "", general: false, aptitude: false, coding: false },
     codingAttempts: [],
     mistakes: [],
+    outcomes: [],
   }
 
   it("is 0 when no companies are tracked", () => {
     expect(overallReadiness(base)).toBe(0)
+  })
+})
+
+describe("outcomeCalibration", () => {
+  const outcome = (partial: Partial<DriveOutcome>): DriveOutcome => ({
+    id: "o1",
+    companyId: "tcs",
+    result: "selected",
+    stageReached: "offer",
+    priAtDrive: 70,
+    ts: 0,
+    ...partial,
+  })
+
+  it("returns null metrics when there is nothing decided", () => {
+    const c = outcomeCalibration([outcome({ result: "in-progress" })])
+    expect(c.total).toBe(1)
+    expect(c.decided).toBe(0)
+    expect(c.separation).toBeNull()
+    expect(c.agreement).toBeNull()
+  })
+
+  it("reports positive separation when higher PRI tracked selection", () => {
+    const c = outcomeCalibration([
+      outcome({ id: "a", result: "selected", priAtDrive: 80 }),
+      outcome({ id: "b", result: "rejected", priAtDrive: 30, stageReached: "online-test" }),
+    ])
+    expect(c.selected).toBe(1)
+    expect(c.rejected).toBe(1)
+    expect(c.avgPriSelected).toBe(80)
+    expect(c.avgPriRejected).toBe(30)
+    expect(c.separation).toBe(50)
+    // Both drives agree with the readiness band (ready→selected, not-ready→rejected).
+    expect(c.agreement).toBe(1)
+  })
+
+  it("counts a low-PRI selection as disagreement with the band", () => {
+    const c = outcomeCalibration([
+      outcome({ id: "a", result: "selected", priAtDrive: 20 }),
+      outcome({ id: "b", result: "rejected", priAtDrive: 20, stageReached: "online-test" }),
+    ])
+    // selected-but-not-ready disagrees; rejected-and-not-ready agrees → 0.5
+    expect(c.agreement).toBe(0.5)
   })
 })

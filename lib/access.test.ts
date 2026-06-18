@@ -26,7 +26,7 @@ describe("plan access", () => {
       expect.arrayContaining([
         expect.objectContaining({
           feature: "Company tracks",
-          free: "All 7 tracks visible",
+          free: "All 13 tracks visible",
         }),
         expect.objectContaining({
           feature: "Learning chapters",

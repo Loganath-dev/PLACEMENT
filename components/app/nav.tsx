@@ -6,7 +6,13 @@ import * as React from "react"
 import { StudyBenchWordmark } from "@/components/app/brand"
 import { Icon } from "@/components/app/icon"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
 import { premiumPriceLabel } from "@/lib/access"
 import { useLevel, useStoreActions, useStoreState } from "@/lib/store"
 import { cn } from "@/lib/utils"
@@ -90,14 +96,25 @@ function NavLink({
     <Link
       href={href}
       onClick={onClick}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25 active:scale-[0.99]",
+        "group/nav relative flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25 active:scale-[0.99]",
+        // Active items carry a left accent bar + primary tint so the current
+        // page reads at a glance, not just a faint ring.
         active
-          ? "bg-background text-sidebar-foreground ring-1 ring-sidebar-border"
+          ? "bg-primary/[0.08] text-foreground ring-1 ring-primary/15 before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
           : "text-sidebar-foreground/62 hover:bg-background/72 hover:text-sidebar-foreground",
       )}
     >
-      <Icon name={icon} className="size-[18px]" />
+      <Icon
+        name={icon}
+        className={cn(
+          "size-[18px] transition-colors",
+          active
+            ? "text-primary"
+            : "text-sidebar-foreground/50 group-hover/nav:text-sidebar-foreground",
+        )}
+      />
       {label}
     </Link>
   )
@@ -203,7 +220,7 @@ export function AppTopbar() {
         </span>
         <Link
           href="/profile"
-          className="flex min-h-10 items-center gap-1.5 rounded-md border border-border bg-card/72 px-3 py-2 text-sm font-semibold text-foreground"
+          className="flex min-h-10 items-center gap-1.5 rounded-md border border-border bg-card/72 px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:border-primary/30 hover:bg-card focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25"
           title={`Level ${lvl.level} - ${state.xp} XP`}
         >
           <Icon name="Target" className="size-4" />
@@ -228,6 +245,9 @@ function MobileNav() {
       </SheetTrigger>
       <SheetContent side="left" className="w-72 bg-sidebar p-4">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
+        <SheetDescription className="sr-only">
+          Main navigation menu for StudyBench.
+        </SheetDescription>
         <div className="mb-4 pt-2">
           <Brand />
         </div>

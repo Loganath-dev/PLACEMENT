@@ -5,13 +5,14 @@ import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar, ToneBadge } from "@/components/app/ui-bits"
 import { Card, CardContent } from "@/components/ui/card"
-import { getCompany } from "@/lib/data/companies"
+import { getCompany, SELECTABLE_COMPANIES } from "@/lib/data/companies"
 import { getSections, totalChapters } from "@/lib/data/content"
 import { computePRI, EMPTY_PROGRESS, priBand } from "@/lib/scoring"
 import { useStore } from "@/lib/store"
 import type { CompanyId } from "@/lib/types"
 
-const ORDER: CompanyId[] = ["general", "tcs", "infosys", "wipro", "accenture", "zoho", "cognizant"]
+// Core first, then every company track — derived so new companies show up automatically.
+const ORDER: CompanyId[] = SELECTABLE_COMPANIES.map((c) => c.id)
 
 export default function LearnPage() {
   const { state } = useStore()

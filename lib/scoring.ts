@@ -4,6 +4,7 @@ import type {
   AppState,
   CompanyId,
   CompanyProgress,
+  DriveOutcome,
   SectionId,
 } from "@/lib/types"
 
@@ -203,6 +204,70 @@ export function topicAccuracies(state: AppState, minTotal = 1): TopicAccuracy[] 
       accuracy: s.total ? Math.round((s.correct / s.total) * 100) : 0,
     }))
     .filter((t) => t.total >= minTotal)
+}
+
+// ---- Drive-outcome calibration ----------------------------------------------
+
+/** The PRI at/above which the app reads a student as "Ready" (see readinessBand). */
+export const READY_THRESHOLD = 55
+
+export interface OutcomeCalibration {
+  total: number
+  /** Drives with a decided result (selected or rejected). */
+  decided: number
+  selected: number
+  rejected: number
+  /** Mean PRI-at-drive among selected results, or null when none. */
+  avgPriSelected: number | null
+  /** Mean PRI-at-drive among rejected results, or null when none. */
+  avgPriRejected: number | null
+  /**
+   * avgPriSelected − avgPriRejected. Positive means a higher in-app PRI lined
+   * up with better real outcomes for this student. Null until both groups exist.
+   */
+  separation: number | null
+  /**
+   * Fraction (0-1) of decided drives where the readiness band agreed with the
+   * real result: Ready→selected or Not-ready→rejected. Null when none decided.
+   */
+  agreement: number | null
+}
+
+function mean(xs: number[]): number | null {
+  if (xs.length === 0) return null
+  return Math.round(xs.reduce((a, b) => a + b, 0) / xs.length)
+}
+
+/**
+ * Honest backtest of the Readiness signal against real, self-reported drive
+ * outcomes. It never claims the app predicts hiring — it just reports whether,
+ * for this student, a higher PRI coincided with better real results.
+ */
+export function outcomeCalibration(
+  outcomes: DriveOutcome[],
+  threshold = READY_THRESHOLD,
+): OutcomeCalibration {
+  const selected = outcomes.filter((o) => o.result === "selected")
+  const rejected = outcomes.filter((o) => o.result === "rejected")
+  const decided = selected.length + rejected.length
+  const avgPriSelected = mean(selected.map((o) => o.priAtDrive))
+  const avgPriRejected = mean(rejected.map((o) => o.priAtDrive))
+  const agreeing =
+    selected.filter((o) => o.priAtDrive >= threshold).length +
+    rejected.filter((o) => o.priAtDrive < threshold).length
+  return {
+    total: outcomes.length,
+    decided,
+    selected: selected.length,
+    rejected: rejected.length,
+    avgPriSelected,
+    avgPriRejected,
+    separation:
+      avgPriSelected !== null && avgPriRejected !== null
+        ? avgPriSelected - avgPriRejected
+        : null,
+    agreement: decided > 0 ? agreeing / decided : null,
+  }
 }
 
 export function weakestTopics(state: AppState, n = 5): TopicAccuracy[] {

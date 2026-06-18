@@ -6,17 +6,32 @@ import { createClient } from "@/lib/supabase/client"
 import {
   deleteAllMistakes,
   deleteMistake,
+  deleteOutcome,
   ensureUserState,
   loadUserState,
   syncAll,
   syncCompanyProgress,
   syncDaily,
+  syncMistakeSchedule,
   syncOneMistake,
+  syncOutcome,
   syncProfile,
+  syncReferral,
   syncUserState,
 } from "@/lib/supabase/db"
-import type { AppState, CodingAttempt, CompanyId, Profile, Question, SectionId } from "@/lib/types"
+import type {
+  AppState,
+  CodingAttempt,
+  CompanyId,
+  DriveOutcome,
+  Profile,
+  Question,
+  SectionId,
+} from "@/lib/types"
 import { levelFromXP, XP } from "@/lib/scoring"
+import { nextSchedule } from "@/lib/spaced-repetition"
+import { identifyAnalyticsUser, track } from "@/lib/analytics"
+import { consumePendingReferral } from "@/lib/referral"
 
 const MISTAKE_CAP = 60
 
@@ -38,6 +53,7 @@ const DEFAULT_STATE: AppState = {
   daily: { date: "", general: false, aptitude: false, coding: false },
   codingAttempts: [],
   mistakes: [],
+  outcomes: [],
 }
 
 function normalizeEntitlement(state: AppState): AppState {
@@ -134,8 +150,13 @@ interface StoreActionsValue {
   submitMock: (companyId: CompanyId, score: number) => { xpGained: number }
   recordCodingAttempt: (attempt: CodingAttempt) => void
   recordMistake: (q: Question, chosen: number) => void
+  /** Record the outcome of a spaced-repetition review for one card. */
+  reviewMistake: (questionId: string, correct: boolean) => void
   clearMistake: (questionId: string) => void
   clearMistakes: () => void
+  /** Log the outcome of a real placement drive (local-only). */
+  recordOutcome: (outcome: Omit<DriveOutcome, "id" | "ts"> & { ts?: number }) => void
+  removeOutcome: (id: string) => void
   reset: () => void
   signOut: () => Promise<void>
   deleteAccount: () => Promise<void>
@@ -184,6 +205,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       if (user) {
         setUserId(user.id)
+        identifyAnalyticsUser(user.id)
         // 3. Load authoritative state from Supabase; merge over localStorage.
         try {
           const remote = await loadUserState(user.id)
@@ -195,6 +217,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         } catch {
           /* offline — localStorage fallback stays */
         }
+      } else {
+        identifyAnalyticsUser(null)
       }
 
       setHydrated(true)
@@ -260,6 +284,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           topicStats: { ...prev.topicStats },
           daily: { ...prev.daily },
           mistakes: prev.mistakes ? [...prev.mistakes] : [],
+          outcomes: prev.outcomes ? [...prev.outcomes] : [],
           codingAttempts: prev.codingAttempts ? [...prev.codingAttempts] : [],
           badges: [...prev.badges],
           interested: [...prev.interested],
@@ -291,10 +316,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             d.onboarded = true
             for (const id of interested) ensureProgress(d, id)
             ensureProgress(d, "general")
+            track("onboarding_complete", { primary, interested_count: interested.length })
           },
           (uid, s) => {
             syncProfile(uid, s.profile)
             syncAll(uid, s)
+            const referredBy = consumePendingReferral(uid)
+            if (referredBy) syncReferral(uid, referredBy)
           },
         ),
 
@@ -338,6 +366,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           })
           d.premium = next.premium
           d.premiumUntil = next.premiumUntil
+          track("premium_upgrade", { premium_until: premiumUntil ?? null })
         }),
 
       updateProfile: (p) =>
@@ -375,6 +404,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             d.xp += xpGained
             xpGained += bumpStreak(d)
             void sectionId
+            track("quiz_attempt", { company: companyId, chapter: chapterId, score, passed, newly_passed: newlyPassed })
             return { score, passed, xpGained, newlyPassed }
           },
           (uid, s) => {
@@ -430,6 +460,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             let xpGained = XP.mock
             d.xp += XP.mock
             xpGained += bumpStreak(d)
+            track("mock_complete", { company: companyId, score })
             return { xpGained }
           },
           (uid, s) => {
@@ -457,6 +488,12 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
               topic: qn.topic,
               difficulty: qn.difficulty,
               ts: Date.now(),
+              // Fresh miss → Leitner box 1, due immediately. Re-missing an
+              // existing card also lands here, which correctly resets it.
+              box: 1,
+              due: Date.now(),
+              reviews: 0,
+              lapses: 0,
             }
             d.mistakes = [entry, ...without].slice(0, MISTAKE_CAP)
           },
@@ -464,6 +501,24 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             // Sync only the new/updated entry — cheaper than a full syncAll.
             const entry = s.mistakes.find((m) => m.questionId === qn.id)
             if (entry) syncOneMistake(uid, entry)
+          },
+        ),
+
+      reviewMistake: (questionId, correct) =>
+        mutate(
+          (d) => {
+            const list = d.mistakes ?? []
+            const i = list.findIndex((x) => x.questionId === questionId)
+            if (i === -1) return
+            // Write a new object (the array is shallow-cloned; its items are shared
+            // with prev state) rather than mutating the existing card in place.
+            list[i] = { ...list[i], ...nextSchedule(list[i], correct) }
+          },
+          // Persist just the updated Leitner schedule so review state follows the
+          // student across devices (mistakes table gained box/due in migration 0009).
+          (uid, s) => {
+            const entry = s.mistakes.find((m) => m.questionId === questionId)
+            if (entry) syncMistakeSchedule(uid, entry)
           },
         ),
 
@@ -479,6 +534,41 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         mutate(
           (d) => void (d.mistakes = []),
           (uid) => deleteAllMistakes(uid),
+        ),
+
+      recordOutcome: (outcome) =>
+        mutate(
+          (d) => {
+            const entry: DriveOutcome = {
+              ...outcome,
+              id:
+                typeof crypto !== "undefined" && "randomUUID" in crypto
+                  ? crypto.randomUUID()
+                  : `outcome-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              ts: outcome.ts ?? Date.now(),
+            }
+            d.outcomes = [entry, ...(d.outcomes ?? [])]
+            track("drive_outcome_logged", {
+              company: entry.companyId,
+              result: entry.result,
+              stage: entry.stageReached,
+              pri_at_drive: entry.priAtDrive,
+            })
+          },
+          // Persist to drive_outcomes (migration 0009) so the calibration history
+          // is portable across devices.
+          (uid, s) => {
+            const entry = s.outcomes[0]
+            if (entry) syncOutcome(uid, entry)
+          },
+        ),
+
+      removeOutcome: (id) =>
+        mutate(
+          (d) => {
+            d.outcomes = (d.outcomes ?? []).filter((o) => o.id !== id)
+          },
+          (uid) => deleteOutcome(uid, id),
         ),
 
       reset: () => {

@@ -858,6 +858,728 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
   },
+
+  // ========================================================================
+  {
+    slug: "infosys-placement-preparation-guide",
+    title: "Infosys Placement Preparation 2026: Pattern, Syllabus & Tips",
+    description:
+      "Complete Infosys placement preparation guide 2026: InfyTQ-aligned exam pattern, eligibility, aptitude syllabus, pseudocode round, and coding tips for freshers.",
+    excerpt:
+      "Everything you need to clear the Infosys online assessment: aptitude syllabus, pseudocode format, hands-on coding tips and the HR round.",
+    datePublished: "2026-06-01",
+    dateModified: "2026-06-12",
+    readMins: 8,
+    tags: ["Infosys", "Placements", "Freshers"],
+    keywords: [
+      "Infosys placement preparation",
+      "Infosys syllabus 2026",
+      "InfyTQ preparation",
+      "Infosys online test pattern",
+      "Infosys fresher hiring",
+    ],
+    intro: [
+      "Infosys is one of India's biggest fresher recruiters, taking thousands of engineering graduates every year through its InfyTQ-aligned online assessment. The test is structured, predictable, and highly clearable if you prepare in the right order.",
+      "This guide breaks down the exact Infosys hiring pattern for 2026, what each section tests, and the preparation strategy that gives you the best chance of clearing every round.",
+    ],
+    sections: [
+      {
+        id: "eligibility",
+        heading: "1. Eligibility criteria",
+        blocks: [
+          {
+            k: "list",
+            items: [
+              "60% or 6.0 CGPA aggregate across 10th, 12th and UG — no rounding.",
+              "No active backlogs at the time of the assessment.",
+              "Minimum 60% in 10th and 12th standard.",
+              "Gap year of more than 2 years is typically not permitted.",
+            ],
+          },
+          {
+            k: "p",
+            text: "Eligibility is checked during document verification after offer. Be accurate on your application; inconsistencies cause offer revocations.",
+          },
+        ],
+      },
+      {
+        id: "exam-pattern",
+        heading: "2. Exam pattern",
+        blocks: [
+          {
+            k: "p",
+            text: "The Infosys online assessment has three sections:",
+          },
+          {
+            k: "ol",
+            items: [
+              "Aptitude: Quantitative Ability + Logical Reasoning — typically 15 questions in 25 minutes.",
+              "Verbal Ability: reading comprehension, fill-in-the-blanks, sentence completion — 20 questions in 35 minutes.",
+              "Pseudocode + Hands-on Coding: 3-4 pseudocode understanding questions + 2 coding problems — 45 minutes.",
+            ],
+          },
+          {
+            k: "p",
+            text: "There is no sectional cut-off reported in most cycles, but each section is scored separately. Do not sacrifice one section entirely.",
+          },
+        ],
+      },
+      {
+        id: "aptitude-prep",
+        heading: "3. Aptitude preparation",
+        blocks: [
+          {
+            k: "p",
+            text: "Focus on these high-frequency topics: percentages and ratios, profit and loss, time-speed-distance, time and work, simple and compound interest, number system, HCF and LCM. For reasoning: series, coding-decoding, blood relations, directions, seating arrangement, data sufficiency.",
+          },
+          {
+            k: "p",
+            text: "Speed matters more than depth here. 15 questions in 25 minutes is under 100 seconds per question. Drill shortcuts and mental arithmetic until approximation is your default, not long calculations.",
+          },
+        ],
+      },
+      {
+        id: "pseudocode",
+        heading: "4. Pseudocode round",
+        blocks: [
+          {
+            k: "p",
+            text: "The pseudocode section is unique to Infosys among the big service companies. You are shown structured pseudocode (variables, loops, conditionals) and asked what it outputs or what a variable holds after execution.",
+          },
+          {
+            k: "p",
+            text: "Practice by tracing through simple code snippets mentally. You need to follow if/else branches, count loop iterations, and track variable values step by step. This is closer to logical reasoning than actual coding.",
+          },
+          {
+            k: "quote",
+            text: "Pseudocode questions reward careful tracing, not deep programming knowledge. Slow down, annotate each loop iteration, and never skip a step.",
+          },
+        ],
+      },
+      {
+        id: "coding-round",
+        heading: "5. Hands-on coding",
+        blocks: [
+          {
+            k: "p",
+            text: "Two coding problems — typically one easy and one medium difficulty. Common patterns: array manipulations, string processing, pattern printing, basic sorting, simple recursion. You should solve both problems to have a strong assessment outcome.",
+          },
+          {
+            k: "p",
+            text: "Practice writing complete, runnable programs from scratch in a plain text editor simulation. The Infosys editor does not autocomplete, so muscle memory for syntax is important.",
+          },
+        ],
+      },
+      {
+        id: "interviews",
+        heading: "6. Technical and HR interviews",
+        blocks: [
+          {
+            k: "p",
+            text: "After clearing the online test, expect a technical interview covering CS fundamentals (DBMS, OS, networking, OOP), and a project discussion. The HR round covers your self-introduction, career goals and basic behavioural questions.",
+          },
+          {
+            k: "p",
+            text: "Prepare a crisp 60-second self-introduction and practise the STAR method (Situation, Task, Action, Result) for situational questions. Know your resume deeply — every project you list should have a 2-minute explanation ready.",
+          },
+        ],
+      },
+    ],
+    takeaways: [
+      "Eligibility: 60% in 10th, 12th and UG with no active backlogs.",
+      "Three test sections: aptitude, verbal, pseudocode + coding. Attempt all three seriously.",
+      "Pseudocode is trace-and-output — treat it like a logic puzzle, not a programming test.",
+      "Two coding problems: aim to solve both. Pattern-focus on arrays, strings and basic algorithms.",
+      "Technical interview tests DBMS, OS, OOP and project knowledge — prepare all four.",
+      "Always verify the current pattern from the official Infosys notification before your drive.",
+    ],
+    faq: [
+      {
+        q: "What is the Infosys online assessment pass mark?",
+        a: "Infosys does not publish a fixed cutoff percentage. Passing depends on relative performance across all test-takers in your batch. Aim to attempt every question and score above 70% in each section as a safe target.",
+      },
+      {
+        q: "Is there negative marking in the Infosys online assessment?",
+        a: "Recent Infosys assessment cycles have not used negative marking, but this can change. Always read the official instructions at the start of your test before answering strategically.",
+      },
+      {
+        q: "How long does the full Infosys hiring process take?",
+        a: "After the online assessment, results are typically declared within 1-2 weeks. Technical and HR interviews follow in batches. Total process time from application to offer letter is commonly 4-8 weeks depending on the batch size.",
+      },
+    ],
+  },
+
+  // ========================================================================
+  {
+    slug: "wipro-placement-preparation-guide",
+    title: "Wipro Elite NTH Placement Preparation 2026: Pattern & Strategy",
+    description:
+      "Wipro Elite NTH placement preparation guide 2026: eligibility, exam pattern, essay writing, aptitude syllabus, coding tips and interview strategy for freshers.",
+    excerpt:
+      "Clear the Wipro Elite NTH assessment: aptitude, essay writing and coding round guide for 2026 fresher hiring.",
+    datePublished: "2026-06-03",
+    dateModified: "2026-06-12",
+    readMins: 7,
+    tags: ["Wipro", "Placements", "Freshers"],
+    keywords: [
+      "Wipro placement preparation",
+      "Wipro Elite NTH 2026",
+      "Wipro online test pattern",
+      "Wipro fresher hiring",
+      "Wipro essay writing round",
+    ],
+    intro: [
+      "Wipro hires freshers through its Elite NTH (National Talent Hunt) program, an online assessment that includes an unusual essay writing component alongside the standard aptitude and coding rounds.",
+      "This guide covers the Wipro Elite NTH 2026 pattern, preparation strategy for each section, and what to expect in the interview rounds.",
+    ],
+    sections: [
+      {
+        id: "eligibility",
+        heading: "1. Eligibility",
+        blocks: [
+          {
+            k: "list",
+            items: [
+              "60% or 6.0 CGPA across 10th, 12th and UG with no rounding.",
+              "No active backlogs at the time of the drive.",
+              "Graduation years typically 2025 and 2026 for the current cycle.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "exam-pattern",
+        heading: "2. Exam pattern",
+        blocks: [
+          {
+            k: "ol",
+            items: [
+              "Aptitude: Quantitative, Logical Reasoning and Verbal Ability — approximately 45 minutes.",
+              "Essay Writing: one essay on a general topic — typically 20-25 minutes.",
+              "Coding Round: two programming problems — approximately 60 minutes.",
+            ],
+          },
+          {
+            k: "p",
+            text: "All three sections are conducted in a single sitting. The essay is graded for language quality, coherence and content relevance.",
+          },
+        ],
+      },
+      {
+        id: "aptitude",
+        heading: "3. Aptitude section",
+        blocks: [
+          {
+            k: "p",
+            text: "High-frequency topics: percentages, profit and loss, ratio and proportion, averages, mixtures, time-speed-distance, time and work. Reasoning: series, blood relations, coding-decoding, directions, puzzles, syllogisms. Verbal: grammar, vocabulary, fill-in-the-blanks, reading comprehension.",
+          },
+          {
+            k: "p",
+            text: "The Wipro aptitude round is at a moderate difficulty level — consistent practice over 3-4 weeks is sufficient for most students who have finished Class 12 mathematics.",
+          },
+        ],
+      },
+      {
+        id: "essay",
+        heading: "4. Essay writing",
+        blocks: [
+          {
+            k: "p",
+            text: "This is the section most students underestimate. The essay is typically 200-300 words on a general or current-affairs topic. Graders look for: a clear position stated in the first paragraph, organised body paragraphs, correct grammar and varied vocabulary, and a concise conclusion.",
+          },
+          {
+            k: "p",
+            text: "Practise writing one essay a day for two weeks before your drive. Time yourself strictly to 20 minutes. Topics often cover technology, work culture, environment or social issues — prepare 5-6 template arguments you can adapt to any topic.",
+          },
+          {
+            k: "quote",
+            text: "A clear structure beats impressive vocabulary. Introduction → 2 body points → conclusion is all you need to score well.",
+          },
+        ],
+      },
+      {
+        id: "coding",
+        heading: "5. Coding round",
+        blocks: [
+          {
+            k: "p",
+            text: "Two problems — one easy and one medium. Typical patterns: string manipulation, array operations, pattern printing, basic searching and sorting, matrix operations. A partial solution that passes some test cases is better than a blank answer.",
+          },
+        ],
+      },
+      {
+        id: "interviews",
+        heading: "6. Technical and HR interviews",
+        blocks: [
+          {
+            k: "p",
+            text: "The technical interview tests OOP concepts, data structures, DBMS basics and your resume projects. The HR round is conversational — clarity and confidence matter more than perfect answers.",
+          },
+        ],
+      },
+    ],
+    takeaways: [
+      "Wipro Elite NTH has three sections: aptitude, essay writing and coding — prepare all three.",
+      "The essay round is unique — practise daily for 2 weeks with a strict 20-minute timer.",
+      "Coding: two problems. Aim to fully solve the easy one and partially solve the medium one.",
+      "Technical interview: OOP, DSA, DBMS and your own project are the four pillars.",
+      "Eligibility: 60% throughout with no active backlogs.",
+    ],
+    faq: [
+      {
+        q: "How is the Wipro essay writing section graded?",
+        a: "Wipro's essay grading uses a combination of automated tools and human reviewers assessing grammar, vocabulary, relevance to the topic, and structural coherence. Focus on writing clear, correctly punctuated sentences in a logical order rather than trying to impress with complex vocabulary.",
+      },
+      {
+        q: "What coding languages does Wipro allow in the assessment?",
+        a: "Wipro commonly supports C, C++, Java, Python and sometimes others. Use the language you are most fluent in, as the platform is plain and autocomplete is limited.",
+      },
+      {
+        q: "How many students does Wipro typically recruit per cycle?",
+        a: "Wipro is a large recruiter and runs multiple cycles across the year, hiring thousands of freshers. Your specific batch size and competition level depend on when you apply and which campus or off-campus drive you attend.",
+      },
+    ],
+  },
+
+  // ========================================================================
+  {
+    slug: "accenture-placement-preparation-guide",
+    title: "Accenture Placement Preparation 2026: Pattern, Syllabus & Tips",
+    description:
+      "Accenture fresher placement guide 2026: cognitive and technical assessment, coding round, communication assessment, and interview tips for campus hiring.",
+    excerpt:
+      "Crack the Accenture campus drive: cognitive + technical assessment, coding, and communication assessment guide for 2026 freshers.",
+    datePublished: "2026-06-05",
+    dateModified: "2026-06-12",
+    readMins: 7,
+    tags: ["Accenture", "Placements", "Freshers"],
+    keywords: [
+      "Accenture placement preparation",
+      "Accenture online test 2026",
+      "Accenture fresher hiring pattern",
+      "Accenture cognitive assessment",
+      "Accenture communication assessment",
+    ],
+    intro: [
+      "Accenture runs a structured multi-stage online assessment for fresher hiring that differs from the typical aptitude-plus-coding pattern. It adds a dedicated technical module and a communication assessment component.",
+      "This guide covers what each module tests, the preparation strategy that works, and the interview rounds you will face after clearing the online test.",
+    ],
+    sections: [
+      {
+        id: "eligibility",
+        heading: "1. Eligibility",
+        blocks: [
+          {
+            k: "list",
+            items: [
+              "Typically 65% or above across 10th, 12th and UG — some cycles relax this to 60%.",
+              "No active backlogs at the time of the drive.",
+              "Any branch of engineering or MCA/M.Tech for most roles.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "exam-pattern",
+        heading: "2. Assessment structure",
+        blocks: [
+          {
+            k: "ol",
+            items: [
+              "Cognitive Ability: Numerical Reasoning, Logical Reasoning, Verbal Reasoning — approximately 40 questions.",
+              "Technical Assessment: Computer Applications, MS Office knowledge, Pseudocode understanding, Core CS Fundamentals.",
+              "Coding Round: 2 programming problems in the language of your choice.",
+              "Communication Assessment: spoken English evaluation — reading a passage, describing an image, answering open-ended questions.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "cognitive",
+        heading: "3. Cognitive ability module",
+        blocks: [
+          {
+            k: "p",
+            text: "Standard aptitude fare: percentages, ratios, profit and loss, averages, time-speed-distance (numerical); series, analogies, data sufficiency (logical); grammar, vocabulary, comprehension (verbal).",
+          },
+          {
+            k: "p",
+            text: "Accenture's cognitive questions are moderate difficulty. 3-4 weeks of daily aptitude practice covering the high-frequency topics is sufficient for most students.",
+          },
+        ],
+      },
+      {
+        id: "technical",
+        heading: "4. Technical assessment module",
+        blocks: [
+          {
+            k: "p",
+            text: "This module tests practical computer knowledge: Microsoft Office proficiency, common software applications, pseudocode tracing, and fundamental CS concepts. It is not deep coding — it is applied IT literacy.",
+          },
+          {
+            k: "p",
+            text: "Revise: database concepts (SQL basics, keys, joins), networking fundamentals (TCP/IP, HTTP, OSI model), OS basics (process vs thread, memory management), and OOP concepts (encapsulation, inheritance, polymorphism).",
+          },
+        ],
+      },
+      {
+        id: "coding",
+        heading: "5. Coding round",
+        blocks: [
+          {
+            k: "p",
+            text: "Two problems at easy to medium difficulty. Typical patterns: array manipulation, string operations, pattern printing, sorting and searching. Aim to solve both within time.",
+          },
+        ],
+      },
+      {
+        id: "communication",
+        heading: "6. Communication assessment",
+        blocks: [
+          {
+            k: "p",
+            text: "The spoken English module is automated. You are asked to read a passage aloud, describe an image and answer behavioural or situational questions. Scoring is on pronunciation, fluency, grammar and vocabulary.",
+          },
+          {
+            k: "p",
+            text: "Practise speaking clearly at a measured pace. Do not rush. Automated tools grade your final seconds of silence as part of your response, so do not cut sentences short.",
+          },
+          {
+            k: "quote",
+            text: "Speak at 80% of your natural pace in the communication module. Clarity scores higher than speed.",
+          },
+        ],
+      },
+      {
+        id: "interview",
+        heading: "7. Final interviews",
+        blocks: [
+          {
+            k: "p",
+            text: "Accenture typically combines the technical and HR rounds into a single interview. Prepare: OOP concepts, one data structure topic in depth, your project, a self-introduction and 2-3 behavioural answers using the STAR method.",
+          },
+        ],
+      },
+    ],
+    takeaways: [
+      "Accenture assessment has four parts: cognitive, technical, coding, communication — each graded separately.",
+      "The communication assessment is automated and grades pronunciation and fluency. Practise speaking at a measured pace.",
+      "Technical module covers MS Office, pseudocode, OOP, DBMS and networking — not deep coding.",
+      "Coding: 2 problems, easy to medium difficulty. Solve both to be safe.",
+      "Final interview combines technical and HR — prepare OOP, projects and STAR-method behavioural answers.",
+    ],
+    faq: [
+      {
+        q: "Does Accenture have negative marking?",
+        a: "Accenture has generally not used negative marking in recent assessment cycles. Attempt every question. Always confirm in the official test instructions when your drive is scheduled.",
+      },
+      {
+        q: "What is the Accenture communication assessment format?",
+        a: "It is a spoken English module with three parts: reading a passage aloud, describing an image, and answering open questions with a recorded response. It is fully automated and uses speech-analysis software.",
+      },
+      {
+        q: "Is the Accenture technical module hard?",
+        a: "The technical module tests applied IT knowledge rather than deep coding. A student with basic knowledge of DBMS, OOP, networking and MS Office should find it manageable with 1-2 weeks of focused revision.",
+      },
+    ],
+  },
+
+  // ========================================================================
+  {
+    slug: "how-to-take-mock-tests-for-placements",
+    title: "How to Take Mock Tests for Placements: The Right Strategy",
+    description:
+      "A practical guide on how to take and review placement mock tests effectively — timing strategy, error analysis, what to track and how to improve your score each attempt.",
+    excerpt:
+      "Taking mocks without a review plan is wasted effort. Here is the system that turns each attempt into measurable improvement.",
+    datePublished: "2026-06-07",
+    dateModified: "2026-06-12",
+    readMins: 7,
+    tags: ["Mock Tests", "Strategy", "Aptitude"],
+    keywords: [
+      "placement mock test strategy",
+      "how to take mock tests for placements",
+      "placement test preparation",
+      "aptitude mock test tips",
+      "mock test review strategy",
+    ],
+    intro: [
+      "Most students take mock tests like this: attempt the test, check the score, feel good or bad, move on. This approach wastes 80% of the value a mock test offers.",
+      "A mock test is only half practice — the other half is the review. This guide gives you the complete mock strategy: how to attempt, how to review, what to track, and how to ensure each mock actually moves your readiness score upward.",
+    ],
+    sections: [
+      {
+        id: "before-the-mock",
+        heading: "1. Set up the attempt correctly",
+        blocks: [
+          {
+            k: "p",
+            text: "Simulate the real test environment: same time of day, no phone, no notes, timer running. A mock taken in comfort teaches your brain the wrong habits. If your placement drive is at 10 AM, take your mock at 10 AM.",
+          },
+          {
+            k: "list",
+            items: [
+              "No pausing mid-test to look up answers.",
+              "Rough paper only — no calculator unless the test permits one.",
+              "Mark questions you are unsure of (without skipping) so you can flag them in review.",
+            ],
+          },
+        ],
+      },
+      {
+        id: "during-attempt",
+        heading: "2. Time allocation by section",
+        blocks: [
+          {
+            k: "p",
+            text: "Know your per-question budget before you start. For a typical 65-question aptitude test in 65 minutes, that is 60 seconds per question. In practice, easy questions should take 20-30 seconds so you bank time for harder ones.",
+          },
+          {
+            k: "p",
+            text: "Use a three-pass system: Pass 1 — answer everything you can solve in under 30 seconds. Pass 2 — return to flagged questions with remaining time. Pass 3 — guess strategically on anything left (if no negative marking).",
+          },
+          {
+            k: "quote",
+            text: "Placement tests reward breadth over depth. One impossible question solved at the cost of three easy ones is a net loss.",
+          },
+        ],
+      },
+      {
+        id: "review-system",
+        heading: "3. The 4-type error classification",
+        blocks: [
+          {
+            k: "p",
+            text: "Every wrong answer falls into one of four buckets. Classify every mistake before moving on:",
+          },
+          {
+            k: "ol",
+            items: [
+              "Concept gap: you did not know the underlying method. Fix: learn the concept, do 5 examples.",
+              "Careless error: you knew the method but made an arithmetic or reading mistake. Fix: identify your personal error pattern (sign errors, unit errors, misreading options).",
+              "Speed failure: you ran out of time before attempting it. Fix: increase speed drills, not attempts.",
+              "Strategy error: you spent too long on a hard question at the cost of easy ones. Fix: set strict per-question time limits.",
+            ],
+          },
+          {
+            k: "p",
+            text: "Track the count in each bucket across mocks. Concept gaps decrease when you study. Careless errors decrease only when you identify and name the recurring mistake specifically.",
+          },
+        ],
+      },
+      {
+        id: "what-to-track",
+        heading: "4. What to record after each mock",
+        blocks: [
+          {
+            k: "list",
+            items: [
+              "Overall score and section-wise score.",
+              "Number of mistakes per error type (concept, careless, speed, strategy).",
+              "Topics where you made concept errors — schedule a 20-minute revision session for each.",
+              "Slowest 3 questions — what made them slow? Can you find a faster method?",
+            ],
+          },
+          {
+            k: "p",
+            text: "After 3 mocks you will see a pattern: probably 2-3 recurring concept gaps and 1-2 careless error types. Eliminating those specific issues is worth more than taking 10 more mocks without targeted fixes.",
+          },
+        ],
+      },
+      {
+        id: "score-improvement",
+        heading: "5. How to ensure each mock improves your score",
+        blocks: [
+          {
+            k: "p",
+            text: "The cadence that works: mock → 48 hours of focused revision on the errors found → short 20-question drill on weak topics → next mock. Never take two full mocks on consecutive days without a revision session between them.",
+          },
+          {
+            k: "p",
+            text: "Do not take more than 2-3 full mocks per week. Each mock needs proper review. Under-reviewed mocks create false confidence or unaddressed patterns that compound across attempts.",
+          },
+        ],
+      },
+    ],
+    takeaways: [
+      "Simulate exam conditions exactly: same time, same environment, no pausing.",
+      "Use a three-pass system — easy questions first, flagged questions second, guesses last.",
+      "Classify every mistake: concept gap, careless, speed failure or strategy error.",
+      "Track errors across mocks to identify the 2-3 recurring patterns worth fixing specifically.",
+      "After each mock, revise for 48 hours before the next one. Cadence beats volume.",
+      "Two to three full mocks per week with proper review beats seven rushed ones.",
+    ],
+    faq: [
+      {
+        q: "How many mock tests should I take before my placement drive?",
+        a: "Aim for at least 8-10 full-length mocks in the 3 months before your drive. Quality of review matters more than quantity. A student who reviews 5 mocks thoroughly will outperform someone who rushes through 20 without analysis.",
+      },
+      {
+        q: "When should I start taking mock tests?",
+        a: "Start diagnostic mocks early — even before you feel ready. An early mock shows you the actual gap between your current level and the test requirement, which drives more focused preparation. Do not wait until you feel 'prepared enough' to start.",
+      },
+      {
+        q: "What is the difference between a mock test and chapter practice?",
+        a: "Chapter practice builds skills in isolation. A mock test builds exam temperament — time management, section-switching, pressure handling and stamina across the full length of the test. Both are necessary. You need chapter practice to build the skills and mock tests to train how you deploy them under pressure.",
+      },
+    ],
+  },
+
+  // ========================================================================
+  {
+    slug: "cs-core-topics-for-placement-interviews",
+    title: "CS Core Topics for Placement Interviews: DBMS, OS, Networks & OOP",
+    description:
+      "A focused revision guide for CS core placement interview topics: DBMS, Operating Systems, Computer Networks and OOP — with the most frequently asked questions and answers.",
+    excerpt:
+      "The 4 CS core pillars every technical interviewer tests in campus placements — and the exact sub-topics you must know in each.",
+    datePublished: "2026-06-09",
+    dateModified: "2026-06-12",
+    readMins: 10,
+    tags: ["CS Core", "Technical Interview", "Placements"],
+    keywords: [
+      "CS core topics for placements",
+      "DBMS interview questions freshers",
+      "OS concepts for placement",
+      "computer networks placement preparation",
+      "OOP interview questions",
+    ],
+    intro: [
+      "Almost every technical interview in campus placements tests the same four areas: Database Management Systems, Operating Systems, Computer Networks and Object-Oriented Programming. These are the non-negotiables.",
+      "This guide gives you a focused revision map for each area — the sub-topics that appear most often, the style of questions interviewers ask, and the depth of answer that impresses versus the shallow recall that does not.",
+    ],
+    sections: [
+      {
+        id: "dbms",
+        heading: "1. DBMS",
+        blocks: [
+          {
+            k: "p",
+            text: "DBMS questions are almost universally asked in technical interviews. The high-frequency sub-topics are:",
+          },
+          {
+            k: "list",
+            items: [
+              "Keys: primary, candidate, foreign, super. Know the exact definition and the difference between candidate and primary key.",
+              "Normalization: 1NF, 2NF, 3NF and BCNF. Be ready to normalize a given schema to 3NF step by step.",
+              "Joins: inner, left, right, full outer. Know what each returns with an example.",
+              "SQL: GROUP BY, HAVING vs WHERE, aggregate functions (COUNT, SUM, AVG, MAX, MIN), subqueries.",
+              "Transactions: ACID properties. Be able to explain each property with an example.",
+              "Indexing: what an index is, the trade-off (faster reads, slower writes), clustered vs non-clustered.",
+            ],
+          },
+          {
+            k: "p",
+            text: "Interviewers probe depth: they start broad ('tell me about normalization') and then probe ('what anomalies does 2NF fix that 1NF does not?'). Prepare example-led answers, not just definitions.",
+          },
+        ],
+      },
+      {
+        id: "os",
+        heading: "2. Operating Systems",
+        blocks: [
+          {
+            k: "p",
+            text: "OS questions focus on three clusters:",
+          },
+          {
+            k: "list",
+            items: [
+              "Process vs Thread: what is the difference, why threads share memory, when to use which. This is asked in nearly every service company interview.",
+              "Deadlock: what it is, the four Coffman conditions (mutual exclusion, hold and wait, no preemption, circular wait), and prevention/avoidance strategies.",
+              "Memory management: paging vs segmentation, virtual memory, page faults, thrashing.",
+              "Scheduling algorithms: FCFS, SJF, Round Robin, Priority. Be able to compute average waiting time for each.",
+              "Synchronization: semaphores, mutex, race conditions, the producer-consumer problem.",
+            ],
+          },
+          {
+            k: "quote",
+            text: "When asked 'what is a deadlock', do not just define it — describe a real scenario. The concrete example shows understanding, the definition shows memory.",
+          },
+        ],
+      },
+      {
+        id: "networks",
+        heading: "3. Computer Networks",
+        blocks: [
+          {
+            k: "list",
+            items: [
+              "OSI model: all 7 layers, what each does, which protocols live where.",
+              "TCP vs UDP: connection-oriented vs connectionless, use cases, why UDP is used for video streaming.",
+              "HTTP vs HTTPS: what HTTPS adds (TLS/SSL), why it matters.",
+              "IP addressing: IPv4 vs IPv6, subnetting, the difference between public and private IP.",
+              "DNS: what it does, the resolution process end to end.",
+              "Three-way handshake: SYN, SYN-ACK, ACK — draw this from memory.",
+            ],
+          },
+          {
+            k: "p",
+            text: "Networks questions are often lateral: 'what happens when you type a URL in a browser?' covers DNS, TCP, HTTP and rendering in one question. Practise narrating full end-to-end flows, not isolated facts.",
+          },
+        ],
+      },
+      {
+        id: "oop",
+        heading: "4. OOP",
+        blocks: [
+          {
+            k: "p",
+            text: "OOP is often tested first because it underpins the recruiter's view of your programming foundation. The four pillars:",
+          },
+          {
+            k: "ol",
+            items: [
+              "Encapsulation: binding data and behaviour, access modifiers. Example: a BankAccount class that hides balance behind deposit/withdraw methods.",
+              "Inheritance: parent-child class relationships, 'is-a' relationship, constructor chaining. Know why multiple inheritance is avoided in Java.",
+              "Polymorphism: compile-time (method overloading) vs runtime (method overriding). The difference matters — interviewers ask it directly.",
+              "Abstraction: hiding implementation, abstract classes vs interfaces. Know when to choose each.",
+            ],
+          },
+          {
+            k: "p",
+            text: "Also revise: constructor vs destructor, static vs instance methods, virtual functions (C++), access specifiers (public, private, protected). In Java-focused interviews: String pool, == vs .equals(), garbage collection basics.",
+          },
+        ],
+      },
+      {
+        id: "prep-order",
+        heading: "5. How to prepare in the right order",
+        blocks: [
+          {
+            k: "p",
+            text: "Prioritise by frequency of appearance: OOP first (asked most widely), then DBMS (asked in service and product companies), then OS, then Networks. Spend two days minimum on each area building depth on the sub-topics above.",
+          },
+          {
+            k: "p",
+            text: "After initial study, do verbal mock answers out loud. Explain 'what is normalization?' to yourself as if to an interviewer. If you stutter or skip steps, revisit. The gap between 'I know this' and 'I can explain this clearly' is exactly what technical interviews expose.",
+          },
+        ],
+      },
+    ],
+    takeaways: [
+      "Four CS core pillars: DBMS, OS, Computer Networks, OOP. All four are tested in most technical interviews.",
+      "DBMS: know keys, normalization to 3NF, all join types, SQL aggregation, ACID properties.",
+      "OS: process vs thread, deadlock conditions, scheduling algorithms and synchronization are the most-asked clusters.",
+      "Networks: OSI layers, TCP vs UDP, HTTP vs HTTPS, three-way handshake and DNS end-to-end.",
+      "OOP: four pillars with examples, polymorphism types, abstract class vs interface.",
+      "Prepare verbal answers out loud — technical interviews test explanation, not recall.",
+    ],
+    faq: [
+      {
+        q: "How much depth do I need in CS core for service company interviews?",
+        a: "For service companies (TCS, Infosys, Wipro, Cognizant, Accenture), you need moderate depth: correct definitions, one clear example per concept, and the ability to distinguish similar terms (process vs thread, 2NF vs 3NF, TCP vs UDP). You do not need to implement OS schedulers or write SQL query optimizers.",
+      },
+      {
+        q: "Is DBMS asked in every placement technical interview?",
+        a: "DBMS is asked in almost every service company technical interview and in most product company interviews at the fresher level. It is the highest-frequency CS core subject. Normalize it to 3NF in your own words before your drive.",
+      },
+      {
+        q: "What is the difference between abstract class and interface in Java?",
+        a: "An abstract class can have both abstract and non-abstract methods, instance variables and constructors. An interface (pre-Java 8) can only have abstract methods. Post-Java 8, interfaces can have default and static methods. Use abstract class when you want a partial implementation; use interface when you want to define a contract that unrelated classes can implement.",
+      },
+    ],
+  },
 ]
 
 export function getPost(slug: string): BlogPost | undefined {

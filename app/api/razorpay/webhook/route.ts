@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { PREMIUM_PRICE_INR } from "@/lib/access"
+import { getRazorpayWebhookSecretOrNull } from "@/lib/env"
+import { captureError, logger } from "@/lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "@/lib/crypto/edge-hmac"
 import { grantPremiumYear, recordPaymentOnce } from "@/lib/entitlement"
 import { createAdminClient } from "@/lib/supabase/admin"
@@ -14,7 +16,7 @@ export const runtime = "edge"
  * both paths are idempotent and never shorten an existing entitlement.
  */
 export async function POST(request: Request) {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET
+  const secret = getRazorpayWebhookSecretOrNull()
   if (!secret) {
     return NextResponse.json(
       { error: "Razorpay webhook secret is not configured." },
@@ -71,19 +73,23 @@ export async function POST(request: Request) {
     })
     if (recorded === "replayed-by-other-user") {
       // Ledger says this payment was consumed by a different account — never
-      // expected from a signed Razorpay delivery; log loudly, don't retry.
-      console.error("[webhook] Payment already consumed by another user:", paymentId)
+      // expected from a signed Razorpay delivery; capture loudly, don't retry.
+      captureError(new Error("Payment already consumed by another user"), {
+        scope: "razorpay/webhook",
+        paymentId,
+        userId,
+      })
       return NextResponse.json({ ok: false, event: eventName, skipped: true })
     }
 
     await grantPremiumYear(admin, userId)
-    console.info("[webhook] Premium activation handled for event:", eventName)
+    logger.info("[webhook] premium activation handled", { event: eventName, userId })
     return NextResponse.json({ ok: true, event: eventName })
   } catch (error) {
     // Transient DB failure: return 5xx so Razorpay retries the signed delivery.
     // Both recordPaymentOnce and grantPremiumYear are idempotent, so a retry
     // can only complete the activation, never double-grant.
-    console.error("[webhook] Failed to activate premium:", error)
+    captureError(error, { scope: "razorpay/webhook", stage: "activation", paymentId, userId })
     return NextResponse.json(
       { error: "Activation failed, retry expected." },
       { status: 500 },

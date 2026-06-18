@@ -56,6 +56,8 @@
    Calm exam-prep surfaces with blue primary, emerald success and amber warning. */
 :root {
     --radius: 0.625rem;
+    /* The single shared easing curve behind every signature motion. */
+    --ease-signature: cubic-bezier(0.22, 1, 0.36, 1);
 
     --background: oklch(0.982 0.006 248);
     --foreground: oklch(0.23 0.03 261);
@@ -153,6 +155,11 @@
       repeating-linear-gradient(90deg, oklch(0.7 0.03 255 / 7%) 0 1px, transparent 1px 32px),
       repeating-linear-gradient(180deg, oklch(0.7 0.03 255 / 5%) 0 1px, transparent 1px 32px);
     background-attachment: fixed;
+    text-rendering: optimizeLegibility;
+    }
+  /* Long-form copy: avoid ugly single-word last lines. */
+  p {
+    text-wrap: pretty;
     }
   .dark body {
     background-image:
@@ -166,6 +173,9 @@
     }
   h1, h2, h3, h4, h5 {
     @apply font-heading;
+    /* Display type reads tighter and never strands a lone word on its own line. */
+    letter-spacing: -0.014em;
+    text-wrap: balance;
     }
 }
 
@@ -176,6 +186,48 @@
 
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/30;
+  }
+
+  /* ── StudyBench motion signature ──────────────────────────────────────────
+     One easing curve and one entrance gesture used app-wide, so motion reads as
+     a deliberate language rather than ad-hoc per component. All guarded by
+     prefers-reduced-motion. */
+
+  /* The PRI gauge sweeps its arc on mount from empty (--pri-c) to value. */
+  .animate-pri-draw {
+    animation: pri-draw 1100ms var(--ease-signature) both;
+  }
+
+  /* Staggered card/list entry. Pair with inline animation-delay for a cascade. */
+  .animate-rise {
+    animation: rise-in 560ms var(--ease-signature) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-pri-draw,
+    .animate-rise {
+      animation: none !important;
+    }
+  }
+}
+
+@keyframes pri-draw {
+  from {
+    stroke-dashoffset: var(--pri-c);
+  }
+  to {
+    stroke-dashoffset: var(--pri-offset);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

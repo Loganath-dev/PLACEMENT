@@ -14,8 +14,9 @@ import {
   SectionProgressBar,
   ToneBadge,
 } from "@/components/app/ui-bits"
+import { SharePriCard } from "@/components/app/share-pri-card"
 import { UpgradeBanner } from "@/components/app/upgrade-prompt"
-import { getCompany } from "@/lib/data/companies"
+import { getCompany, SELECTABLE_COMPANIES } from "@/lib/data/companies"
 import { getSections } from "@/lib/data/content"
 import {
   computePRI,
@@ -30,7 +31,9 @@ import { useStoreActions, useStoreState } from "@/lib/store"
 import type { CompanyId } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-const ALL_TRACK_IDS = ["general", "tcs", "infosys", "wipro", "accenture", "zoho", "cognizant"] as const
+// Derived from the canonical company list so every track (Core + all companies)
+// appears here automatically when companies are added.
+const ALL_TRACK_IDS: CompanyId[] = SELECTABLE_COMPANIES.map((c) => c.id)
 
 function nextChapter(companyId: CompanyId, progress = EMPTY_PROGRESS) {
   for (const section of getSections(companyId)) {
@@ -44,75 +47,74 @@ function nextChapter(companyId: CompanyId, progress = EMPTY_PROGRESS) {
 }
 
 export default function DashboardPage() {
-  const { state } = useStoreState()
+  const { state, userId } = useStoreState()
   const { setPrimary } = useStoreActions()
   const primary = state.primary
   const company = getCompany(primary)
   const progress = state.progress[primary] ?? EMPTY_PROGRESS
 
-  const pri = React.useMemo(() => computePRI(primary, progress), [primary, progress])
-  const next = React.useMemo(() => nextChapter(primary, progress), [primary, progress])
+  const pri = React.useMemo(
+    () => computePRI(primary, progress),
+    [primary, progress]
+  )
+  const next = React.useMemo(
+    () => nextChapter(primary, progress),
+    [primary, progress]
+  )
   const weakest = React.useMemo(() => weakestTopics(state, 1)[0], [state])
   const nextMinutes = React.useMemo(
-    () => (next ? next.chapter.lessons.reduce((m, l) => m + l.minutes, 0) + next.chapter.quiz.length : 0),
-    [next],
+    () =>
+      next
+        ? next.chapter.lessons.reduce((m, l) => m + l.minutes, 0) +
+          next.chapter.quiz.length
+        : 0,
+    [next]
   )
   const nextGain = React.useMemo(
     () => (next ? expectedPriGain(primary, next.chapter.id, progress) : 0),
-    [primary, next, progress],
+    [primary, next, progress]
   )
 
   const others = React.useMemo(
     () => state.interested.filter((id) => id !== primary),
-    [state.interested, primary],
+    [state.interested, primary]
   )
 
   // Memoize PRI for each "other" company so the list doesn't recompute on unrelated state changes.
   const otherPRIs = React.useMemo(
-    () => Object.fromEntries(others.map((id) => [id, computePRI(id, state.progress[id] ?? EMPTY_PROGRESS)])),
-    [others, state.progress],
+    () =>
+      Object.fromEntries(
+        others.map((id) => [
+          id,
+          computePRI(id, state.progress[id] ?? EMPTY_PROGRESS),
+        ])
+      ),
+    [others, state.progress]
   )
 
-  // Memoize "All tracks" PRIs — 7 companies, called every render without this.
+  // Memoize "All tracks" PRIs — one per track, called every render without this.
   const trackPRIs = React.useMemo(
-    () => Object.fromEntries(ALL_TRACK_IDS.map((id) => [id, computePRI(id, state.progress[id] ?? EMPTY_PROGRESS)])),
-    [state.progress],
+    () =>
+      Object.fromEntries(
+        ALL_TRACK_IDS.map((id) => [
+          id,
+          computePRI(id, state.progress[id] ?? EMPTY_PROGRESS),
+        ])
+      ),
+    [state.progress]
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            {greeting()}, {state.profile.name?.split(" ")[0] || "there"}
-          </p>
-          <h1 className="font-heading text-2xl font-bold md:text-3xl">
-            Your placement plan for today
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Start with the three actions below. They are picked from your target company,
-            weakest areas and mock progress.
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/readiness">
-            <Icon name="TrendingUp" className="size-4" /> Full readiness
-          </Link>
-        </Button>
-      </div>
-
-      {!state.premium && <UpgradeBanner />}
-
-      <TodayTasksCard />
-
-      {/* Primary focus */}
-      <Card className="overflow-hidden duration-500 animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none">
-        <CardContent className="grid gap-6 p-6 md:grid-cols-[auto_1fr]">
-          <div className="flex flex-col items-center justify-center gap-3 md:border-r md:border-border md:pr-6">
+    <div className="space-y-8">
+      {/* Hero — greeting, readiness snapshot and the single highest-impact action */}
+      <Card className="animate-in overflow-hidden border-primary/15 shadow-[0_28px_80px_-52px_oklch(0.25_0.12_260_/_55%)] duration-500 fade-in slide-in-from-bottom-2 motion-reduce:animate-none">
+        <CardContent className="grid gap-6 p-5 sm:p-6 md:grid-cols-[minmax(0,15rem)_1fr] md:gap-8">
+          {/* Readiness column */}
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-[linear-gradient(160deg,var(--accent),transparent)] p-5 text-center">
             <div className="flex items-center gap-2">
-              <CompanyAvatar id={primary} size={28} />
+              <CompanyAvatar id={primary} size={26} />
               <span className="font-heading font-semibold">{company.short}</span>
-              <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              <span className="rounded-full bg-background/70 px-2 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border">
                 Primary
               </span>
             </div>
@@ -122,61 +124,83 @@ export default function DashboardPage() {
             <ProbabilityInputs companyId={primary} progress={progress} compact />
           </div>
 
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-heading text-lg font-semibold">Continue preparing</h2>
-              <Button asChild variant="ghost" size="sm">
-                <Link href={`/learn/${primary}`}>
-                  View track <Icon name="ChevronRight" className="size-4" />
+          {/* Action column */}
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  {greeting()}, {state.profile.name?.split(" ")[0] || "there"}
+                </p>
+                <h1 className="mt-0.5 font-heading text-2xl font-bold tracking-tight md:text-[1.75rem]">
+                  Your plan for today
+                </h1>
+              </div>
+              <Button asChild variant="outline" size="sm" className="shrink-0">
+                <Link href="/readiness">
+                  <Icon name="TrendingUp" className="size-4" /> Full readiness
                 </Link>
               </Button>
             </div>
 
             {next ? (
-              <div className="rounded-xl border border-primary/20 bg-[linear-gradient(135deg,var(--accent),transparent)] p-4 sm:p-5">
+              <div className="rounded-2xl border border-primary/20 bg-[linear-gradient(135deg,var(--accent),transparent)] p-4 sm:p-5">
                 <div className="flex items-start gap-3">
                   <span className="grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                     <Icon name={next.section.icon} className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+                    <p className="text-[11px] font-semibold tracking-wider text-primary uppercase">
                       Do this now - {next.section.short}
                     </p>
-                    <p className="mt-0.5 line-clamp-2 font-heading text-lg font-semibold leading-snug">
+                    <p className="mt-0.5 line-clamp-2 font-heading text-lg leading-snug font-semibold">
                       {next.chapter.title}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                       <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-1 font-medium text-muted-foreground ring-1 ring-border">
-                        <Icon name="Clock" className="size-3.5" /> ~{Math.max(5, nextMinutes)} min
+                        <Icon name="Clock" className="size-3.5" /> ~
+                        {Math.max(5, nextMinutes)} min
                       </span>
                       {nextGain > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 font-medium text-[color:var(--success)]">
-                          <Icon name="TrendingUp" className="size-3.5" /> +{nextGain} PRI when you pass
+                          <Icon name="TrendingUp" className="size-3.5" /> +
+                          {nextGain} PRI when you pass
                         </span>
                       ) : null}
                     </div>
                     {weakest ? (
                       <p className="mt-2 text-xs text-muted-foreground">
                         Targets your weakest area so far:{" "}
-                        <span className="font-medium text-foreground">{weakest.topic}</span> (
-                        {weakest.accuracy}%)
+                        <span className="font-medium text-foreground">
+                          {weakest.topic}
+                        </span>{" "}
+                        ({weakest.accuracy}%)
                       </p>
                     ) : null}
                   </div>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex flex-wrap items-center gap-3">
                   <StartNowButton
                     href={`/learn/${primary}/${next.section.id}/${next.chapter.id}`}
                     label="Start now"
                   />
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href={`/learn/${primary}`}>
+                      View full track{" "}
+                      <Icon name="ChevronRight" className="size-4" />
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col items-start gap-3 rounded-xl border border-success/30 bg-success/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col items-start gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <Icon name="Trophy" className="size-6 text-[color:var(--success)]" />
+                  <Icon
+                    name="Trophy"
+                    className="size-6 text-[color:var(--success)]"
+                  />
                   <p className="font-medium">
-                    You&apos;ve cleared every chapter for {company.short}. Put it to the test.
+                    You&apos;ve cleared every chapter for {company.short}. Put it
+                    to the test.
                   </p>
                 </div>
                 <StartNowButton href="/mock" label="Take a mock" />
@@ -197,86 +221,117 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Daily challenge + Other companies */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <DailyCard />
-        <Card>
-          <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle className="font-heading text-base">Your other companies</CardTitle>
-            <Link href="/readiness" className="text-sm text-primary hover:underline">
-              Compare all
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {others.length === 0 ? (
-              <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
-                You&apos;re only tracking one company.{" "}
-                <Link href="/settings" className="text-primary hover:underline">
-                  Add more
-                </Link>{" "}
-                to compare readiness.
-              </div>
-            ) : (
-              others.map((id) => {
-                const cp = otherPRIs[id] ?? 0
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      setPrimary(id)
-                      toast.success(`Switched focus to ${getCompany(id).short}`)
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:bg-muted/50"
+      {!state.premium && <UpgradeBanner />}
+
+      {/* Zone 2 — Keep momentum: daily reps, other targets, the drive path */}
+      <section className="space-y-4">
+        <ZoneHeading
+          title="Keep momentum"
+          hint="Daily reps, your other target companies and the path to a drive."
+        />
+
+        {/* Daily challenge + Other companies */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <DailyCard />
+          <Card>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle className="font-heading text-base">
+                Your other companies
+              </CardTitle>
+              <Link
+                href="/readiness"
+                className="text-sm text-primary hover:underline"
+              >
+                Compare all
+              </Link>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {others.length === 0 ? (
+                <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                  You&apos;re only tracking one company.{" "}
+                  <Link
+                    href="/settings"
+                    className="text-primary hover:underline"
                   >
-                    <CompanyAvatar id={id} size={38} />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium">{getCompany(id).short}</p>
-                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${cp}%` }}
-                        />
+                    Add more
+                  </Link>{" "}
+                  to compare readiness.
+                </div>
+              ) : (
+                others.map((id) => {
+                  const cp = otherPRIs[id] ?? 0
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => {
+                        setPrimary(id)
+                        toast.success(
+                          `Switched focus to ${getCompany(id).short}`
+                        )
+                      }}
+                      className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition-colors hover:bg-muted/50"
+                    >
+                      <CompanyAvatar id={id} size={38} />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium">{getCompany(id).short}</p>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary"
+                            style={{ width: `${cp}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-heading font-bold tabular-nums">{cp}</p>
-                      <p
-                        className="text-xs text-muted-foreground"
-                        title={`Readiness from your in-app practice: PRI ${cp}/100. Not a guarantee of selection.`}
-                      >
-                        {readinessBand(cp).label}
-                      </p>
-                    </div>
-                  </button>
-                )
-              })
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <PlacementRoadmap />
-
-      {/* All tracks */}
-      <div>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-heading text-lg font-semibold">All tracks</h2>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/learn">
-              Open Learn <Icon name="ChevronRight" className="size-4" />
-            </Link>
-          </Button>
+                      <div className="text-right">
+                        <p className="font-heading font-bold tabular-nums">
+                          {cp}
+                        </p>
+                        <p
+                          className="text-xs text-muted-foreground"
+                          title={`Readiness from your in-app practice: PRI ${cp}/100. Not a guarantee of selection.`}
+                        >
+                          {readinessBand(cp).label}
+                        </p>
+                      </div>
+                    </button>
+                  )
+                })
+              )}
+            </CardContent>
+          </Card>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(ALL_TRACK_IDS as unknown as CompanyId[]).map(
-            (id) => {
+
+        <PlacementRoadmap />
+      </section>
+
+      {/* Zone 3 — Compare & share: every track + share your real readiness */}
+      <section className="space-y-4">
+        <ZoneHeading
+          title="Compare & share"
+          hint="See readiness across every track and share your real score."
+        />
+
+        <SharePriCard pri={pri} companyShort={company.short} userId={userId} />
+
+        {/* All tracks */}
+        <div>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-heading text-lg font-semibold">All tracks</h2>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/learn">
+                Open Learn <Icon name="ChevronRight" className="size-4" />
+              </Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {ALL_TRACK_IDS.map((id, i) => {
               const cp = trackPRIs[id] ?? 0
               return (
                 <Link
                   key={id}
                   href={`/learn/${id}`}
-                  className="surface-panel rounded-xl p-4 transition-all hover:border-primary/40"
+                  className="surface-panel animate-rise rounded-xl p-4 transition-all hover:-translate-y-0.5 hover:border-primary/40"
+                  style={{ animationDelay: `${Math.min(i * 35, 350)}ms` }}
                 >
                   <div className="flex items-center justify-between">
                     <CompanyAvatar id={id} size={40} />
@@ -287,106 +342,35 @@ export default function DashboardPage() {
                     ) : null}
                   </div>
                   <p className="mt-3 font-semibold">{getCompany(id).short}</p>
-                  <p className="text-xs text-muted-foreground">PRI {cp}/100</p>
+                  <p className="text-xs tabular-nums text-muted-foreground">PRI {cp}/100</p>
                 </Link>
               )
-            },
-          )}
+            })}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
 
-function TodayTasksCard() {
-  const { state } = useStoreState()
-  const progress = state.progress[state.primary] ?? EMPTY_PROGRESS
-  const next = React.useMemo(() => nextChapter(state.primary, progress), [state.primary, progress])
-  const weak = React.useMemo(() => weakestTopics(state, 1)[0], [state])
-  const mockDone = progress.mockScores.length > 0
-  const tasks = [
-    next
-      ? {
-          label: `Finish ${next.chapter.title}`,
-          detail: `${next.section.short} chapter - builds your PRI directly`,
-          href: `/learn/${state.primary}/${next.section.id}/${next.chapter.id}`,
-          icon: next.section.icon,
-        }
-      : {
-          label: "Attempt a full mock",
-          detail: "You cleared the learning track; now test under pressure",
-          href: "/mock",
-          icon: "Target",
-        },
-    weak
-      ? {
-          label: `Repair ${weak.topic}`,
-          detail: `${weak.accuracy}% accuracy - practise this before broad revision`,
-          href: "/analytics",
-          icon: "Wrench",
-        }
-      : {
-          label: "Practise PYQs",
-          detail: "Build weak-topic data for better recommendations",
-          href: "/practice",
-          icon: "BookOpen",
-        },
-    mockDone
-      ? {
-          label: "Take the next mock",
-          detail: "Pressure practice matters after basics",
-          href: "/mock",
-          icon: "Trophy",
-        }
-      : {
-          label: "Take one diagnostic mock",
-          detail: "Find your real weak sections today",
-          href: "/mock",
-          icon: "Trophy",
-        },
-  ]
-
+function ZoneHeading({ title, hint }: { title: string; hint: string }) {
   return (
-    <Card className="border-primary/25 bg-primary/[0.04] shadow-[0_22px_70px_-42px_oklch(0.25_0.12_260_/_45%)]">
-      <CardHeader className="flex-row items-center justify-between space-y-0">
-        <div>
-          <CardTitle className="font-heading text-lg">Do these 3 things first</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Completing this set is the shortest path to a better readiness score today.
-          </p>
-        </div>
-        <Button asChild variant="outline" size="sm">
-          <Link href="/readiness">
-            Why these? <Icon name="ArrowRight" className="size-4" />
-          </Link>
-        </Button>
-      </CardHeader>
-      <CardContent className="grid gap-3 md:grid-cols-3">
-        {tasks.map((task, index) => (
-          <Link
-            key={task.label}
-            href={task.href}
-            className="rounded-xl border border-border bg-background p-3 transition-colors hover:bg-muted/50"
-          >
-            <div className="flex items-center justify-between">
-              <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Icon name={task.icon} className="size-4" />
-              </span>
-              <span className="text-xs font-medium text-muted-foreground">Task {index + 1}</span>
-            </div>
-            <p className="mt-3 font-semibold">{task.label}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{task.detail}</p>
-          </Link>
-        ))}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-0.5">
+      <h2 className="font-heading text-base font-semibold tracking-tight">
+        {title}
+      </h2>
+      <p className="text-sm text-muted-foreground">{hint}</p>
+    </div>
   )
 }
 
 function DailyCard() {
   const { state } = useStoreState()
   const t = new Date().toISOString().slice(0, 10)
-  const daily = state.daily.date === t ? state.daily : { general: false, aptitude: false, coding: false }
+  const daily =
+    state.daily.date === t
+      ? state.daily
+      : { general: false, aptitude: false, coding: false }
   const cats = [
     { key: "general", label: "Mixed", icon: "BookOpen" },
     { key: "aptitude", label: "Aptitude", icon: "Calculator" },
@@ -397,7 +381,8 @@ function DailyCard() {
     <Card>
       <CardHeader className="flex-row items-center justify-between space-y-0">
         <CardTitle className="flex items-center gap-2 font-heading text-base">
-          <Icon name="CalendarCheck" className="size-4 text-primary" /> Daily Challenge
+          <Icon name="CalendarCheck" className="size-4 text-primary" /> Daily
+          Challenge
         </CardTitle>
         <span className="text-sm text-muted-foreground">
           {state.streak.count}-day streak
@@ -436,14 +421,19 @@ function DailyCard() {
 function PlacementRoadmap() {
   const { state } = useStoreState()
   const progress = state.progress[state.primary] ?? EMPTY_PROGRESS
-  const sections = React.useMemo(() => getSections(state.primary), [state.primary])
+  const sections = React.useMemo(
+    () => getSections(state.primary),
+    [state.primary]
+  )
   const passed = React.useMemo(
-    () => Object.values(progress.chapters).filter((chapter) => chapter.passed).length,
-    [progress.chapters],
+    () =>
+      Object.values(progress.chapters).filter((chapter) => chapter.passed)
+        .length,
+    [progress.chapters]
   )
   const total = React.useMemo(
     () => sections.reduce((sum, section) => sum + section.chapters.length, 0),
-    [sections],
+    [sections]
   )
   const weak = React.useMemo(() => weakestTopics(state, 1)[0], [state])
 
@@ -466,7 +456,9 @@ function PlacementRoadmap() {
     },
     {
       label: "Fix weak area",
-      detail: weak ? `${weak.topic} at ${weak.accuracy}%` : "Answer quizzes to unlock",
+      detail: weak
+        ? `${weak.topic} at ${weak.accuracy}%`
+        : "Answer quizzes to unlock",
       href: weak ? "/analytics" : "/challenges",
       done: Boolean(weak && weak.accuracy >= 70),
       icon: "Wrench",
@@ -494,7 +486,9 @@ function PlacementRoadmap() {
       <CardContent className="p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-heading text-lg font-semibold">Placement roadmap</h2>
+            <h2 className="font-heading text-lg font-semibold">
+              Placement roadmap
+            </h2>
             <p className="text-sm text-muted-foreground">
               A simple path from diagnosis to final-drive simulation.
             </p>
@@ -505,7 +499,7 @@ function PlacementRoadmap() {
             </Link>
           </Button>
         </div>
-        <div className="mt-4 grid gap-2 md:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-5">
           {steps.map((step, index) => (
             <Link
               key={step.label}
@@ -518,17 +512,22 @@ function PlacementRoadmap() {
                     "grid size-8 place-items-center rounded-lg",
                     step.done
                       ? "bg-success/15 text-[color:var(--success)]"
-                      : "bg-primary/10 text-primary",
+                      : "bg-primary/10 text-primary"
                   )}
                 >
-                  <Icon name={step.done ? "CircleCheckBig" : step.icon} className="size-4" />
+                  <Icon
+                    name={step.done ? "CircleCheckBig" : step.icon}
+                    className="size-4"
+                  />
                 </span>
                 <span className="text-xs font-medium text-muted-foreground">
                   Step {index + 1}
                 </span>
               </div>
               <p className="mt-3 font-medium">{step.label}</p>
-              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{step.detail}</p>
+              <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+                {step.detail}
+              </p>
             </Link>
           ))}
         </div>
@@ -542,7 +541,7 @@ function StartNowButton({ href, label }: { href: string; label: string }) {
     <Button
       asChild
       size="lg"
-      className="group/cta rounded-lg pl-5 pr-2 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
+      className="group/cta rounded-lg pr-2 pl-5 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] active:scale-[0.98]"
     >
       <Link href={href}>
         {label}

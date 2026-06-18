@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { PREMIUM_PRICE_INR } from "@/lib/access"
+import { getRazorpayEnvOrNull } from "@/lib/env"
 import { rateLimit } from "@/lib/rate-limit"
 import { createClient } from "@/lib/supabase/server"
 
@@ -9,14 +10,14 @@ import { createClient } from "@/lib/supabase/server"
  * activate premium server-side even if the client tab is closed.
  */
 export async function POST() {
-  const keyId = process.env.RAZORPAY_KEY_ID
-  const keySecret = process.env.RAZORPAY_KEY_SECRET
-  if (!keyId || !keySecret) {
+  const razorpay = getRazorpayEnvOrNull()
+  if (!razorpay) {
     return NextResponse.json(
       { error: "Razorpay keys are not configured." },
       { status: 500 },
     )
   }
+  const { keyId, keySecret } = razorpay
 
   // Authenticate the caller.
   const supabase = await createClient()

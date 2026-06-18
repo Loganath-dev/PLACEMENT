@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import * as React from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
+import { EmptyState } from "@/components/app/empty-state"
 import { Icon } from "@/components/app/icon"
 import { PageHeader } from "@/components/app/page-header"
 import { removeBookmark, useBookmarks } from "@/lib/bookmarks"
@@ -21,15 +22,11 @@ export default function BookmarksPage() {
 
       {items.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-            <span className="grid size-14 place-items-center rounded-2xl bg-muted text-muted-foreground">
-              <Icon name="Bookmark" className="size-7" />
-            </span>
-            <p className="font-medium">No bookmarks yet</p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              While reading a lesson or interview answer, tap the bookmark icon to save it here.
-            </p>
-          </CardContent>
+          <EmptyState
+            icon="Bookmark"
+            title="No bookmarks yet"
+            description="While reading a lesson or interview answer, tap the bookmark icon to save it here for quick re-read."
+          />
         </Card>
       ) : (
         <div className="space-y-2">

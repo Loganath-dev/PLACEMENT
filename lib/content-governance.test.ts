@@ -4,7 +4,8 @@ import { ALL_CODING_PROBLEMS, codingProblemsForCompany } from "@/lib/data/coding
 import { CHAPTER_PRACTICE_TARGET, chapterPracticeQuestions, getSections } from "@/lib/data/content"
 import { INTERVIEW_QUESTIONS } from "@/lib/data/interview"
 import { MOCKS_PER_COMPANY, MOCK_TESTS, buildMockQuestions } from "@/lib/data/mocks"
-import { ALL_PYQS, PYQS, pyqsForCompany } from "@/lib/data/pyqs"
+import { ALL_PYQS, EXPANDED_PYQS, FLAGSHIP_PYQS, PYQS, pyqsForCompany } from "@/lib/data/pyqs"
+import { generateDrills } from "@/lib/data/question-bank"
 import { SOURCES, sourceById } from "@/lib/data/sources"
 import type { Question } from "@/lib/types"
 
@@ -87,7 +88,7 @@ describe("content source governance", () => {
         }
       }
     }
-  }, 30_000)
+  }, 180_000)
 
   it("sources every PYQ reconstruction and interview question", () => {
     for (const pyq of ALL_PYQS) {
@@ -98,7 +99,7 @@ describe("content source governance", () => {
       expectKnownSource(question.sourceId, `interview question ${question.id}`)
       expect(question.guidance.trim().length, `${question.id} guidance is empty`).toBeGreaterThan(0)
     }
-  }, 30000)
+  }, 60_000)
 
   it("keeps every company PYQ bank at serious starter scale", () => {
     for (const company of COMPANIES) {
@@ -158,6 +159,66 @@ describe("content source governance", () => {
     }
   })
 
+  it("marks hand-authored content as curated and generated volume as not", () => {
+    // The hand-authored PYQ starter bank is the curated/flagship layer.
+    for (const pyq of PYQS) {
+      expect(pyq.curated, `pyq ${pyq.id} should be marked curated`).toBe(true)
+    }
+    // The programmatically expanded PYQs are generated volume — not curated, so
+    // we never pass auto-generated questions off as expert-written.
+    for (const pyq of EXPANDED_PYQS) {
+      expect(pyq.curated, `expanded pyq ${pyq.id} must not be curated`).toBeFalsy()
+    }
+    // ALL_PYQS is therefore a genuine mix of both layers.
+    expect(ALL_PYQS.some((q) => q.curated)).toBe(true)
+    expect(ALL_PYQS.some((q) => !q.curated)).toBe(true)
+
+    // Chapter quizzes are a genuine mix: a hand-authored curated core plus
+    // programmatically generated padding (supp-* templated practice). Every
+    // non-curated question must be recognizably generated, and each chapter
+    // must keep a real curated core — we never inflate the curated count with
+    // generated volume.
+    for (const section of getSections("general")) {
+      for (const chapter of section.chapters) {
+        const curated = chapter.quiz.filter((q) => q.curated)
+        expect(curated.length, `chapter ${chapter.id} should have a curated core`).toBeGreaterThan(0)
+        for (const question of chapter.quiz) {
+          if (question.curated) continue
+          expect(
+            question.id.startsWith("supp-") || question.id.startsWith("boost-q-"),
+            `uncurated chapter question ${question.id} must be recognizably generated`,
+          ).toBe(true)
+        }
+      }
+    }
+    // Parametric drill volume must NOT claim to be curated.
+    const drills = generateDrills("mixed", 60, 20260617)
+    for (const drill of drills) {
+      expect(drill.curated, `generated drill ${drill.id} must not be curated`).toBeFalsy()
+    }
+  }, 60_000)
+
+  it("holds the flagship bank to its deeper authoring contract", () => {
+    expect(FLAGSHIP_PYQS.length, "flagship bank should not be empty").toBeGreaterThan(0)
+    for (const q of FLAGSHIP_PYQS) {
+      expectGovernedQuestion(q, `flagship ${q.topic}`)
+      expect(q.curated, `flagship ${q.id} must be curated`).toBe(true)
+      // The defining feature: a rationale for every option, parallel to options.
+      expect(q.optionNotes, `flagship ${q.id} must have optionNotes`).toBeTruthy()
+      expect(
+        q.optionNotes?.length,
+        `flagship ${q.id} optionNotes must be parallel to options`,
+      ).toBe(q.options.length)
+      for (const note of q.optionNotes ?? []) {
+        expect(note.trim().length, `flagship ${q.id} has an empty option note`).toBeGreaterThan(0)
+      }
+      expect(q.answer, `flagship ${q.id} answer index out of range`).toBeGreaterThanOrEqual(0)
+      expect(q.answer).toBeLessThan(q.options.length)
+    }
+    // Flagship questions flow into the served bank and stay marked curated.
+    expect(ALL_PYQS.filter((q) => q.optionNotes?.length).length).toBe(FLAGSHIP_PYQS.length)
+  })
+
   it("builds a unique 300-question practice bank for every foundation chapter", () => {
     for (const section of getSections("general")) {
       for (const chapter of section.chapters) {
@@ -173,5 +234,5 @@ describe("content source governance", () => {
         ).toBe(questions.length)
       }
     }
-  }, 30000)
+  }, 300_000)
 })

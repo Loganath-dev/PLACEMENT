@@ -4,7 +4,15 @@
 // Errors are logged but not thrown so the UI stays responsive offline.
 
 import { createClient } from "@/lib/supabase/client"
-import type { AppState, CompanyId, CompanyProgress, Mistake, Profile } from "@/lib/types"
+import { logger } from "@/lib/logger"
+import type {
+  AppState,
+  CompanyId,
+  CompanyProgress,
+  DriveOutcome,
+  Mistake,
+  Profile,
+} from "@/lib/types"
 
 // ─── row shapes ──────────────────────────────────────────────────────────────
 // Hand-typed mirrors of the `supabase/migrations` tables. `select("*")` otherwise
@@ -61,6 +69,23 @@ interface MistakeRow {
   topic: string
   difficulty: string
   ts: number
+  // Leitner schedule (migration 0009). Nullable so rows written before the
+  // migration still read fine.
+  box: number | null
+  due: number | null
+  reviews: number | null
+  lapses: number | null
+}
+
+interface DriveOutcomeRow {
+  id: string
+  user_id: string
+  company_id: CompanyId
+  result: string
+  stage_reached: string
+  pri_at_drive: number
+  ts: number
+  notes: string | null
 }
 
 const SYNC_ERROR_EVENT = "studybench:sync-error"
@@ -69,7 +94,9 @@ async function safe(label: string, fn: () => PromiseLike<unknown> | unknown) {
   try {
     await fn()
   } catch (err) {
-    console.warn("[supabase/db]", label, err)
+    // Sync failures are usually transient (offline) so this is warn-level, not a
+    // captured error — the UI's offline banner is driven by the event below.
+    logger.warn(`[supabase/db] ${label} failed`, { error: String(err) })
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent(SYNC_ERROR_EVENT, { detail: { label } }))
     }
@@ -79,12 +106,13 @@ async function safe(label: string, fn: () => PromiseLike<unknown> | unknown) {
 export async function loadUserState(userId: string): Promise<Partial<AppState> | null> {
   const sb = createClient()
 
-  const [profRes, stRes, cpRes, dailyRes, mistakesRes] = await Promise.all([
+  const [profRes, stRes, cpRes, dailyRes, mistakesRes, outcomesRes] = await Promise.all([
     sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
     sb.from("user_state").select("*").eq("id", userId).maybeSingle(),
     sb.from("company_progress").select("*").eq("user_id", userId),
     sb.from("daily_challenges").select("*").eq("id", userId).maybeSingle(),
     sb.from("mistakes").select("*").eq("user_id", userId).order("ts", { ascending: false }).limit(60),
+    sb.from("drive_outcomes").select("*").eq("user_id", userId).order("ts", { ascending: false }),
   ])
 
   const prof = profRes.data as ProfileRow | null
@@ -92,6 +120,7 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
   const cpRows = (cpRes.data ?? []) as CompanyProgressRow[]
   const daily = dailyRes.data as DailyRow | null
   const mistakeRows = (mistakesRes.data ?? []) as MistakeRow[]
+  const outcomeRows = (outcomesRes.data ?? []) as DriveOutcomeRow[]
 
   if (!st) return null
 
@@ -113,6 +142,22 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
     topic: r.topic,
     difficulty: r.difficulty as AppState["mistakes"][number]["difficulty"],
     ts: r.ts,
+    // Leitner schedule — undefined when the row predates migration 0009; the
+    // client treats an undefined box as box 1, due now.
+    box: r.box ?? undefined,
+    due: r.due ?? undefined,
+    reviews: r.reviews ?? undefined,
+    lapses: r.lapses ?? undefined,
+  }))
+
+  const outcomes: AppState["outcomes"] = outcomeRows.map((r) => ({
+    id: r.id,
+    companyId: r.company_id,
+    result: r.result as DriveOutcome["result"],
+    stageReached: r.stage_reached as DriveOutcome["stageReached"],
+    priAtDrive: r.pri_at_drive,
+    ts: r.ts,
+    notes: r.notes ?? undefined,
   }))
 
   return {
@@ -127,6 +172,7 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
     topicStats: st.topic_stats ?? {},
     codingAttempts: st.coding_attempts ?? [],
     mistakes,
+    outcomes,
     progress,
     ...(prof
       ? {
@@ -197,6 +243,16 @@ export function syncProfile(userId: string, p: Profile) {
         cgpa: p.cgpa,
         backlogs: p.backlogs,
       }),
+  )
+}
+
+/** One-time attribution write. Safe to call repeatedly: the 0008 migration
+ *  trigger makes referred_by immutable once set, so a second call is a no-op. */
+export function syncReferral(userId: string, referredBy: string) {
+  void safe("syncReferral", () =>
+    createClient()
+      .from("profiles")
+      .upsert({ id: userId, referred_by: referredBy }),
   )
 }
 
@@ -271,9 +327,33 @@ export function syncOneMistake(userId: string, m: Mistake) {
           topic: m.topic,
           difficulty: m.difficulty,
           ts: m.ts,
+          box: m.box ?? 1,
+          due: m.due ?? null,
+          reviews: m.reviews ?? 0,
+          lapses: m.lapses ?? 0,
         },
         { onConflict: "user_id,question_id" },
       ),
+  )
+}
+
+/**
+ * Persist just the Leitner schedule after a review. Lighter than a full
+ * upsert — the row already exists from recordMistake — and keeps the review
+ * schedule portable across devices.
+ */
+export function syncMistakeSchedule(userId: string, m: Mistake) {
+  void safe("syncMistakeSchedule", () =>
+    createClient()
+      .from("mistakes")
+      .update({
+        box: m.box ?? 1,
+        due: m.due ?? null,
+        reviews: m.reviews ?? 0,
+        lapses: m.lapses ?? 0,
+      })
+      .eq("user_id", userId)
+      .eq("question_id", m.questionId),
   )
 }
 
@@ -296,6 +376,36 @@ export function deleteMistake(userId: string, questionId: string) {
 export function deleteAllMistakes(userId: string) {
   void safe("deleteAllMistakes", () =>
     createClient().from("mistakes").delete().eq("user_id", userId),
+  )
+}
+
+// ─── drive outcomes ───────────────────────────────────────────────────────────
+
+/** Upsert a single self-reported drive outcome (keyed by client-generated id). */
+export function syncOutcome(userId: string, o: DriveOutcome) {
+  void safe("syncOutcome", () =>
+    createClient()
+      .from("drive_outcomes")
+      .upsert(
+        {
+          id: o.id,
+          user_id: userId,
+          company_id: o.companyId,
+          result: o.result,
+          stage_reached: o.stageReached,
+          pri_at_drive: o.priAtDrive,
+          ts: o.ts,
+          notes: o.notes ?? null,
+        },
+        { onConflict: "user_id,id" },
+      ),
+  )
+}
+
+/** Delete one drive outcome the student removed. */
+export function deleteOutcome(userId: string, id: string) {
+  void safe("deleteOutcome", () =>
+    createClient().from("drive_outcomes").delete().eq("user_id", userId).eq("id", id),
   )
 }
 

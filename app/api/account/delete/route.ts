@@ -32,6 +32,7 @@ export async function POST() {
     admin.from("company_progress").delete().eq("user_id", uid),
     admin.from("daily_challenges").delete().eq("id", uid),
     admin.from("mistakes").delete().eq("user_id", uid),
+    admin.from("drive_outcomes").delete().eq("user_id", uid),
     admin.from("coding_attempts").delete().eq("user_id", uid),
     admin.from("user_state").delete().eq("id", uid),
     admin.from("profiles").delete().eq("id", uid),

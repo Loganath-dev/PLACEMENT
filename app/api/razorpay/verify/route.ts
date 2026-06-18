@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import { PREMIUM_PRICE_INR } from "@/lib/access"
+import { getRazorpayEnvOrNull } from "@/lib/env"
+import { captureError } from "@/lib/logger"
 import { hmacSha256Hex, timingSafeStringEqual } from "@/lib/crypto/edge-hmac"
 import { grantPremiumYear, recordPaymentOnce } from "@/lib/entitlement"
 import { rateLimit } from "@/lib/rate-limit"
@@ -20,14 +22,14 @@ import { createClient } from "@/lib/supabase/server"
  *      identical to the webhook path.
  */
 export async function POST(request: Request) {
-  const keyId = process.env.RAZORPAY_KEY_ID
-  const keySecret = process.env.RAZORPAY_KEY_SECRET
-  if (!keyId || !keySecret) {
+  const razorpay = getRazorpayEnvOrNull()
+  if (!razorpay) {
     return NextResponse.json(
       { error: "Razorpay keys are not configured." },
       { status: 500 },
     )
   }
+  const { keyId, keySecret } = razorpay
 
   // 1. Authenticate the caller from the session cookie.
   const supabase = await createClient()
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
     const premiumUntil = await grantPremiumYear(admin, user.id)
     return NextResponse.json({ ok: true, paymentId, premiumUntil })
   } catch (error) {
-    console.error("[razorpay/verify] activation failed:", error)
+    captureError(error, { scope: "razorpay/verify", stage: "activation", userId: user.id, paymentId })
     return NextResponse.json(
       { error: "Payment verified but could not activate premium. Contact support." },
       { status: 500 },

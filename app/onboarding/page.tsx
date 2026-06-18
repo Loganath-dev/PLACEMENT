@@ -17,6 +17,7 @@ import {
 import { Icon } from "@/components/app/icon"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { SELECTABLE_COMPANIES } from "@/lib/data/companies"
+import { getSections } from "@/lib/data/content"
 import { useStore } from "@/lib/store"
 import type { CompanyId, Profile } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -68,7 +69,15 @@ export default function OnboardingPage() {
     }).catch(() => {
       // Email should never block a student from reaching the dashboard.
     })
-    router.push("/dashboard")
+    // Land on the first chapter so new users get immediate value, not a blank dashboard.
+    const sections = getSections(prim)
+    const firstSection = sections[0]
+    const firstChapter = firstSection?.chapters[0]
+    if (firstSection && firstChapter) {
+      router.push(`/learn/${prim}/${firstSection.id}/${firstChapter.id}`)
+    } else {
+      router.push("/dashboard")
+    }
   }
 
   return (

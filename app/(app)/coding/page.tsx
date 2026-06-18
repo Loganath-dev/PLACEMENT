@@ -1,7 +1,10 @@
 ﻿"use client"
 
+import { javascript } from "@codemirror/lang-javascript"
+import CodeMirror from "@uiw/react-codemirror"
 import { useSearchParams } from "next/navigation"
 import * as React from "react"
+import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,6 +15,8 @@ import { CompanyPicker } from "@/components/app/company-picker"
 import { LockedFeatureCard } from "@/components/app/upgrade-prompt"
 import { visibleCodingTestsForPlan } from "@/lib/access"
 import {
+  CODING_TIMEOUT_MS,
+  CODING_WORKER_SOURCE,
   normalizeCodingOutput,
 } from "@/lib/coding-runner"
 import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
@@ -23,18 +28,27 @@ import {
   type CodingRunResult,
 } from "@/lib/domain/coding-practice"
 import { useStore } from "@/lib/store"
-import type { CodingAttempt, CodingProblem, CodingTestCase, CompanyId } from "@/lib/types"
+import type {
+  CodingAttempt,
+  CodingProblem,
+  CodingTestCase,
+  CompanyId,
+} from "@/lib/types"
 
 export default function CodingPage() {
   const { state, recordCodingAttempt } = useStore()
   const searchParams = useSearchParams()
   const queryCompany = companyFromParam(searchParams.get("company"))
-  const [selectedCompany, setSelectedCompany] = React.useState<CompanyId | null>(null)
+  const [selectedCompany, setSelectedCompany] =
+    React.useState<CompanyId | null>(null)
   const [openId, setOpenId] = React.useState<string | null>(null)
   const company = selectedCompany ?? queryCompany ?? state.primary ?? "general"
 
   const companyInfo = getCompany(company)
-  const problems = React.useMemo(() => codingProblemsForCompany(company), [company])
+  const problems = React.useMemo(
+    () => codingProblemsForCompany(company),
+    [company]
+  )
   const attemptsByProblem = React.useMemo(() => {
     const map = new Map<string, CodingAttempt>()
     for (const attempt of state.codingAttempts) {
@@ -85,7 +99,9 @@ export default function CodingPage() {
         <CardContent className="flex items-center gap-3 py-4">
           <CompanyAvatar id={company} size={40} />
           <div className="flex-1">
-            <p className="font-heading font-semibold">{companyInfo.name} coding ladder</p>
+            <p className="font-heading font-semibold">
+              {companyInfo.name} coding ladder
+            </p>
             <p className="text-sm text-muted-foreground">
               Practise the problem types most useful for this track.
             </p>
@@ -112,11 +128,12 @@ export default function CodingPage() {
                 ts: Date.now(),
               })
             }
-            onToggle={() => setOpenId((id) => (id === problem.id ? null : problem.id))}
+            onToggle={() =>
+              setOpenId((id) => (id === problem.id ? null : problem.id))
+            }
           />
         ))}
       </div>
-
     </div>
   )
 }
@@ -146,11 +163,11 @@ function ProblemCard({
   const [attempted, setAttempted] = React.useState(Boolean(lastAttempt))
   const visibleTests = React.useMemo(
     () => problem.testCases.filter((tc) => !tc.hidden),
-    [problem.testCases],
+    [problem.testCases]
   )
   const availableTests = React.useMemo(
     () => visibleCodingTestsForPlan(problem.testCases, premium),
-    [premium, problem.testCases],
+    [premium, problem.testCases]
   )
   const hiddenTestCount = problem.testCases.length - visibleTests.length
   const editorialUnlocked = attempted || Boolean(lastAttempt)
@@ -171,14 +188,18 @@ function ProblemCard({
           <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
             {problem.level}
           </span>
-          <span className="rounded-full bg-muted px-2 py-0.5 capitalize text-muted-foreground">
+          <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground capitalize">
             {problem.difficulty}
           </span>
           <span className="flex items-center gap-1 text-muted-foreground">
-            <Icon name="Clock" className="size-3.5" /> {problem.estimatedMinutes} min
+            <Icon name="Clock" className="size-3.5" />{" "}
+            {problem.estimatedMinutes} min
           </span>
           {problem.topics.slice(0, 2).map((t) => (
-            <span key={t} className="rounded-full bg-muted/80 px-2 py-0.5 text-muted-foreground">
+            <span
+              key={t}
+              className="rounded-full bg-muted/80 px-2 py-0.5 text-muted-foreground"
+            >
               #{t}
             </span>
           ))}
@@ -195,8 +216,12 @@ function ProblemCard({
         </div>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="font-heading text-base">{problem.title}</CardTitle>
-            <p className="mt-1 text-sm text-muted-foreground">{problem.prompt}</p>
+            <CardTitle className="font-heading text-base">
+              {problem.title}
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {problem.prompt}
+            </p>
           </div>
           <button
             type="button"
@@ -216,7 +241,9 @@ function ProblemCard({
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
             <p className="font-medium">How to read this problem</p>
             <p className="mt-1 text-muted-foreground">{studentHint(problem)}</p>
-            <p className="mt-2 font-mono text-xs text-primary">{solveSignature(problem)}</p>
+            <p className="mt-2 font-mono text-xs text-primary">
+              {solveSignature(problem)}
+            </p>
           </div>
           <div className="grid gap-2 rounded-xl border border-border p-3 text-sm md:grid-cols-3">
             <StepHint
@@ -265,14 +292,21 @@ function ProblemCard({
           />
           <div className="grid gap-3 md:grid-cols-2">
             {availableTests.map((tc, i) => (
-              <div key={i} className="rounded-xl border border-border p-3 text-sm">
+              <div
+                key={i}
+                className="rounded-xl border border-border p-3 text-sm"
+              >
                 <p className="font-medium">
                   {tc.hidden ? "Premium edge case" : "Sample"} {i + 1}
                 </p>
                 <p className="mt-2 text-muted-foreground">Input</p>
-                <pre className="whitespace-pre-wrap rounded-lg bg-muted p-2">{tc.input}</pre>
+                <pre className="rounded-lg bg-muted p-2 whitespace-pre-wrap">
+                  {tc.input}
+                </pre>
                 <p className="mt-2 text-muted-foreground">Output</p>
-                <pre className="whitespace-pre-wrap rounded-lg bg-muted p-2">{tc.output}</pre>
+                <pre className="rounded-lg bg-muted p-2 whitespace-pre-wrap">
+                  {tc.output}
+                </pre>
               </div>
             ))}
           </div>
@@ -280,21 +314,29 @@ function ProblemCard({
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
               <p className="flex items-center gap-1.5 font-medium">
                 <Icon name="Lock" className="size-4 text-primary" />
-                {hiddenTestCount} premium edge case{hiddenTestCount === 1 ? "" : "s"} locked
+                {hiddenTestCount} premium edge case
+                {hiddenTestCount === 1 ? "" : "s"} locked
               </p>
               <p className="mt-1 text-muted-foreground">
-                Upgrade to run the extra edge cases used to check interview-level correctness.
+                Upgrade to run the extra edge cases used to check
+                interview-level correctness.
               </p>
             </div>
           ) : null}
           <div className="rounded-xl border border-border p-3 text-sm">
             <p className="flex items-center gap-1.5 font-medium">
-              <Icon name="Terminal" className="size-4 text-primary" /> After samples pass
+              <Icon name="Terminal" className="size-4 text-primary" /> After
+              samples pass
             </p>
             <ol className="mt-2 space-y-1 text-muted-foreground">
-              <li>1. Add edge cases for empty input, single item, duplicates and large values.</li>
+              <li>
+                1. Add edge cases for empty input, single item, duplicates and
+                large values.
+              </li>
               <li>2. Check time complexity against the constraint size.</li>
-              <li>3. Compare your approach with the editorial after solving.</li>
+              <li>
+                3. Compare your approach with the editorial after solving.
+              </li>
             </ol>
           </div>
           {editorialUnlocked ? (
@@ -305,7 +347,8 @@ function ProblemCard({
           ) : (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 text-sm">
               <p className="flex items-center gap-1.5 font-medium">
-                <Icon name="Lock" className="size-4 text-primary" /> Editorial locked
+                <Icon name="Lock" className="size-4 text-primary" /> Editorial
+                locked
               </p>
               <p className="mt-1 text-muted-foreground">
                 Run the available cases once to unlock the explanation.
@@ -336,6 +379,7 @@ function BrowserJsRunner({
   const [results, setResults] = React.useState<RunResult[]>([])
   const mountedRef = React.useRef(true)
   const runSeq = React.useRef(0)
+  const { resolvedTheme } = useTheme()
 
   React.useEffect(() => {
     return () => {
@@ -379,30 +423,48 @@ function BrowserJsRunner({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={resetCode} disabled={running}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetCode}
+            disabled={running}
+          >
             <Icon name="RotateCcw" className="size-3.5" />
             Reset
           </Button>
-          <Button size="sm" onClick={runSamples} disabled={running || tests.length === 0}>
+          <Button
+            size="sm"
+            onClick={runSamples}
+            disabled={running || tests.length === 0}
+          >
             <Icon name="Play" className="size-3.5" />
             {running ? "Running..." : "Run cases"}
           </Button>
         </div>
       </div>
-      <textarea
-        value={code}
-        onChange={(event) => setCode(event.target.value)}
-        spellCheck={false}
-        className="min-h-56 w-full resize-y border-0 bg-background p-3 font-mono text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+      <div
+        className="min-h-56 [&_.cm-editor]:min-h-56 [&_.cm-editor]:outline-none [&_.cm-scroller]:font-mono [&_.cm-scroller]:text-sm"
+        role="group"
         aria-label={`Code editor for ${problem.title}`}
-      />
+      >
+        <CodeMirror
+          value={code}
+          onChange={(value) => setCode(value)}
+          theme={resolvedTheme === "dark" ? "dark" : "light"}
+          extensions={[javascript()]}
+          basicSetup={{ closeBrackets: true, autocompletion: true }}
+        />
+      </div>
       {results.length > 0 ? (
         <div className="grid gap-2 border-t border-border bg-muted/25 p-3">
           <div className="rounded-lg bg-background p-2 text-xs text-muted-foreground ring-1 ring-border">
             {codingFeedback(results, companyId)}
           </div>
           {results.map((result) => (
-            <div key={result.index} className="rounded-lg border border-border bg-background p-2 text-xs">
+            <div
+              key={result.index}
+              className="rounded-lg border border-border bg-background p-2 text-xs"
+            >
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium">Case {result.index + 1}</span>
                 <span
@@ -416,14 +478,16 @@ function BrowserJsRunner({
                 </span>
               </div>
               <div className="mt-2 grid gap-2">
-                <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-2">
+                <pre className="overflow-x-auto rounded-md bg-muted p-2 whitespace-pre-wrap">
                   Input: {result.input}
                 </pre>
-                <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-2">
+                <pre className="overflow-x-auto rounded-md bg-muted p-2 whitespace-pre-wrap">
                   Expected: {result.expected}
                 </pre>
-                <pre className="overflow-x-auto whitespace-pre-wrap rounded-md bg-muted p-2">
-                  {result.error ? `Error: ${result.error}` : `Your output: ${result.actual ?? ""}`}
+                <pre className="overflow-x-auto rounded-md bg-muted p-2 whitespace-pre-wrap">
+                  {result.error
+                    ? `Error: ${result.error}`
+                    : `Your output: ${result.actual ?? ""}`}
                 </pre>
               </div>
             </div>
@@ -434,9 +498,13 @@ function BrowserJsRunner({
   )
 }
 
-function runOneTest(code: string, test: CodingTestCase, index: number): Promise<RunResult> {
+function runOneTest(
+  code: string,
+  test: CodingTestCase,
+  index: number
+): Promise<RunResult> {
   return new Promise((resolve) => {
-    const blob = new Blob([codingWorkerSource], { type: "text/javascript" })
+    const blob = new Blob([CODING_WORKER_SOURCE], { type: "text/javascript" })
     const workerUrl = URL.createObjectURL(blob)
     let settled = false
     let worker: Worker
@@ -454,9 +522,9 @@ function runOneTest(code: string, test: CodingTestCase, index: number): Promise<
         status: "timeout",
         input: test.input,
         expected: normalizeCodingOutput(test.output),
-        error: "Execution took more than 1.5 seconds.",
+        error: `Execution took more than ${CODING_TIMEOUT_MS / 1000} seconds (possible infinite loop).`,
       })
-    }, 1500)
+    }, CODING_TIMEOUT_MS)
 
     try {
       worker = new Worker(workerUrl)
@@ -471,7 +539,9 @@ function runOneTest(code: string, test: CodingTestCase, index: number): Promise<
       return
     }
 
-    worker.onmessage = (event: MessageEvent<{ ok: boolean; output?: string; error?: string }>) => {
+    worker.onmessage = (
+      event: MessageEvent<{ ok: boolean; output?: string; error?: string }>
+    ) => {
       const expected = normalizeCodingOutput(test.output)
       if (!event.data.ok) {
         finish({
@@ -505,84 +575,6 @@ function runOneTest(code: string, test: CodingTestCase, index: number): Promise<
   })
 }
 
-const codingWorkerSource = `
-function normalizeCodingOutput(value) {
-  if (Array.isArray(value)) return value.flat(Infinity).join(" ").trim();
-  return String(value == null ? "" : value).trim().replace(/\\s+/g, " ");
-}
-
-function parseCodingInput(input, arity) {
-  const trimmed = String(input).trim();
-  if (trimmed.length === 0) return arity === 0 ? [] : [""];
-
-  const lines = trimmed.split(/\\n+/).map((line) => line.trim()).filter(Boolean);
-  const tokens = trimmed.split(/\\s+/).filter(Boolean);
-  const nums = tokens.map(Number);
-  const allNums = tokens.length > 0 && nums.every((n) => Number.isFinite(n));
-  const firstNums = (lines[0] || "").split(/\\s+/).filter(Boolean).map(Number);
-  const restLines = lines.slice(1);
-
-  if (arity > 1 && !allNums) return lines.slice(0, arity);
-  if (arity > 1 && lines.length === 1 && allNums) return nums.slice(0, arity);
-
-  if (lines.length > 1) {
-    if (allNums && arity === 2 && firstNums.length >= 2 && restLines.length === 1) {
-      return [restLines[0].split(/\\s+/).map(Number), firstNums[1]];
-    }
-    if (allNums && arity === 1 && firstNums.length === 2 && restLines.length === firstNums[0]) {
-      return [restLines.map((line) => line.split(/\\s+/).map(Number))];
-    }
-    if (allNums && arity === 1 && firstNums.length === 1 && restLines.length === firstNums[0]) {
-      return [restLines.map((line) => line.split(/\\s+/).map(Number))];
-    }
-    if (allNums && arity === 1 && firstNums.length === 1) return [nums.slice(1)];
-    if (allNums && arity === 1) return [restLines.map((line) => line.split(/\\s+/).map(Number))];
-    if (!allNums && arity === 1) return [trimmed];
-  }
-
-  if (arity > 1 && allNums) return nums.slice(0, arity);
-  if (tokens.length === 1) return [allNums ? nums[0] : tokens[0]];
-  if (allNums) return [nums];
-  return [trimmed];
-}
-
-function executeSubmission(code, input) {
-  const logs = [];
-  const studentConsole = {
-    log: (...parts) => {
-      logs.push(parts.map((part) => normalizeCodingOutput(part)).join(" "));
-    },
-    __output: () => logs.join("\\n"),
-  };
-
-  try {
-    const runner = new Function(
-      "input",
-      "parseCodingInput",
-      "normalizeCodingOutput",
-      "console",
-      code + "\\n" +
-        "if (typeof solve !== 'function') throw new Error('Define function solve(...) first.');\\n" +
-        "const args = parseCodingInput(input, solve.length);\\n" +
-        "const value = solve.apply(null, args);\\n" +
-        "return value === undefined ? console.__output() : value;"
-    );
-    const value = runner(input, parseCodingInput, normalizeCodingOutput, studentConsole);
-    return { ok: true, output: normalizeCodingOutput(value) };
-  } catch (error) {
-    return {
-      ok: false,
-      error: String(error && error instanceof Error ? error.message : error),
-    };
-  }
-}
-
-self.onmessage = function(event) {
-  const payload = event.data;
-  self.postMessage(executeSubmission(payload.code, payload.input));
-};
-`
-
 function InfoBlock({ title, text }: { title: string; text: string }) {
   return (
     <div className="rounded-xl border border-border p-3">
@@ -592,7 +584,15 @@ function InfoBlock({ title, text }: { title: string; text: string }) {
   )
 }
 
-function StepHint({ icon, title, text }: { icon: string; title: string; text: string }) {
+function StepHint({
+  icon,
+  title,
+  text,
+}: {
+  icon: string
+  title: string
+  text: string
+}) {
   return (
     <div className="flex items-start gap-2">
       <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg bg-muted text-primary">
@@ -605,5 +605,3 @@ function StepHint({ icon, title, text }: { icon: string; title: string; text: st
     </div>
   )
 }
-
-

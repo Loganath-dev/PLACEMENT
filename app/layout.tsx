@@ -1,5 +1,5 @@
 ﻿import type { Metadata } from "next"
-import { Geist_Mono, Inter, Plus_Jakarta_Sans } from "next/font/google"
+import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
@@ -11,7 +11,9 @@ import { SEO } from "@/lib/seo"
 import { AppStoreProvider } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+// Geist (body) pairs with Geist Mono for figures/code, giving a coherent type
+// system; Plus Jakarta Sans below carries the display headings.
+const sans = Geist({ subsets: ["latin"], variable: "--font-sans" })
 
 const heading = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -93,7 +95,7 @@ export default function RootLayout({
       className={cn(
         "antialiased",
         fontMono.variable,
-        inter.variable,
+        sans.variable,
         heading.variable,
         "font-sans",
       )}

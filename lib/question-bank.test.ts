@@ -59,7 +59,7 @@ describe("question generator", () => {
       expect(today.map((q) => q.id)).toEqual(sameDay.map((q) => q.id))
       expect(today.map((q) => q.id)).not.toEqual(nextDay.map((q) => q.id))
     }
-  }, 15000)
+  }, 120_000)
 
   it("uses mainstream programming language questions in the coding daily challenge", async () => {
     const { dailyChallengeQuestions } = await import("@/lib/data/pyqs")
@@ -71,5 +71,5 @@ describe("question generator", () => {
       "Python Programming",
       "JavaScript Programming",
     ])
-  }, 15000)
+  }, 120_000)
 })

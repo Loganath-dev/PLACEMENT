@@ -14,8 +14,8 @@ export const FREE_MOCK_COMPANY: CompanyId = "general"
 export const PLAN_FEATURES = [
   {
     feature: "Company tracks",
-    free: "All 7 tracks visible",
-    premium: "Full depth in all 7 tracks",
+    free: "All 13 tracks visible",
+    premium: "Full depth in all 13 tracks",
   },
   {
     feature: "Learning chapters",
