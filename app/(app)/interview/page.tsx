@@ -11,14 +11,13 @@ import { CompanyAvatar } from "@/components/app/ui-bits"
 import { CompanyPicker } from "@/components/app/company-picker"
 import { FREE_INTERVIEW_LIMIT, lockedCount, visibleForPlan } from "@/lib/access"
 import { COMPANY_BY_ID, getCompany } from "@/lib/data/companies"
-import { INTERVIEW_CATEGORIES, interviewForCompany } from "@/lib/data/interview"
+import { interviewForCompany } from "@/lib/data/interview"
 import {
-  INTERVIEW_CATEGORY_LABEL,
   badInterviewAnswer,
   shortInterviewAnswer,
 } from "@/lib/domain/interview-coaching"
 import { useStore } from "@/lib/store"
-import type { CompanyId, InterviewCategory, InterviewQuestion } from "@/lib/types"
+import type { CompanyId, InterviewQuestion } from "@/lib/types"
 import { cn, seededShuffle } from "@/lib/utils"
 
 type DifficultyFilter = "all" | "easy" | "medium" | "hard"
@@ -28,7 +27,6 @@ export default function InterviewPage() {
   const searchParams = useSearchParams()
   const queryCompany = companyFromParam(searchParams.get("company"))
   const [selectedCompany, setSelectedCompany] = React.useState<CompanyId | null>(null)
-  const [cat, setCat] = React.useState<InterviewCategory | "all">("all")
   const [difficulty, setDifficulty] = React.useState<DifficultyFilter>("all")
   // Seed picked when the user starts a simulation, so each run gets a fresh
   // (but render-pure) shuffle. null = not simulating.
@@ -39,10 +37,9 @@ export default function InterviewPage() {
   const all = React.useMemo(() => interviewForCompany(company), [company])
   const list = React.useMemo(() => {
     let next = all
-    if (cat !== "all") next = next.filter((q) => q.category === cat)
     if (difficulty !== "all") next = next.filter((q) => q.difficulty === difficulty)
     return next
-  }, [all, cat, difficulty])
+  }, [all, difficulty])
 
   const visible = React.useMemo(
     () => visibleForPlan(list, state.premium, FREE_INTERVIEW_LIMIT),
@@ -65,12 +62,12 @@ export default function InterviewPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Interview prep"
-        title="Interview Questions"
-        description="Company-wise technical, coding, domain, HR and managerial questions with trainer guidance."
+        title="Interview Practice"
+        description="Real company interview questions. Answer each one yourself first, then reveal a trainer's model answer to compare."
         actions={
           visible.length >= 3 ? (
             <Button onClick={() => setSimSeed(Date.now())}>
-              <Icon name="PlayCircle" className="size-4" /> Simulate interview
+              <Icon name="PlayCircle" className="size-4" /> Focused round
             </Button>
           ) : undefined
         }
@@ -80,7 +77,6 @@ export default function InterviewPage() {
         value={company}
         onChange={(id) => {
           setSelectedCompany(id)
-          setCat("all")
           setDifficulty("all")
         }}
       />
@@ -96,19 +92,6 @@ export default function InterviewPage() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Category filter */}
-      <div className="flex flex-wrap gap-2">
-        <CatPill active={cat === "all"} onClick={() => setCat("all")} label="All" />
-        {INTERVIEW_CATEGORIES.map((k) => (
-          <CatPill
-            key={k.id}
-            active={cat === k.id}
-            onClick={() => setCat(k.id)}
-            label={k.label}
-          />
-        ))}
-      </div>
 
       {/* Difficulty filter */}
       <div className="flex flex-wrap items-center gap-2">
@@ -152,8 +135,9 @@ export default function InterviewPage() {
             <p className="font-heading text-lg font-semibold">
               Unlock complete interview preparation
             </p>
-            <p className="max-md text-sm text-muted-foreground">
-              Continue with deeper company-wise technical, coding, HR, domain and managerial questions.
+            <p className="max-w-md text-sm text-muted-foreground">
+              Continue practising the full bank of company-wise interview questions with trainer
+              answers to compare against.
             </p>
             <Button asChild className="mt-2">
               <Link href="/settings">
@@ -252,11 +236,8 @@ function SimulationMode({
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
-              {INTERVIEW_CATEGORY_LABEL[current.category]}
-            </span>
             <span className="rounded-full bg-muted px-2 py-0.5 capitalize text-muted-foreground">
-              {current.difficulty}
+              {current.difficulty === "easy" ? "Beginner" : current.difficulty === "medium" ? "Intermediate" : "Advanced"}
             </span>
             {current.tags.slice(0, 2).map((t) => (
               <span key={t} className="text-muted-foreground">#{t}</span>
@@ -329,38 +310,14 @@ function companyFromParam(value: string | null): CompanyId | null {
   return value as CompanyId
 }
 
-function CatPill({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean
-  onClick: () => void
-  label: string
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-        active ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-muted/50",
-      )}
-    >
-      {label}
-    </button>
-  )
-}
-
 function InterviewItem({ q }: { q: InterviewQuestion }) {
-  const [open, setOpen] = React.useState(false)
+  const [answer, setAnswer] = React.useState("")
+  const [revealed, setRevealed] = React.useState(false)
+  const canSubmit = answer.trim().length > 0
   return (
     <Card>
       <CardContent className="space-y-3 pt-5">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
-            {INTERVIEW_CATEGORY_LABEL[q.category]}
-          </span>
           <span
             className={cn(
               "rounded-full px-2 py-0.5 capitalize font-medium",
@@ -379,21 +336,46 @@ function InterviewItem({ q }: { q: InterviewQuestion }) {
             </span>
           ))}
         </div>
-        <p className="font-medium">{q.question}</p>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="inline-flex rounded-lg px-2 py-1 text-sm font-medium hover:bg-muted/60"
-        >
-          {open ? "Hide trainer answer" : "Show trainer answer"}
-        </button>
-        {open ? (
-          <div className="space-y-3 rounded-xl bg-muted/60 p-3 text-sm">
-            <AnswerBlock title="Natural answer" text={q.guidance} />
-            <AnswerBlock title="Short version" text={shortInterviewAnswer(q)} />
-            <AnswerBlock title="Do not say" text={badInterviewAnswer(q)} muted />
+        <p className="font-heading font-semibold leading-snug">{q.question}</p>
+
+        {!revealed ? (
+          <div className="space-y-2">
+            <textarea
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              rows={4}
+              placeholder="Answer it yourself first — type how you'd respond in the interview…"
+              className="w-full resize-none rounded-xl border border-border bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+            />
+            <Button size="sm" disabled={!canSubmit} onClick={() => setRevealed(true)}>
+              Submit &amp; reveal model answer <Icon name="ArrowRight" className="size-4" />
+            </Button>
           </div>
-        ) : null}
+        ) : (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-border bg-muted/40 p-3 text-sm">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Your answer
+              </p>
+              <p className="italic text-foreground/80">{answer}</p>
+            </div>
+            <div className="space-y-3 rounded-xl bg-primary/5 p-3 text-sm">
+              <AnswerBlock title="Model answer" text={q.guidance} />
+              <AnswerBlock title="Short version" text={shortInterviewAnswer(q)} />
+              <AnswerBlock title="Avoid saying" text={badInterviewAnswer(q)} muted />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setRevealed(false)
+                setAnswer("")
+              }}
+              className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              <Icon name="RotateCcw" className="size-3.5" /> Try again
+            </button>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
