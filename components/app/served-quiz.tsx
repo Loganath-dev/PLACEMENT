@@ -100,15 +100,9 @@ export function ServedQuiz({ section, company }: { section?: string; company?: s
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between space-y-0">
-        <div>
-          <CardTitle className="flex items-center gap-2 font-heading text-base">
-            <Icon name="BadgeCheck" className="size-4 text-primary" /> StudyBench bank
-          </CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Served live from our reviewed question bank — premium items are unlocked by your plan,
-            not shipped to the browser.
-          </p>
-        </div>
+        <CardTitle className="flex items-center gap-2 font-heading text-base">
+          <Icon name="BadgeCheck" className="size-4 text-primary" /> StudyBench bank
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {state.status === "loading" ? (
@@ -125,14 +119,9 @@ export function ServedQuiz({ section, company }: { section?: string; company?: s
             This bank is being populated for this section. Check back soon.
           </p>
         ) : (
-          <div className="flex flex-wrap items-center gap-3">
-            <Button onClick={() => setPlaying(true)}>
-              <Icon name="Play" className="size-4" /> Start {state.questions.length}-question set
-            </Button>
-            <span className="text-xs text-muted-foreground">
-              {state.premium ? "Includes premium-tier questions" : "Free-tier questions"}
-            </span>
-          </div>
+          <Button onClick={() => setPlaying(true)}>
+            <Icon name="Play" className="size-4" /> Start {state.questions.length}-question set
+          </Button>
         )}
       </CardContent>
     </Card>

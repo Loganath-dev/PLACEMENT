@@ -348,7 +348,7 @@ function InterviewItem({ q }: { q: InterviewQuestion }) {
               className="w-full resize-none rounded-xl border border-border bg-background p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             />
             <Button size="sm" disabled={!canSubmit} onClick={() => setRevealed(true)}>
-              Submit &amp; reveal model answer <Icon name="ArrowRight" className="size-4" />
+              Submit answer <Icon name="ArrowRight" className="size-4" />
             </Button>
           </div>
         ) : (

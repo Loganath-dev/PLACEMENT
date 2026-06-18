@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/app/icon"
+import { LaunchOffer } from "@/components/app/launch-offer"
 import { premiumPriceLabel } from "@/lib/access"
 
 /**
@@ -20,12 +21,13 @@ export function UpgradeBanner() {
           </div>
           <p className="text-sm text-muted-foreground">
             Turn weak topics into exact chapters, full PYQ sets, complete mocks and
-            detailed company-wise readiness for {premiumPriceLabel()}.
+            detailed company-wise readiness.
           </p>
+          <LaunchOffer variant="compact" className="mt-1.5" />
         </div>
       </div>
       <Button asChild className="shrink-0">
-        <Link href="/settings">Go Premium</Link>
+        <Link href="/settings">Claim launch offer</Link>
       </Button>
     </div>
   )

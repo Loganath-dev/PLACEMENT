@@ -26,12 +26,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Icon } from "@/components/app/icon"
+import { LaunchOffer } from "@/components/app/launch-offer"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
-import {
-  PLAN_FEATURES,
-  premiumPriceLabel,
-} from "@/lib/access"
+import { PLAN_FEATURES } from "@/lib/access"
 import { SELECTABLE_COMPANIES, getCompany } from "@/lib/data/companies"
 import { referralLink } from "@/lib/referral"
 import { useStore } from "@/lib/store"
@@ -164,19 +162,22 @@ export default function SettingsPage() {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col items-start justify-between gap-3 rounded-xl bg-primary/5 p-4 sm:flex-row sm:items-center">
-              <div>
+            <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center">
+              <div className="space-y-2">
                 <p className="font-heading text-lg font-semibold">StudyBench Premium</p>
+                <LaunchOffer />
                 <p className="text-sm text-muted-foreground">
-                  Everything unlocked across all tracks for <strong>{premiumPriceLabel()}</strong>.
-                  No ads.
+                  Everything unlocked across all tracks. No ads.
                 </p>
               </div>
               <Button
+                size="lg"
                 onClick={startPremiumCheckout}
                 disabled={checkingOut}
+                className="shrink-0"
               >
-                {checkingOut ? "Opening checkout..." : "Pay with Razorpay"}
+                {checkingOut ? "Opening checkout..." : "Claim launch offer"}
+                {!checkingOut ? <Icon name="ArrowRight" className="size-4" /> : null}
               </Button>
             </div>
           )}

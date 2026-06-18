@@ -1,7 +1,20 @@
 import type { CompanyId } from "@/lib/types"
 
 export const PREMIUM_PRICE_INR = 399
+/**
+ * Regular (anchor) price shown struck-through next to the launch price. Keep this
+ * the genuine post-launch price you actually intend to charge — a strikethrough
+ * reference price that is never charged is a regulated dark pattern (CCPA 2023).
+ */
+export const PREMIUM_ORIGINAL_PRICE_INR = 1399
+/** Duration of the first-visit launch-offer countdown. */
+export const PREMIUM_OFFER_DURATION_MS = 60 * 60 * 1000 // 1 hour
 export const PREMIUM_DURATION_LABEL = "year"
+
+/** Whole-number discount of the launch price vs the regular price. */
+export function premiumDiscountPercent(): number {
+  return Math.round((1 - PREMIUM_PRICE_INR / PREMIUM_ORIGINAL_PRICE_INR) * 100)
+}
 export const FREE_PYQ_LIMIT = 15
 export const FREE_INTERVIEW_LIMIT = 12
 // Coding practice is a Premium-only surface: free users see the locked page.

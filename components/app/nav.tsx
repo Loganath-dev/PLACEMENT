@@ -13,7 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
-import { premiumPriceLabel } from "@/lib/access"
+import { LaunchOffer } from "@/components/app/launch-offer"
 import { useLevel, useStoreActions, useStoreState } from "@/lib/store"
 import { cn } from "@/lib/utils"
 
@@ -194,8 +194,9 @@ function PremiumNudge() {
         <Icon name="Crown" className="size-3.5" /> Premium
       </p>
       <p className="mt-1 text-muted-foreground">
-        Unlock every section, chapter and practice bank for {premiumPriceLabel()}.
+        Unlock every section, chapter and practice bank.
       </p>
+      <LaunchOffer variant="compact" className="mt-1.5" />
     </Link>
   )
 }
