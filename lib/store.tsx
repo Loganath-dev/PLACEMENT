@@ -127,6 +127,8 @@ interface StoreStateValue {
   state: AppState
   hydrated: boolean
   userId: string | null
+  /** Account registration timestamp (ISO) — anchors the first-time launch offer. */
+  userCreatedAt: string | null
 }
 
 interface StoreActionsValue {
@@ -179,6 +181,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = React.useState<AppState>(DEFAULT_STATE)
   const [hydrated, setHydrated] = React.useState(false)
   const [userId, setUserId] = React.useState<string | null>(null)
+  const [userCreatedAt, setUserCreatedAt] = React.useState<string | null>(null)
 
   // ── hydrate: localStorage first (fast), then Supabase (authoritative) ──
   React.useEffect(() => {
@@ -205,6 +208,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       if (user) {
         setUserId(user.id)
+        setUserCreatedAt(user.created_at ?? null)
         identifyAnalyticsUser(user.id)
         // 3. Load authoritative state from Supabase; merge over localStorage.
         try {
@@ -232,6 +236,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setUserId(session?.user?.id ?? null)
+      setUserCreatedAt(session?.user?.created_at ?? null)
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -613,8 +618,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   // ── State context — re-renders whenever state/hydrated/userId change ──
   const stateValue = React.useMemo<StoreStateValue>(
-    () => ({ state, hydrated, userId }),
-    [state, hydrated, userId],
+    () => ({ state, hydrated, userId, userCreatedAt }),
+    [state, hydrated, userId, userCreatedAt],
   )
 
   return (

@@ -2,11 +2,10 @@
 
 import * as React from "react"
 import { PREMIUM_OFFER_DURATION_MS } from "@/lib/access"
-
-const KEY = "studybench.offer.startedAt"
+import { useStoreState } from "@/lib/store"
 
 export interface LaunchOfferState {
-  /** True once hydrated on the client (avoids SSR flash). */
+  /** True once we have a real registration anchor + a client clock. */
   ready: boolean
   remainingMs: number
   expired: boolean
@@ -16,41 +15,29 @@ export interface LaunchOfferState {
 }
 
 /**
- * Drives the first-visit launch-offer countdown. The window starts the first
- * time a user lands (persisted per device in localStorage) and runs for
- * PREMIUM_OFFER_DURATION_MS. This is a genuine launch offer — ₹1399 is the real
- * regular price and ₹399 the launch price — so the urgency is honest, not a
- * resetting fake timer.
+ * Drives the first-time launch-offer countdown, anchored to the user's account
+ * registration time (from the Supabase session). This makes the offer genuinely
+ * "first-time, first hour" per account — it cannot be reset by clearing browser
+ * storage or switching devices, and only brand-new registrations ever see the
+ * live timer. Signed-out users (no anchor) get `ready: false` → nothing shown.
  */
 export function useLaunchOffer(): LaunchOfferState {
-  const [startedAt, setStartedAt] = React.useState<number | null>(null)
+  const { userCreatedAt } = useStoreState()
   const [now, setNow] = React.useState<number | null>(null)
 
   React.useEffect(() => {
-    let start: number
-    try {
-      const raw = localStorage.getItem(KEY)
-      const parsed = raw ? Number(raw) : NaN
-      if (Number.isFinite(parsed)) {
-        start = parsed
-      } else {
-        start = Date.now()
-        localStorage.setItem(KEY, String(start))
-      }
-    } catch {
-      start = Date.now()
-    }
-    setStartedAt(start)
     setNow(Date.now())
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  if (startedAt === null || now === null) {
+  const anchor = userCreatedAt ? Date.parse(userCreatedAt) : NaN
+
+  if (now === null || Number.isNaN(anchor)) {
     return { ready: false, remainingMs: PREMIUM_OFFER_DURATION_MS, expired: false, hh: "00", mm: "00", ss: "00" }
   }
 
-  const remainingMs = Math.max(0, startedAt + PREMIUM_OFFER_DURATION_MS - now)
+  const remainingMs = Math.max(0, anchor + PREMIUM_OFFER_DURATION_MS - now)
   const totalSec = Math.floor(remainingMs / 1000)
   return {
     ready: true,
