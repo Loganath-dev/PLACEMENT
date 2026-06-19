@@ -344,7 +344,7 @@ export const TERMS: LegalDoc = {
   slug: "terms",
   title: "Terms & Conditions",
   effectiveDate: "6 June 2026",
-  lastUpdated: "6 June 2026",
+  lastUpdated: "19 June 2026",
   notice:
     "These Terms & Conditions, together with the Privacy Policy, form a legally binding agreement between you and StudyBench and constitute an \"electronic record\" under the Information Technology Act, 2000. Please read them carefully before using the Platform.",
   intro: [
@@ -391,6 +391,14 @@ export const TERMS: LegalDoc = {
         {
           k: "p",
           text: "We strive to provide accurate, high-quality content authored or compiled in our own words and from publicly available and licensed references. However, eligibility criteria, test patterns and company processes change frequently and vary by year, role and campus. Such information is provided on an **\"as published / last verified\"** basis for general guidance only; you must independently verify current details from the official source (e.g. the relevant company's official careers page) before relying on them.",
+        },
+        {
+          k: "p",
+          text: "All practice questions, including previous-year-style questions (\"PYQs\"), are **original practice reconstructions** written by us to mirror the publicly known style, topics and difficulty of company assessments. They are **not copies, scans, or reproductions of any actual examination paper** and do not contain any company's confidential or proprietary questions; they are provided solely for self-practice. Test patterns and durations shown for any company are indicative, based on publicly available information and our review, and may differ from a particular drive.",
+        },
+        {
+          k: "p",
+          text: "Your Placement Readiness Index (PRI) and any readiness band, score or estimated probability are computed **only from your activity within the Platform**. They are study signals to guide your preparation and are **not a prediction, assurance, or guarantee** of selection, shortlisting, or any outcome in any real recruitment process.",
         },
       ],
     },
