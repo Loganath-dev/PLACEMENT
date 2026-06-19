@@ -26,9 +26,22 @@ const fontMono = Geist_Mono({
   variable: "--font-mono",
 })
 
+// Search-engine ownership verification. Set GOOGLE_SITE_VERIFICATION (Search
+// Console) and/or BING_SITE_VERIFICATION (Bing Webmaster Tools — also powers
+// Yahoo, which is Bing-backed) to emit the meta verification tags. Absent → none.
+const seoVerification: Metadata["verification"] = {
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : {}),
+  ...(process.env.BING_SITE_VERIFICATION
+    ? { other: { "msvalidate.01": process.env.BING_SITE_VERIFICATION } }
+    : {}),
+}
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: SITE_NAME,
+  verification: seoVerification,
   title: {
     default: SEO.title,
     template: `%s | ${SITE_NAME}`,
