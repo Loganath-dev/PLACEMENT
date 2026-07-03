@@ -77,7 +77,13 @@ export default function SettingsPage() {
   const [checkingOut, setCheckingOut] = React.useState(false)
   const [creatorCode, setCreatorCode] = React.useState("")
   const [redeemingCode, setRedeemingCode] = React.useState(false)
+  const [renderSecondarySections, setRenderSecondarySections] = React.useState(false)
   const activeUntil = state.premiumUntil ?? null
+
+  React.useEffect(() => {
+    const id = window.setTimeout(() => setRenderSecondarySections(true), 0)
+    return () => window.clearTimeout(id)
+  }, [])
 
   function tryAdd(id: CompanyId) {
     addInterested(id)
@@ -147,15 +153,16 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: creatorCode }),
       })
-      const result = await readApiJson<{ error?: string; ok?: boolean }>(
+      const result = await readApiJson<{ error?: string; ok?: boolean; premiumUntil?: string }>(
         response,
         "Could not redeem the creator code.",
       )
       if (!response.ok) throw new Error(result.error ?? "Could not redeem the creator code.")
+      activatePremium(result.premiumUntil, "creator")
+      setCreatorCode("")
       toast.success("Creator access activated", {
         description: "Premium is unlocked for one year on this account.",
       })
-      window.location.reload()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not redeem the creator code.")
       setRedeemingCode(false)
@@ -169,6 +176,24 @@ export default function SettingsPage() {
         title="Settings"
         description="Subscription, target companies and your profile."
       />
+
+      {state.entitlementSource !== "creator" ? (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="flex items-center gap-2 font-heading text-sm font-semibold">
+                <Icon name="KeyRound" className="size-4 text-primary" /> Have a creator code?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Redeem your one-time invite here to unlock creator access for one year.
+              </p>
+            </div>
+            <Button asChild variant="outline" className="shrink-0">
+              <a href="#creator-invite">Redeem creator code</a>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Subscription */}
       <Card>
@@ -215,13 +240,19 @@ export default function SettingsPage() {
               </Button>
             </div>
           )}
-          <PlanComparison premium={state.premium} />
+          {renderSecondarySections ? (
+            <PlanComparison premium={state.premium} />
+          ) : (
+            <div className="mt-5 rounded-xl border border-dashed border-border bg-muted/30 px-4 py-8 text-sm text-muted-foreground">
+              Loading feature comparison…
+            </div>
+          )}
 
         </CardContent>
       </Card>
 
-      {state.entitlementSource !== "creator" ? (
-        <Card>
+      {renderSecondarySections && state.entitlementSource !== "creator" ? (
+        <Card id="creator-invite">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-heading text-base">
               <Icon name="KeyRound" className="size-4 text-primary" /> Creator invite
@@ -349,49 +380,51 @@ export default function SettingsPage() {
       <ProfileEditor profile={state.profile} onSave={updateProfile} />
 
       {/* Refer a friend */}
-      {userId ? <ReferFriendCard userId={userId} /> : null}
+      {renderSecondarySections && userId ? <ReferFriendCard userId={userId} /> : null}
 
       {/* Notifications */}
-      <NotificationSettings />
+      {renderSecondarySections ? <NotificationSettings /> : null}
 
       {/* Danger zone */}
-      <Card className="border-destructive/30">
-        <CardHeader>
-          <CardTitle className="font-heading text-base text-destructive">Danger zone</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-sm font-medium">Reset progress</p>
-              <p className="text-sm text-muted-foreground">
-                Clear all progress, XP, streaks and target companies. Your account stays.
-              </p>
+      {renderSecondarySections ? (
+        <Card className="border-destructive/30">
+          <CardHeader>
+            <CardTitle className="font-heading text-base text-destructive">Danger zone</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-medium">Reset progress</p>
+                <p className="text-sm text-muted-foreground">
+                  Clear all progress, XP, streaks and target companies. Your account stays.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10"
+                onClick={() => {
+                  reset()
+                  toast("All progress reset")
+                }}
+              >
+                Reset everything
+              </Button>
             </div>
-            <Button
-              variant="outline"
-              className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/10"
-              onClick={() => {
-                reset()
-                toast("All progress reset")
-              }}
-            >
-              Reset everything
-            </Button>
-          </div>
 
-          <div className="h-px bg-destructive/15" />
+            <div className="h-px bg-destructive/15" />
 
-          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-            <div>
-              <p className="text-sm font-medium">Delete account</p>
-              <p className="text-sm text-muted-foreground">
-                Permanently delete your account and all personal data. This cannot be undone.
-              </p>
+            <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-sm font-medium">Delete account</p>
+                <p className="text-sm text-muted-foreground">
+                  Permanently delete your account and all personal data. This cannot be undone.
+                </p>
+              </div>
+              <DeleteAccountDialog onConfirm={deleteAccount} />
             </div>
-            <DeleteAccountDialog onConfirm={deleteAccount} />
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   )
 }

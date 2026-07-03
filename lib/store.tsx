@@ -137,7 +137,7 @@ interface StoreActionsValue {
   setPrimary: (id: CompanyId) => void
   addInterested: (id: CompanyId) => void
   removeInterested: (id: CompanyId) => void
-  activatePremium: (premiumUntil?: string) => void
+  activatePremium: (premiumUntil?: string, source?: "creator" | "purchase") => void
   updateProfile: (p: Partial<Profile>) => void
   submitQuiz: (args: {
     companyId: CompanyId
@@ -224,22 +224,24 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             fetch("/api/premium/status", { cache: "no-store" }),
           ])
           if (remote) {
-            setState((prev) => normalizeEntitlement({ ...prev, ...remote }))
+            const normalized = normalizeEntitlement({ ...DEFAULT_STATE, ...remote })
+            if (statusResponse.ok) {
+              const entitlement = (await statusResponse.json()) as {
+                premium: boolean
+                premiumUntil: string | null
+                source: "creator" | "purchase" | "free"
+              }
+              setState({
+                ...normalized,
+                premium: entitlement.premium,
+                premiumUntil: entitlement.premiumUntil ?? undefined,
+                entitlementSource: entitlement.source,
+              })
+            } else {
+              setState(normalized)
+            }
           } else {
             await ensureUserState(user.id, DEFAULT_STATE)
-          }
-          if (statusResponse.ok) {
-            const entitlement = (await statusResponse.json()) as {
-              premium: boolean
-              premiumUntil: string | null
-              source: "creator" | "purchase" | "free"
-            }
-            setState((prev) => ({
-              ...prev,
-              premium: entitlement.premium,
-              premiumUntil: entitlement.premiumUntil ?? undefined,
-              entitlementSource: entitlement.source,
-            }))
           }
         } catch {
           /* offline — localStorage fallback stays */
@@ -387,7 +389,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // Local echo after a server-verified payment. The authoritative write
       // already happened in the verify route / webhook via the service role —
       // clients can no longer write entitlement columns (DB trigger).
-      activatePremium: (premiumUntil) =>
+      activatePremium: (premiumUntil, source = "purchase") =>
         mutate((d) => {
           const next = normalizeEntitlement({
             ...d,
@@ -396,7 +398,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           })
           d.premium = next.premium
           d.premiumUntil = next.premiumUntil
-          d.entitlementSource = "purchase"
+          d.entitlementSource = source
           track("premium_upgrade", { premium_until: premiumUntil ?? null })
         }),
 
