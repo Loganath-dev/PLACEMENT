@@ -107,12 +107,12 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
   const sb = createClient()
 
   const [profRes, stRes, cpRes, dailyRes, mistakesRes, outcomesRes] = await Promise.all([
-    sb.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    sb.from("user_state").select("*").eq("id", userId).maybeSingle(),
-    sb.from("company_progress").select("*").eq("user_id", userId),
-    sb.from("daily_challenges").select("*").eq("id", userId).maybeSingle(),
-    sb.from("mistakes").select("*").eq("user_id", userId).order("ts", { ascending: false }).limit(60),
-    sb.from("drive_outcomes").select("*").eq("user_id", userId).order("ts", { ascending: false }),
+    sb.from("profiles").select("id,name,college,branch,grad_year,cgpa,backlogs").eq("id", userId).maybeSingle(),
+    sb.from("user_state").select("id,xp,streak_count,streak_last_active,premium,premium_until,primary_company,interested,onboarded,topic_stats,badges,coding_attempts").eq("id", userId).maybeSingle(),
+    sb.from("company_progress").select("user_id,company_id,chapters,mock_scores").eq("user_id", userId),
+    sb.from("daily_challenges").select("id,date,general,aptitude,coding").eq("id", userId).maybeSingle(),
+    sb.from("mistakes").select("user_id,question_id,prompt,options,answer,chosen,explanation,topic,difficulty,ts,box,due,reviews,lapses").eq("user_id", userId).order("ts", { ascending: false }).limit(60),
+    sb.from("drive_outcomes").select("id,user_id,company_id,result,stage_reached,pri_at_drive,ts,notes").eq("user_id", userId).order("ts", { ascending: false }).limit(50),
   ])
 
   const prof = profRes.data as ProfileRow | null

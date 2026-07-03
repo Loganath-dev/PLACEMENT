@@ -75,6 +75,8 @@ export default function SettingsPage() {
 
   const available = SELECTABLE_COMPANIES.filter((c) => !state.interested.includes(c.id))
   const [checkingOut, setCheckingOut] = React.useState(false)
+  const [creatorCode, setCreatorCode] = React.useState("")
+  const [redeemingCode, setRedeemingCode] = React.useState(false)
   const activeUntil = state.premiumUntil ?? null
 
   function tryAdd(id: CompanyId) {
@@ -135,6 +137,31 @@ export default function SettingsPage() {
     }
   }
 
+  async function redeemCreatorCode(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!creatorCode.trim() || redeemingCode) return
+    setRedeemingCode(true)
+    try {
+      const response = await fetch("/api/creator/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: creatorCode }),
+      })
+      const result = await readApiJson<{ error?: string; ok?: boolean }>(
+        response,
+        "Could not redeem the creator code.",
+      )
+      if (!response.ok) throw new Error(result.error ?? "Could not redeem the creator code.")
+      toast.success("Creator access activated", {
+        description: "Premium is unlocked for one year on this account.",
+      })
+      window.location.reload()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not redeem the creator code.")
+      setRedeemingCode(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -154,11 +181,18 @@ export default function SettingsPage() {
           {state.premium ? (
             <div>
               <p className="flex items-center gap-1.5 font-semibold text-[color:var(--success)]">
-                <Icon name="CircleCheckBig" className="size-4" /> Premium active
+                <Icon name="CircleCheckBig" className="size-4" />
+                {state.entitlementSource === "creator" ? "Creator access" : "Premium active"}
               </p>
               <p className="text-sm text-muted-foreground">
                 All chapters, all company depth, full PYQs, mocks and readiness unlocked.
-                {activeUntil ? ` Valid until ${new Date(activeUntil).toLocaleDateString()}.` : ""}
+                {state.entitlementSource === "creator"
+                  ? activeUntil
+                    ? ` Creator access is valid until ${new Date(activeUntil).toLocaleDateString()}.`
+                    : " Owner access is active on this account."
+                  : activeUntil
+                    ? ` Valid until ${new Date(activeUntil).toLocaleDateString()}.`
+                    : ""}
               </p>
             </div>
           ) : (
@@ -185,6 +219,43 @@ export default function SettingsPage() {
 
         </CardContent>
       </Card>
+
+      {state.entitlementSource !== "creator" ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 font-heading text-base">
+              <Icon name="KeyRound" className="size-4 text-primary" /> Creator invite
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form className="flex flex-col gap-3 sm:flex-row" onSubmit={redeemCreatorCode}>
+              <div className="flex-1 space-y-1.5">
+                <Label htmlFor="creator-code">Creator code</Label>
+                <Input
+                  id="creator-code"
+                  value={creatorCode}
+                  onChange={(event) => setCreatorCode(event.target.value.toUpperCase())}
+                  placeholder="STUDYBENCH-XXXXX-XXXXX"
+                  autoComplete="off"
+                  spellCheck={false}
+                  maxLength={22}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Each invite works once and unlocks creator access for one year on this account.
+                </p>
+              </div>
+              <Button
+                type="submit"
+                variant="outline"
+                className="sm:mt-6"
+                disabled={!creatorCode.trim() || redeemingCode}
+              >
+                {redeemingCode ? "Checking..." : "Redeem code"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {/* Target companies */}
       <Card>

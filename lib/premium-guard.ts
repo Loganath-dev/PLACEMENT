@@ -8,6 +8,9 @@
 
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { isCreatorEmail } from "@/lib/creators"
+
+export type EntitlementSource = "creator" | "purchase" | "free"
 
 export interface Entitlement {
   userId: string
@@ -15,6 +18,7 @@ export interface Entitlement {
   /** True only when premium is set AND not expired. */
   premium: boolean
   premiumUntil: string | null
+  source: EntitlementSource
 }
 
 interface UserStateEntitlementRow {
@@ -58,11 +62,27 @@ export async function readEntitlement(): Promise<Entitlement | null> {
     .eq("id", user.id)
     .maybeSingle()
 
+  const { data: creatorGrant } = await sb
+    .from("creator_access")
+    .select("user_id, expires_at")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
   const row = data as UserStateEntitlementRow | null
   const premiumUntil = row?.premium_until ?? null
-  const active = isPremiumActive(row?.premium, premiumUntil)
+  const internalCreator = isCreatorEmail(user.email)
+  const inviteExpiry = creatorGrant?.expires_at ?? null
+  const activeInvite = Boolean(inviteExpiry && Date.parse(inviteExpiry) > Date.now())
+  const creator = internalCreator || activeInvite
+  const active = creator || isPremiumActive(row?.premium, premiumUntil)
 
-  return { userId: user.id, email: user.email ?? undefined, premium: active, premiumUntil }
+  return {
+    userId: user.id,
+    email: user.email ?? undefined,
+    premium: active,
+    premiumUntil: internalCreator ? null : activeInvite ? inviteExpiry : premiumUntil,
+    source: creator ? "creator" : active ? "purchase" : "free",
+  }
 }
 
 /**

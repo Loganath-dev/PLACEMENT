@@ -18,7 +18,9 @@ const sans = Geist({ subsets: ["latin"], variable: "--font-sans" })
 const heading = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-heading",
-  weight: ["500", "600", "700", "800"],
+  // Most headings use 600/700. Shipping only these cuts two global font files;
+  // browsers synthesize the rare 500/800 usage without blocking first paint.
+  weight: ["600", "700"],
 })
 
 const fontMono = Geist_Mono({
@@ -125,5 +127,4 @@ export default function RootLayout({
     </html>
   )
 }
-
 

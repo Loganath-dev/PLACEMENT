@@ -290,6 +290,7 @@ export interface AppState {
   onboarded: boolean
   premium: boolean
   premiumUntil?: string
+  entitlementSource?: "creator" | "purchase" | "free"
   profile: Profile
   interested: CompanyId[]
   primary: CompanyId

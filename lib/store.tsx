@@ -42,6 +42,7 @@ const DEFAULT_STATE: AppState = {
   onboarded: false,
   premium: false,
   premiumUntil: undefined,
+  entitlementSource: "free",
   profile: { name: "", college: "", branch: "", gradYear: "", cgpa: "", backlogs: "" },
   interested: [],
   primary: "general",
@@ -187,10 +188,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     async function hydrate() {
       // 1. Restore from localStorage immediately so UI doesn't flash blank.
+      let restoredFromCache = false
       try {
         const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
         if (raw) {
           setState(normalizeEntitlement({ ...DEFAULT_STATE, ...JSON.parse(raw) }))
+          restoredFromCache = true
+          // Returning users can use the cached app immediately while Supabase
+          // refreshes in the background. This removes a full-network loader.
+          setHydrated(true)
           if (!localStorage.getItem(STORAGE_KEY)) {
             localStorage.setItem(STORAGE_KEY, raw)
             localStorage.removeItem(LEGACY_STORAGE_KEY)
@@ -210,13 +216,30 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         setUserId(user.id)
         setUserCreatedAt(user.created_at ?? null)
         identifyAnalyticsUser(user.id)
-        // 3. Load authoritative state from Supabase; merge over localStorage.
+        // 3. Refresh state and entitlement concurrently; neither depends on the
+        // other and serializing them adds an avoidable network round trip.
         try {
-          const remote = await loadUserState(user.id)
+          const [remote, statusResponse] = await Promise.all([
+            loadUserState(user.id),
+            fetch("/api/premium/status", { cache: "no-store" }),
+          ])
           if (remote) {
             setState((prev) => normalizeEntitlement({ ...prev, ...remote }))
           } else {
             await ensureUserState(user.id, DEFAULT_STATE)
+          }
+          if (statusResponse.ok) {
+            const entitlement = (await statusResponse.json()) as {
+              premium: boolean
+              premiumUntil: string | null
+              source: "creator" | "purchase" | "free"
+            }
+            setState((prev) => ({
+              ...prev,
+              premium: entitlement.premium,
+              premiumUntil: entitlement.premiumUntil ?? undefined,
+              entitlementSource: entitlement.source,
+            }))
           }
         } catch {
           /* offline — localStorage fallback stays */
@@ -225,7 +248,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         identifyAnalyticsUser(null)
       }
 
-      setHydrated(true)
+      // First-time users have no safe cached routing state, so they wait for
+      // the authoritative load. Returning users were already released above.
+      if (!restoredFromCache) setHydrated(true)
     }
 
     void hydrate()
@@ -371,6 +396,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           })
           d.premium = next.premium
           d.premiumUntil = next.premiumUntil
+          d.entitlementSource = "purchase"
           track("premium_upgrade", { premium_until: premiumUntil ?? null })
         }),
 

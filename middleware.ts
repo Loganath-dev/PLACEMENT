@@ -4,6 +4,26 @@ import { NextResponse, type NextRequest } from "next/server"
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
+  const { pathname } = request.nextUrl
+
+  // These routes never need session-aware redirects. Avoid a Supabase network
+  // call entirely so articles, legal pages, SEO assets and APIs start faster.
+  const sessionAgnosticPublicRoute =
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/faq" ||
+    pathname === "/blog" ||
+    pathname.startsWith("/blog/") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname === "/icon" ||
+    pathname === "/apple-icon" ||
+    pathname === "/opengraph-image" ||
+    pathname === "/manifest.webmanifest"
+
+  if (sessionAgnosticPublicRoute) return supabaseResponse
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -27,8 +47,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
 
   const isPublic =
     pathname === "/" ||

@@ -5,12 +5,13 @@
 
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
+import { CREATOR_EMAILS, isCreatorEmail } from "@/lib/creators"
 
 /** Founder / operator emails allowed into /admin/*. */
-export const ADMIN_EMAILS = ["lnath6630@gmail.com", "smartonboardai@gmail.com"]
+export const ADMIN_EMAILS = CREATOR_EMAILS
 
 export function isAdminEmail(email: string | null | undefined): boolean {
-  return !!email && ADMIN_EMAILS.includes(email)
+  return isCreatorEmail(email)
 }
 
 /**

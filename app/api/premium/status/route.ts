@@ -15,5 +15,6 @@ export async function GET() {
   return NextResponse.json({
     premium: ent.premium,
     premiumUntil: ent.premiumUntil,
+    source: ent.source,
   })
 }
