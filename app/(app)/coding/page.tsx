@@ -35,6 +35,16 @@ import type {
   CompanyId,
 } from "@/lib/types"
 
+let codingWorkerUrl: string | null = null
+
+function getCodingWorkerUrl() {
+  if (!codingWorkerUrl) {
+    const blob = new Blob([CODING_WORKER_SOURCE], { type: "text/javascript" })
+    codingWorkerUrl = URL.createObjectURL(blob)
+  }
+  return codingWorkerUrl
+}
+
 export default function CodingPage() {
   const { state, recordCodingAttempt } = useStore()
   const searchParams = useSearchParams()
@@ -504,8 +514,7 @@ function runOneTest(
   index: number
 ): Promise<RunResult> {
   return new Promise((resolve) => {
-    const blob = new Blob([CODING_WORKER_SOURCE], { type: "text/javascript" })
-    const workerUrl = URL.createObjectURL(blob)
+    const workerUrl = getCodingWorkerUrl()
     let settled = false
     let worker: Worker
     function finish(result: RunResult) {
@@ -513,7 +522,6 @@ function runOneTest(
       settled = true
       window.clearTimeout(timer)
       worker?.terminate()
-      URL.revokeObjectURL(workerUrl)
       resolve(result)
     }
     const timer = window.setTimeout(() => {

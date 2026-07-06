@@ -10,6 +10,7 @@
  *   track("quiz_complete", { company: "tcs", score: 85, passed: true })
  *
  * Event catalogue (keep in sync with admin/metrics page):
+ *   marketing_cta_click    — public-site CTA clicked
  *   signup                 — new user account created
  *   onboarding_complete    — user finished onboarding
  *   chapter_start          — user opened a chapter
@@ -25,6 +26,7 @@
  */
 
 type EventName =
+  | "marketing_cta_click"
   | "signup"
   | "onboarding_complete"
   | "chapter_start"

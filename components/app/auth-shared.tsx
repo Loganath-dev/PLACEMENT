@@ -3,6 +3,7 @@
 import * as React from "react"
 import { StudyBenchWordmark } from "@/components/app/brand"
 import { Button } from "@/components/ui/button"
+import { track } from "@/lib/analytics"
 import { createClient } from "@/lib/supabase/client"
 
 export function GoogleIcon({ className }: { className?: string }) {
@@ -28,11 +29,18 @@ export function GoogleIcon({ className }: { className?: string }) {
   )
 }
 
-export function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
+export function GoogleButton({
+  label = "Continue with Google",
+  source = "auth",
+}: {
+  label?: string
+  source?: "auth" | "signup" | "login"
+}) {
   const [loading, setLoading] = React.useState(false)
 
   async function handleGoogle() {
     setLoading(true)
+    track("marketing_cta_click", { placement: `google_oauth_${source}` })
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

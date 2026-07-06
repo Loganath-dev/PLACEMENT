@@ -14,6 +14,7 @@ async function getMetrics() {
     signupsToday,
     signupsWeek,
     signupsMonth,
+    ctaClicksWeek,
     onboardingsWeek,
     quizAttemptsWeek,
     mockCompletesWeek,
@@ -45,6 +46,14 @@ async function getMetrics() {
       .from("profiles")
       .select("id", { count: "exact", head: true })
       .gte("created_at", monthAgo)
+      .then(({ count }) => count ?? 0),
+
+    // Onboarding completions last 7 days
+    admin
+      .from("analytics_events")
+      .select("id", { count: "exact", head: true })
+      .eq("event", "marketing_cta_click")
+      .gte("occurred_at", weekAgo)
       .then(({ count }) => count ?? 0),
 
     // Onboarding completions last 7 days
@@ -130,6 +139,7 @@ async function getMetrics() {
     signupsToday,
     signupsWeek,
     signupsMonth,
+    ctaClicksWeek,
     onboardingsWeek,
     quizAttemptsWeek,
     mockCompletesWeek,
@@ -182,6 +192,7 @@ export default async function AdminMetricsPage() {
       <section>
         <h2 className="mb-3 font-heading text-lg font-semibold">Engagement (last 7 days)</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <KpiCard label="CTA clicks" value={m.ctaClicksWeek} />
           <KpiCard label="Onboardings" value={m.onboardingsWeek} />
           <KpiCard label="Quiz attempts" value={m.quizAttemptsWeek} />
           <KpiCard label="Mock completions" value={m.mockCompletesWeek} />

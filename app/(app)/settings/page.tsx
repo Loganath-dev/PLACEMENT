@@ -79,6 +79,11 @@ export default function SettingsPage() {
   const [redeemingCode, setRedeemingCode] = React.useState(false)
   const [renderSecondarySections, setRenderSecondarySections] = React.useState(false)
   const activeUntil = state.premiumUntil ?? null
+  const premiumTargetNames = (
+    state.interested.length ? state.interested : (["general"] as CompanyId[])
+  )
+    .slice(0, 3)
+    .map((id) => getCompany(id).short)
 
   React.useEffect(() => {
     const id = window.setTimeout(() => setRenderSecondarySections(true), 0)
@@ -221,23 +226,58 @@ export default function SettingsPage() {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col items-start justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center">
-              <div className="space-y-2">
-                <p className="font-heading text-lg font-semibold">StudyBench Premium</p>
-                <LaunchOffer />
-                <p className="text-sm text-muted-foreground">
-                  Everything unlocked across all tracks. No ads.
-                </p>
+            <div className="space-y-5 rounded-2xl border border-primary/20 bg-[linear-gradient(135deg,var(--card),var(--accent))] p-5 shadow-[0_28px_70px_-52px_oklch(0.25_0.08_260_/_35%)]">
+              <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                <div className="space-y-2">
+                  <p className="font-heading text-lg font-semibold">StudyBench Premium</p>
+                  <LaunchOffer />
+                  <p className="max-w-2xl text-sm text-muted-foreground">
+                    Upgrade when you want deeper company preparation, more mocks and better feedback for{" "}
+                    {premiumTargetNames.join(", ")}.
+                  </p>
+                </div>
+                <Button
+                  size="lg"
+                  onClick={startPremiumCheckout}
+                  disabled={checkingOut}
+                  className="shrink-0"
+                >
+                  {checkingOut ? "Opening checkout..." : "Claim launch offer"}
+                  {!checkingOut ? <Icon name="ArrowRight" className="size-4" /> : null}
+                </Button>
               </div>
-              <Button
-                size="lg"
-                onClick={startPremiumCheckout}
-                disabled={checkingOut}
-                className="shrink-0"
-              >
-                {checkingOut ? "Opening checkout..." : "Claim launch offer"}
-                {!checkingOut ? <Icon name="ArrowRight" className="size-4" /> : null}
-              </Button>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                <UpgradeReasonCard
+                  icon="BookOpenCheck"
+                  title="Go past the free section"
+                  body="Free gets you started. Premium unlocks the full chapter depth in every company track you selected."
+                />
+                <UpgradeReasonCard
+                  icon="ClipboardCheck"
+                  title="Practice with real pressure"
+                  body="Unlock the company mock series, not just the starter experience, so you can compare performance across more rounds."
+                />
+                <UpgradeReasonCard
+                  icon="Code2"
+                  title="Use coding and analytics together"
+                  body="Pair coding practice, hidden edge cases, deeper PYQs and detailed analytics in the same prep loop."
+                />
+              </div>
+
+              <div className="rounded-xl border border-border/80 bg-background/80 p-4">
+                <p className="text-sm font-semibold">What changes after you upgrade</p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {PLAN_FEATURES.slice(0, 6).map((row) => (
+                    <div key={row.feature} className="rounded-xl bg-muted/45 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {row.feature}
+                      </p>
+                      <p className="mt-1 text-sm">{row.premium}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
           {renderSecondarySections ? (
@@ -749,6 +789,26 @@ function NotificationSettings() {
         </p>
       </CardContent>
     </Card>
+  )
+}
+
+function UpgradeReasonCard({
+  icon,
+  title,
+  body,
+}: {
+  icon: string
+  title: string
+  body: string
+}) {
+  return (
+    <div className="rounded-2xl border border-border/70 bg-background/85 p-4">
+      <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+        <Icon name={icon} className="size-5" />
+      </span>
+      <p className="mt-3 font-heading text-base font-semibold">{title}</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
   )
 }
 

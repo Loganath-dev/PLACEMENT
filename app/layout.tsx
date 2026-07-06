@@ -1,5 +1,6 @@
 ﻿import type { Metadata } from "next"
 import { Geist, Geist_Mono, Plus_Jakarta_Sans } from "next/font/google"
+import Script from "next/script"
 import { Analytics } from "@vercel/analytics/next"
 
 import "./globals.css"
@@ -123,8 +124,17 @@ export default function RootLayout({
           </AppStoreProvider>
         </ThemeProvider>
         <Analytics />
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-QFG7H4ZY9E"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-QFG7H4ZY9E');`}
+        </Script>
       </body>
     </html>
   )
 }
-

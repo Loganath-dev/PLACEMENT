@@ -5,15 +5,16 @@ import * as React from "react"
 import { AppSidebar, AppTopbar } from "@/components/app/nav"
 import { SyncErrorBanner } from "@/components/app/sync-error-banner"
 import { StudyTimer } from "@/components/app/study-timer"
-import { useStoreState } from "@/lib/store"
+import { useStoreSelector } from "@/lib/store"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const { state, hydrated } = useStoreState()
+  const hydrated = useStoreSelector((store) => store.hydrated)
+  const onboarded = useStoreSelector((store) => store.state.onboarded)
   const router = useRouter()
 
   React.useEffect(() => {
-    if (hydrated && !state.onboarded) router.replace("/onboarding")
-  }, [hydrated, state.onboarded, router])
+    if (hydrated && !onboarded) router.replace("/onboarding")
+  }, [hydrated, onboarded, router])
 
   if (!hydrated) {
     return (
@@ -28,7 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!state.onboarded) return null
+  if (!onboarded) return null
 
   return (
     <div className="flex min-h-svh bg-background">

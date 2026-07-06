@@ -165,6 +165,11 @@ interface StoreActionsValue {
   deleteAccount: () => Promise<void>
 }
 
+interface StoreSubscriptionValue {
+  getSnapshot: () => StoreStateValue
+  subscribe: (listener: () => void) => () => void
+}
+
 // StoreContext re-exports both shapes for the backward-compatible useStore() hook.
 type StoreContextValue = StoreStateValue & StoreActionsValue
 
@@ -175,6 +180,7 @@ const StoreStateContext = React.createContext<StoreStateValue | null>(null)
 // Actions context is intentionally never null after mount; stable identity
 // means any component subscribed only to actions never re-renders on state changes.
 const StoreActionsContext = React.createContext<StoreActionsValue | null>(null)
+const StoreSubscriptionContext = React.createContext<StoreSubscriptionValue | null>(null)
 
 // ── Provider ─────────────────────────────────────────────────────────────────
 
@@ -183,6 +189,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [hydrated, setHydrated] = React.useState(false)
   const [userId, setUserId] = React.useState<string | null>(null)
   const [userCreatedAt, setUserCreatedAt] = React.useState<string | null>(null)
+  const snapshotRef = React.useRef<StoreStateValue>({
+    state: DEFAULT_STATE,
+    hydrated: false,
+    userId: null,
+    userCreatedAt: null,
+  })
+  const listenersRef = React.useRef(new Set<() => void>())
 
   // ── hydrate: localStorage first (fast), then Supabase (authoritative) ──
   React.useEffect(() => {
@@ -649,13 +662,31 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     () => ({ state, hydrated, userId, userCreatedAt }),
     [state, hydrated, userId, userCreatedAt],
   )
+  snapshotRef.current = stateValue
+
+  const subscriptionValue = React.useMemo<StoreSubscriptionValue>(
+    () => ({
+      getSnapshot: () => snapshotRef.current,
+      subscribe: (listener) => {
+        listenersRef.current.add(listener)
+        return () => listenersRef.current.delete(listener)
+      },
+    }),
+    [],
+  )
+
+  React.useEffect(() => {
+    for (const listener of listenersRef.current) listener()
+  }, [stateValue])
 
   return (
-    <StoreActionsContext.Provider value={actionsValue}>
-      <StoreStateContext.Provider value={stateValue}>
-        {children}
-      </StoreStateContext.Provider>
-    </StoreActionsContext.Provider>
+    <StoreSubscriptionContext.Provider value={subscriptionValue}>
+      <StoreActionsContext.Provider value={actionsValue}>
+        <StoreStateContext.Provider value={stateValue}>
+          {children}
+        </StoreStateContext.Provider>
+      </StoreActionsContext.Provider>
+    </StoreSubscriptionContext.Provider>
   )
 }
 
@@ -676,6 +707,27 @@ export function useStoreState(): StoreStateValue {
 export function useStoreActions(): StoreActionsValue {
   const ctx = React.useContext(StoreActionsContext)
   if (!ctx) throw new Error("useStoreActions must be used within AppStoreProvider")
+  return ctx
+}
+
+/**
+ * Selector-based subscription for always-mounted shells and helpers that only
+ * need a tiny slice of store state. This avoids re-rendering them on every
+ * unrelated progress update.
+ */
+export function useStoreSelector<T>(selector: (value: StoreStateValue) => T): T {
+  const ctx = React.useContext(StoreSubscriptionContext)
+  if (!ctx) throw new Error("useStoreSelector must be used within AppStoreProvider")
+  return React.useSyncExternalStore(
+    ctx.subscribe,
+    () => selector(ctx.getSnapshot()),
+    () => selector(ctx.getSnapshot()),
+  )
+}
+
+export function useStoreSnapshot(): StoreSubscriptionValue {
+  const ctx = React.useContext(StoreSubscriptionContext)
+  if (!ctx) throw new Error("useStoreSnapshot must be used within AppStoreProvider")
   return ctx
 }
 

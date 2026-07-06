@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { PasswordInput } from "@/components/ui/password-input"
 import { Icon } from "@/components/app/icon"
 import { AuthShell, GoogleButton, OrDivider } from "@/components/app/auth-shared"
+import { track } from "@/lib/analytics"
 import { capturePendingReferral } from "@/lib/referral"
 import { createClient } from "@/lib/supabase/client"
 
@@ -37,6 +38,7 @@ export default function SignupPage() {
     }
     setLoading(true)
     setError(null)
+    track("marketing_cta_click", { placement: "signup_form_submit" })
     const supabase = createClient()
     const { data, error: err } = await supabase.auth.signUp({
       email,
@@ -48,6 +50,10 @@ export default function SignupPage() {
       setError(err.message)
       return
     }
+    track("signup", {
+      method: "email",
+      email_confirmation_required: !Boolean(data.session),
+    })
     // If email confirmation is off, a session is returned and the user enters the app.
     if (data.session) {
       router.push("/onboarding")
@@ -79,7 +85,24 @@ export default function SignupPage() {
   return (
     <AuthShell title="Create your account" subtitle="Start preparing for your dream company - free.">
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <GoogleButton label="Sign up with Google" />
+        <div className="mb-4 rounded-xl border border-primary/15 bg-primary/5 p-3">
+          <p className="text-sm font-semibold text-foreground">What you get immediately</p>
+          <div className="mt-2 grid gap-1.5 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2">
+              <Icon name="Check" className="size-4 text-primary" />
+              All of Section 1 unlocked in every company track
+            </p>
+            <p className="flex items-center gap-2">
+              <Icon name="Check" className="size-4 text-primary" />
+              Daily challenge, PYQs, mocks and readiness tracking
+            </p>
+            <p className="flex items-center gap-2">
+              <Icon name="Check" className="size-4 text-primary" />
+              No card needed to start
+            </p>
+          </div>
+        </div>
+        <GoogleButton label="Sign up with Google" source="signup" />
         <div className="my-4">
           <OrDivider />
         </div>
@@ -144,5 +167,4 @@ export default function SignupPage() {
     </AuthShell>
   )
 }
-
 

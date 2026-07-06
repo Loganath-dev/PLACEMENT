@@ -9,7 +9,7 @@ import {
   PREMIUM_PRICE_INR,
   premiumDiscountPercent,
 } from "@/lib/access"
-import { useStoreState } from "@/lib/store"
+import { useStoreSelector } from "@/lib/store"
 import { useLaunchOffer } from "@/lib/use-offer"
 import { cn } from "@/lib/utils"
 
@@ -131,10 +131,10 @@ export function LaunchOffer({
  * renders nothing for premium users or once the window has passed.
  */
 export function LaunchOfferBanner({ className }: { className?: string }) {
-  const { state } = useStoreState()
+  const premium = useStoreSelector((store) => store.state.premium)
   const offer = useLaunchOffer()
 
-  if (state.premium || !offer.ready || offer.expired) return null
+  if (premium || !offer.ready || offer.expired) return null
 
   return (
     <div

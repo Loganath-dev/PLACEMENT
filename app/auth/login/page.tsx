@@ -74,7 +74,7 @@ function LoginForm() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <GoogleButton label="Sign in with Google" />
+      <GoogleButton label="Sign in with Google" source="login" />
       <div className="my-4">
         <OrDivider />
       </div>

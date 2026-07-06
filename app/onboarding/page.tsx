@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select"
 import { Icon } from "@/components/app/icon"
 import { CompanyAvatar } from "@/components/app/ui-bits"
-import { SELECTABLE_COMPANIES } from "@/lib/data/companies"
+import { SELECTABLE_COMPANIES, getCompany } from "@/lib/data/companies"
 import { getSections } from "@/lib/data/content"
 import { useStore } from "@/lib/store"
 import type { CompanyId, Profile } from "@/lib/types"
@@ -52,8 +52,7 @@ export default function OnboardingPage() {
     })
   }
 
-  const canNextProfile =
-    profile.name.trim() && profile.college.trim() && profile.branch.trim() && profile.gradYear
+  const canNextProfile = profile.name.trim() && profile.gradYear
   const canNextCompanies = interested.length > 0
 
   function finish() {
@@ -90,12 +89,15 @@ export default function OnboardingPage() {
         {step === 0 ? <PlacementOutcomePanel /> : null}
 
         {step === 0 && (
-          <Card className="mt-5">
+          <Card className="mt-5 overflow-hidden rounded-2xl border-border/80 shadow-[0_22px_55px_-38px_oklch(0.25_0.08_260_/_35%)]">
             <CardContent className="space-y-4 pt-6">
               <div>
-                <h1 className="font-heading text-2xl font-bold">Tell us about you</h1>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+                  Step 1 of 3
+                </p>
+                <h1 className="font-heading text-2xl font-bold">Set up your prep in under a minute</h1>
                 <p className="text-sm text-muted-foreground">
-                  We use this to personalise your prep.
+                  We only need the basics to personalize your route. College and branch can wait.
                 </p>
               </div>
               <Field label="Full name">
@@ -109,7 +111,7 @@ export default function OnboardingPage() {
                 <Input
                   value={profile.college}
                   onChange={(e) => set("college", e.target.value)}
-                  placeholder="e.g. PSG College of Technology"
+                  placeholder="Optional"
                 />
               </Field>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -117,7 +119,7 @@ export default function OnboardingPage() {
                   <Input
                     value={profile.branch}
                     onChange={(e) => set("branch", e.target.value)}
-                    placeholder="e.g. CSE"
+                    placeholder="Optional"
                   />
                 </Field>
                 <Field label="Graduation year">
@@ -143,6 +145,9 @@ export default function OnboardingPage() {
                   inputMode="decimal"
                 />
               </Field>
+              <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
+                You can change these later in Settings. The only required details right now are your name and graduation year.
+              </div>
               <div className="flex justify-end pt-2">
                 <Button disabled={!canNextProfile} onClick={() => setStep(1)}>
                   Continue <Icon name="ChevronRight" className="size-4" />
@@ -153,26 +158,30 @@ export default function OnboardingPage() {
         )}
 
         {step === 1 && (
-          <Card className="mt-5">
+          <Card className="mt-5 overflow-hidden rounded-2xl border-border/80 shadow-[0_22px_55px_-38px_oklch(0.25_0.08_260_/_35%)]">
             <CardContent className="space-y-4 pt-6">
               <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+                  Step 2 of 3
+                </p>
                 <h1 className="font-heading text-2xl font-bold">
                   Which companies are you preparing for?
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  Pick all that apply. Free gives you all of Section 1 in every track. Premium unlocks every section, deep PYQ banks and mock series.
+                  Pick every company you care about. Your first choice becomes your main dashboard focus.
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {SELECTABLE_COMPANIES.map((c) => {
                   const on = interested.includes(c.id)
+                  const primarySelected = primary === c.id
                   return (
                     <button
                       key={c.id}
                       type="button"
                       onClick={() => toggle(c.id)}
                       className={cn(
-                        "flex flex-col items-center gap-2 rounded-lg border p-4 text-center transition-all",
+                        "flex flex-col items-center gap-2 rounded-2xl border p-4 text-center transition-all",
                         on
                           ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                           : "border-border hover:border-primary/40 hover:bg-muted/50",
@@ -183,9 +192,19 @@ export default function OnboardingPage() {
                         {c.id === "general" ? "Core Prep" : c.short}
                       </span>
                       {on ? (
-                        <span className="flex items-center gap-1 text-xs text-primary">
-                          <Icon name="Check" className="size-3" /> Selected
-                        </span>
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="flex items-center gap-1 text-xs text-primary">
+                            <Icon name="Check" className="size-3" /> Selected
+                          </span>
+                          <span className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                            primarySelected
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground",
+                          )}>
+                            {primarySelected ? "Main target" : "Can become main"}
+                          </span>
+                        </div>
                       ) : c.id === "general" ? (
                         <span className="text-xs leading-relaxed text-muted-foreground">
                           Build all core skills before choosing a company path.
@@ -196,6 +215,45 @@ export default function OnboardingPage() {
                     </button>
                   )
                 })}
+              </div>
+              {interested.length > 0 ? (
+                <div className="rounded-xl border border-border bg-muted/35 p-4">
+                  <p className="text-sm font-semibold">Main dashboard target</p>
+                  <div className="mt-3 grid gap-2">
+                    {interested.map((id) => {
+                      const company = SELECTABLE_COMPANIES.find((item) => item.id === id)!
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onClick={() => setPrimary(id)}
+                          className={cn(
+                            "flex items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors",
+                            primary === id
+                              ? "border-primary bg-primary/8"
+                              : "border-border bg-background hover:bg-muted/50",
+                          )}
+                        >
+                          <CompanyAvatar id={id} size={28} />
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium">{company.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              This becomes your first learning route after signup.
+                            </p>
+                          </div>
+                          {primary === id ? (
+                            <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                              Main
+                            </span>
+                          ) : null}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
+              <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
+                Free gives you the full first section in every track. Premium opens all chapters, deep PYQ banks, company mocks and coding depth.
               </div>
               <div className="flex justify-between pt-2">
                 <Button variant="ghost" onClick={() => setStep(0)}>
@@ -210,67 +268,31 @@ export default function OnboardingPage() {
         )}
 
         {step === 2 && (
-          <Card className="mt-5">
-            <CardContent className="space-y-4 pt-6">
-              <div>
-                <h1 className="font-heading text-2xl font-bold">Pick your primary target</h1>
-                <p className="text-sm text-muted-foreground">
-                  Your dashboard focuses on this one. You can switch anytime.
-                </p>
-              </div>
-              <div className="grid gap-2">
-                {interested.map((id) => {
-                  const on = primary === id
-                  const c = SELECTABLE_COMPANIES.find((x) => x.id === id)!
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setPrimary(id)}
-                      className={cn(
-                        "flex w-full min-w-0 items-center gap-3 overflow-hidden rounded-lg border p-3 text-left transition-all",
-                        on
-                          ? "border-primary bg-primary/5 ring-2 ring-primary/20"
-                          : "border-border hover:bg-muted/50",
-                      )}
-                    >
-                      <CompanyAvatar id={id} size={40} className="shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold">{c.name}</p>
-                        <p className="text-xs leading-relaxed text-muted-foreground">{c.blurb}</p>
-                      </div>
-                      <span
-                        className={cn(
-                          "grid size-5 place-items-center rounded-full border",
-                          on ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30",
-                        )}
-                      >
-                        {on ? <Icon name="Check" className="size-3" /> : null}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-              <div className="flex justify-between pt-2">
-                <Button variant="ghost" onClick={() => setStep(1)}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(3)}>
-                  Continue <Icon name="ChevronRight" className="size-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {step === 3 && (
-          <Card className="mt-5 overflow-hidden">
+          <Card className="mt-5 overflow-hidden rounded-2xl border-border/80 shadow-[0_22px_55px_-38px_oklch(0.25_0.08_260_/_35%)]">
             <CardContent className="space-y-5 pt-6">
               <div>
-                <h1 className="font-heading text-2xl font-bold">Here is what to do first</h1>
-                <p className="text-sm text-muted-foreground">
-                  Follow this order after onboarding. It keeps your preparation simple and builds your readiness score step by step.
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
+                  Step 3 of 3
                 </p>
+                <h1 className="font-heading text-2xl font-bold">Here is your fastest route to first value</h1>
+                <p className="text-sm text-muted-foreground">
+                  Start with one chapter, one challenge and one mock. That is enough to make the app useful on day one.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4">
+                <p className="text-sm font-semibold">Your main target</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <CompanyAvatar id={(primary || interested[0] || "general") as CompanyId} size={40} />
+                  <div>
+                    <p className="font-semibold">
+                      {getCompany((primary || interested[0] || "general") as CompanyId).name}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      We will drop you straight into the first chapter after this.
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid gap-3">
@@ -298,7 +320,7 @@ export default function OnboardingPage() {
                 ].map((item, index) => (
                   <div
                     key={item.title}
-                    className="flex gap-3 rounded-xl border border-border bg-muted/35 p-3"
+                    className="flex gap-3 rounded-2xl border border-border bg-muted/35 p-3"
                   >
                     <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                       <Icon name={item.icon} className="size-5" />
@@ -317,12 +339,12 @@ export default function OnboardingPage() {
               <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
                 <p className="font-heading font-semibold">Your dashboard will guide you</p>
                 <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  After this, your dashboard will show three daily tasks so you always know the next action.
+                  After this, your dashboard will keep your next three tasks visible so you always know what to do next.
                 </p>
               </div>
 
               <div className="flex justify-between pt-2">
-                <Button variant="ghost" onClick={() => setStep(2)}>
+                <Button variant="ghost" onClick={() => setStep(1)}>
                   Back
                 </Button>
                 <Button onClick={finish}>
@@ -338,7 +360,7 @@ export default function OnboardingPage() {
 }
 
 function Stepper({ step }: { step: number }) {
-  const labels = ["Profile", "Companies", "Primary", "Next steps"]
+  const labels = ["Basics", "Targets", "Start"]
   return (
     <div className="flex items-center gap-2">
       {labels.map((l, i) => (
@@ -411,4 +433,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 // ArrowRight isn't in the icon registry by default name lookup fallback handles it,
 // but we map it here for crispness.
-

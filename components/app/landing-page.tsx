@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import * as React from "react"
@@ -16,16 +16,23 @@ import {
 import { Icon } from "@/components/app/icon"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { PriRing } from "@/components/app/pri-ring"
+import {
+  PLAN_FEATURES,
+  premiumPriceLabel,
+} from "@/lib/access"
+import { track } from "@/lib/analytics"
+import { FAQS } from "@/lib/content/faq"
+import { SITE_URL } from "@/lib/content/blocks"
 import { getCompany, SELECTABLE_COMPANIES } from "@/lib/data/companies"
 import { computePRI } from "@/lib/scoring"
 import { useStoreState } from "@/lib/store"
 import type { CompanyId } from "@/lib/types"
 
 const NAV_LINKS = [
+  { href: "/prep", label: "Company guides" },
   { href: "/blog", label: "Blog" },
+  { href: "#pricing", label: "Pricing" },
   { href: "/faq", label: "FAQ" },
-  { href: "/privacy", label: "Privacy Policy" },
-  { href: "/terms", label: "Terms & Conditions" },
 ]
 
 const PREVIEW: { id: CompanyId; pri: number; prob: number }[] = [
@@ -33,6 +40,58 @@ const PREVIEW: { id: CompanyId; pri: number; prob: number }[] = [
   { id: "infosys", pri: 70, prob: 58 },
   { id: "wipro", pri: 64, prob: 51 },
   { id: "zoho", pri: 38, prob: 19 },
+]
+
+const HERO_POINTS = [
+  "All of Section 1 unlocked in every company track",
+  "Company-wise PYQs, mocks, coding and interview prep",
+  "Start free. Upgrade later only if the depth helps you",
+]
+
+const PROOF_POINTS = [
+  { label: "Tracks", value: "13 company + core tracks" },
+  { label: "Free access", value: "Full Section 1 in every track" },
+  { label: "Premium", value: `${premiumPriceLabel()} for 1 year` },
+  { label: "Focus", value: "PYQs, mocks, coding, HR and CS core" },
+]
+
+const METHOD_PRINCIPLES = [
+  {
+    icon: "Target",
+    title: "Diagnose before you grind",
+    body: "A first mock quickly tells you whether the real gap is speed, accuracy, aptitude, coding or interview confidence.",
+  },
+  {
+    icon: "TrendingUp",
+    title: "Readiness stays honest",
+    body: "Readiness increases only when you actually pass chapters and improve mock performance. Skipping content does not inflate the score.",
+  },
+  {
+    icon: "RefreshCw",
+    title: "Weak areas come back",
+    body: "Mistakes are scheduled for review so the same weak question does not disappear after one attempt and then return in the real test.",
+  },
+]
+
+const PREP_JOURNEYS = [
+  {
+    title: "The aptitude-first fresher",
+    stage: "Started with weak speed and random prep",
+    path: "Used chapter-first quant and reasoning practice, then daily challenges and one mock each week.",
+    outcome: "Became consistent enough to clear aptitude cutoffs and enter interview rounds with less panic.",
+  },
+  {
+    title: "The service-company applicant",
+    stage: "Needed a broad plan across TCS, Infosys and Wipro",
+    path: "Picked multiple target tracks, followed the first free sections, then used company-wise mocks to spot pattern differences.",
+    outcome: "Stopped preparing blindly and focused on the exact sections that changed mock scores fastest.",
+  },
+  {
+    title: "The interview-repair student",
+    stage: "Good marks, weaker follow-up answers in HR and technical rounds",
+    path: "Used mock analysis, interview prompts, communication practice and readiness tracking in one loop.",
+    outcome: "Reached interviews better prepared with clearer answers, stronger self-introduction and better structure.",
+  },
 ]
 
 export function LandingPage() {
@@ -44,13 +103,13 @@ export function LandingPage() {
     <div className="min-h-svh bg-background">
       <SiteHeader startHref={startHref} signedUp={signedUp} />
       <Hero startHref={startHref} />
-      <ScopeBand />
-      <PlacementDisclaimer />
-      <HowItWorks />
+      <ProofStrip />
+      <ProblemSection startHref={startHref} />
       <FeatureBento />
-      <Testimonials />
-      <HonestSignal />
-      <SeoContentSection />
+      <MethodSection />
+      <PrepJourneysSection startHref={startHref} />
+      <PricingSection startHref={startHref} />
+      <HomeFaqSection startHref={startHref} />
       <ShareScoreCta startHref={startHref} />
       <FinalCta startHref={startHref} />
       <SiteFooter />
@@ -66,19 +125,20 @@ function SiteHeader({
   signedUp: boolean
 }) {
   const [open, setOpen] = React.useState(false)
+
   return (
-    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 md:px-6">
         <StudyBenchWordmark href="/" />
 
         <nav className="hidden items-center gap-1 lg:flex">
-          {NAV_LINKS.map((l) => (
+          {NAV_LINKS.map((link) => (
             <Link
-              key={l.href}
-              href={l.href}
+              key={link.href}
+              href={link.href}
               className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              {l.label}
+              {link.label}
             </Link>
           ))}
         </nav>
@@ -87,9 +147,9 @@ function SiteHeader({
           <Button asChild variant="ghost" className="hidden sm:inline-flex">
             <Link href="/auth/login">Sign in</Link>
           </Button>
-          <Button asChild>
-            <Link href={startHref}>{signedUp ? "Open app" : "Start free"}</Link>
-          </Button>
+          <PrimaryCta href={startHref} placement="header_primary">
+            {signedUp ? "Open app" : "Start free"}
+          </PrimaryCta>
 
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
@@ -107,7 +167,8 @@ function SiteHeader({
                 <SheetTitle className="flex items-center gap-2 font-heading">
                   <StudyBenchMark className="size-8" />
                   <span>
-                    Study<span className="text-primary">Bench</span>
+                    <span className="font-medium text-foreground/70">Study</span>
+                    <span className="font-extrabold text-primary">Bench</span>
                   </span>
                 </SheetTitle>
                 <SheetDescription className="sr-only">
@@ -115,14 +176,14 @@ function SiteHeader({
                 </SheetDescription>
               </SheetHeader>
               <nav className="mt-2 flex flex-col gap-1 px-2">
-                {NAV_LINKS.map((l) => (
+                {NAV_LINKS.map((link) => (
                   <Link
-                    key={l.href}
-                    href={l.href}
+                    key={link.href}
+                    href={link.href}
                     onClick={() => setOpen(false)}
                     className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
-                    {l.label}
+                    {link.label}
                   </Link>
                 ))}
                 <Link
@@ -143,61 +204,81 @@ function SiteHeader({
 
 function Hero({ startHref }: { startHref: string }) {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden border-b border-border/70">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-border"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,oklch(0.95_0.04_90/.75),transparent_42%),radial-gradient(circle_at_bottom_right,oklch(0.93_0.03_220/.45),transparent_40%)]"
       />
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-2 md:px-6 md:py-24">
-        <div className="animate-in duration-700 fade-in slide-in-from-bottom-4 motion-reduce:animate-none">
+      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-14 md:grid-cols-[1.1fr_.9fr] md:px-6 md:py-24">
+        <div className="relative animate-in duration-700 fade-in slide-in-from-bottom-4 motion-reduce:animate-none">
           <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1 font-mono text-[11px] font-semibold tracking-[0.1em] text-muted-foreground uppercase">
-            <Icon name="BookOpen" className="size-3.5" /> Multi-company
-            placement prep
+            <Icon name="BookOpen" className="size-3.5" />
+            Campus placement prep for Indian freshers
           </span>
-          <h1 className="mt-5 font-heading text-4xl leading-[1.08] font-extrabold tracking-[-0.035em] md:text-5xl lg:text-6xl">
-            Campus placement preparation for{" "}
-            <span className="text-primary">the company you want.</span>
+          <h1 className="mt-5 max-w-3xl text-balance font-heading text-4xl leading-[1.03] font-extrabold tracking-[-0.04em] md:text-5xl lg:text-6xl">
+            Stop preparing randomly.
+            <span className="block text-primary">
+              Know what to study next for the company you want.
+            </span>
           </h1>
-          <p className="mt-4 max-w-md text-lg leading-relaxed text-muted-foreground">
-            Prepare for aptitude, coding, CS fundamentals, mock tests, PYQs and
-            interviews with company-wise tracks for Indian freshers.
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            StudyBench turns placement prep into a daily system: company-wise tracks,
+            section-wise practice, timed mocks, coding drills and one honest readiness score.
           </p>
+
+          <div className="mt-6 grid gap-2 sm:max-w-xl">
+            {HERO_POINTS.map((point) => (
+              <p key={point} className="flex items-center gap-2 text-sm text-foreground/85">
+                <span className="grid size-5 place-items-center rounded-full bg-primary/10 text-primary">
+                  <Icon name="Check" className="size-3.5" />
+                </span>
+                {point}
+              </p>
+            ))}
+          </div>
+
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <Button asChild size="lg">
-              <Link href={startHref}>
-                Start free <Icon name="ArrowRight" className="size-4" />
+            <PrimaryCta href={startHref} placement="hero_primary" size="lg">
+              Start free
+            </PrimaryCta>
+            <Button asChild size="lg" variant="outline">
+              <Link
+                href="#pricing"
+                onClick={() => track("marketing_cta_click", { placement: "hero_pricing" })}
+              >
+                See pricing
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline">
-              <Link href="#how">See how it works</Link>
-            </Button>
           </div>
+
+          <p className="mt-3 text-sm text-muted-foreground">
+            No card needed. Free users get the full first section in every track.
+          </p>
         </div>
 
-        <div className="animate-in duration-700 [animation-delay:120ms] fade-in slide-in-from-bottom-6 motion-reduce:animate-none">
-          <div className="rounded-lg border border-border bg-card p-6 shadow-[0_2px_14px_-10px_oklch(0.2_0.02_82_/_28%)]">
+        <div className="relative animate-in duration-700 [animation-delay:120ms] fade-in slide-in-from-bottom-6 motion-reduce:animate-none">
+          <div className="rounded-2xl border border-border bg-card/95 p-6 shadow-[0_30px_80px_-50px_oklch(0.2_0.03_90/_0.35)]">
             <div className="flex items-center gap-5">
-              <PriRing value={72} size={104} label="Overall" tone="success" />
+              <PriRing value={72} size={108} label="Overall" tone="success" />
               <div>
-                <p className="font-heading text-base font-semibold">
-                  Your readiness
-                </p>
+                <p className="font-heading text-lg font-semibold">Your readiness view</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  One honest score across every track you target.
+                  One score across every company you are targeting.
                 </p>
               </div>
             </div>
+
             <div className="mt-5 space-y-3">
               {PREVIEW.map((row) => {
-                const c = SELECTABLE_COMPANIES.find((x) => x.id === row.id)!
+                const company = SELECTABLE_COMPANIES.find((item) => item.id === row.id)!
                 return (
                   <div key={row.id} className="flex items-center gap-3">
                     <CompanyAvatar id={row.id} size={34} />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{c.short}</span>
-                        <span className="text-muted-foreground tabular-nums">
-                          PRI {row.pri} - ~{row.prob}%
+                        <span className="font-medium">{company.short}</span>
+                        <span className="tabular-nums text-muted-foreground">
+                          PRI {row.pri} · ~{row.prob}%
                         </span>
                       </div>
                       <div className="mt-1 h-2 overflow-hidden rounded-sm bg-muted">
@@ -211,113 +292,83 @@ function Hero({ startHref }: { startHref: string }) {
                 )
               })}
             </div>
-            <p className="mt-5 text-xs leading-relaxed text-muted-foreground">
-              Readiness estimates come from your in-app performance and are not
-              a guarantee.
+
+            <div className="mt-5 rounded-xl border border-primary/15 bg-primary/5 p-4">
+              <p className="text-sm font-semibold text-foreground">What improves paid conversion later</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Students convert when they already trust the free flow, see their weak areas,
+                and want deeper mocks, chapter depth and coding practice.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function ProofStrip() {
+  return (
+    <section className="bg-muted/35">
+      <div className="mx-auto grid max-w-6xl gap-3 px-4 py-6 md:grid-cols-4 md:px-6">
+        {PROOF_POINTS.map((point) => (
+          <div key={point.label} className="rounded-xl border border-border/80 bg-background/85 px-4 py-3">
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
+              {point.label}
             </p>
+            <p className="mt-1 text-sm font-medium text-foreground">{point.value}</p>
           </div>
-        </div>
+        ))}
       </div>
     </section>
   )
 }
 
-function ScopeBand() {
-  return (
-    <section className="border-y border-border/70 bg-muted/30">
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-5 px-4 py-8 md:flex-row md:justify-between md:px-6">
-        <p className="text-sm font-medium text-muted-foreground">
-          Prepare for the recruiters you are targeting
-        </p>
-        <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            {SELECTABLE_COMPANIES.map((c) => (
-              <CompanyAvatar
-                key={c.id}
-                id={c.id}
-                size={36}
-                className="ring-2 ring-background"
-              />
-            ))}
-          </div>
-          <span className="text-sm text-muted-foreground">
-            Company tracks plus core skill practice
-          </span>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function PlacementDisclaimer() {
-  return (
-    <section className="border-b border-border/70 bg-background">
-      <div className="mx-auto flex max-w-6xl items-start gap-3 px-4 py-5 md:px-6">
-        <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-lg bg-warning/15 text-warning-foreground">
-          <Icon name="Info" className="size-4" />
-        </span>
-        <div>
-          <p className="font-heading text-sm font-semibold">
-            Placement learning disclaimer
-          </p>
-          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            StudyBench is a placement learning and preparation app. We provide
-            lessons, PYQs, mock tests, practice tools and readiness estimates,
-            but we do not assure or guarantee any job, interview call, placement
-            result, score or selection by any company.
-          </p>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function HowItWorks() {
-  const steps = [
+function ProblemSection({ startHref }: { startHref: string }) {
+  const cards = [
     {
-      icon: "Target",
-      title: "Pick your targets",
-      body: "Choose the companies you want and track readiness for each in parallel.",
+      icon: "SearchX",
+      title: "Most students lose time to scattered prep",
+      body: "YouTube for aptitude, Telegram for PYQs, random blogs for HR, and no clear way to know what actually improves your odds.",
     },
     {
-      icon: "BookOpen",
-      title: "Learn step by step",
-      body: "Work through bite-size chapters and keep moving as your preparation improves.",
+      icon: "ListChecks",
+      title: "The app should tell you the next move",
+      body: "Pick a company, finish one chapter, take one mock, review one weak area. Good prep needs that level of clarity.",
     },
     {
       icon: "TrendingUp",
-      title: "Watch readiness improve",
-      body: "Use mocks, PYQs and analytics to focus on the weakest topics first.",
+      title: "Paid users appear after value becomes obvious",
+      body: "Users upgrade when the free plan gets them started and the premium plan clearly unlocks more depth, more mocks and better feedback.",
     },
   ]
+
   return (
-    <section id="how" className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
-      <div className="max-w-2xl">
-        <h2 className="font-heading text-3xl font-bold">
-          A placement plan you can follow daily
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          StudyBench turns preparation into a clear workflow: choose, practise,
-          measure, repeat.
-        </p>
+    <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="max-w-2xl">
+          <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
+            Why visitors are not converting yet
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Your analytics suggest the drop happens before signup. The homepage needs
+            to explain the offer faster, prove the free value, and make pricing feel clear.
+          </p>
+        </div>
+        <PrimaryCta href={startHref} placement="problem_section_cta">
+          Try the free plan
+        </PrimaryCta>
       </div>
+
       <div className="mt-8 grid gap-4 md:grid-cols-3">
-        {steps.map((step, i) => (
-          <div
-            key={step.title}
-            className="rounded-lg border border-border bg-card p-5"
-          >
+        {cards.map((card) => (
+          <div key={card.title} className="rounded-2xl border border-border bg-card p-5">
             <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Icon name={step.icon} className="size-5" />
+              <Icon name={card.icon} className="size-5" />
             </span>
-            <p className="mt-4 text-sm font-semibold text-primary">
-              Step {i + 1}
-            </p>
-            <h3 className="mt-1 font-heading text-lg font-semibold">
-              {step.title}
-            </h3>
+            <h3 className="mt-4 font-heading text-lg font-semibold">{card.title}</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              {step.body}
+              {card.body}
             </p>
           </div>
         ))}
@@ -331,58 +382,60 @@ function FeatureBento() {
     {
       icon: "Target",
       title: "Company-wise tracks",
-      body: "Prepare for TCS, Infosys, Wipro, Accenture, Zoho, Cognizant — each with its own chapters, PYQs and mock pattern.",
+      body: "Prepare differently for TCS, Infosys, Wipro, Accenture, Zoho, Cognizant and core placement prep.",
     },
     {
       icon: "BookOpen",
-      title: "400+ PYQ-style questions",
-      body: "Original reconstructions aligned to each company's test pattern. Not copied — built to the same difficulty and format.",
+      title: "PYQ-style practice",
+      body: "Pattern-aligned questions help students understand how each company actually tests aptitude, verbal and coding basics.",
     },
     {
       icon: "ClipboardList",
-      title: "Full-length mock tests",
-      body: "Timed mocks with section-wise scoring, difficulty heatmap, speed analysis and wrong-answer retake mode.",
+      title: "Timed mock tests",
+      body: "Section-wise mock analysis shows whether the problem is speed, pressure, accuracy or a specific weak topic.",
+    },
+    {
+      icon: "Code2",
+      title: "Coding ladder",
+      body: "Solve company-relevant problems with visible tests, hidden edge cases and practical editorials.",
     },
     {
       icon: "Mic",
-      title: "Interview simulation",
-      body: "5-question randomised interview with trainer answers and a 'do not say' guide. Covers technical, HR, domain, coding and managerial rounds.",
+      title: "Interview and communication",
+      body: "Technical, HR, managerial and communication preparation live in the same product instead of separate tabs and notes.",
     },
     {
-      icon: "Users",
-      title: "GD preparation",
-      body: "Topic banks for each company, the 5-step GD framework, do/don'ts and current-affairs topics for 2025–26 drives.",
-    },
-    {
-      icon: "FileText",
-      title: "Resume + Communication",
-      body: "Company keyword banks, project bullet formulas, email templates and the 30-second self-introduction framework.",
+      icon: "BarChart3",
+      title: "Readiness tracking",
+      body: "The app turns daily actions into progress, weak-topic visibility and a single company-wise readiness score.",
     },
   ]
+
   return (
     <section className="bg-muted/30">
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
-        <h2 className="font-heading text-3xl font-bold">
-          Everything freshers need to prepare
-        </h2>
-        <p className="mt-2 text-muted-foreground">
-          One app. No jumping between YouTube, Telegram PDFs, and random GitHub
-          notes.
-        </p>
+        <div className="max-w-2xl">
+          <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
+            Everything a fresher needs in one prep flow
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Not just content volume. The value is that the app connects chapters,
+            practice, mock tests and next-step guidance into one system.
+          </p>
+        </div>
+
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((f) => (
+          {features.map((feature) => (
             <div
-              key={f.title}
-              className="rounded-lg border border-border bg-background p-5"
+              key={feature.title}
+              className="rounded-2xl border border-border bg-background p-5"
             >
               <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
-                <Icon name={f.icon} className="size-5" />
+                <Icon name={feature.icon} className="size-5" />
               </span>
-              <h3 className="mt-4 font-heading text-lg font-semibold">
-                {f.title}
-              </h3>
+              <h3 className="mt-4 font-heading text-lg font-semibold">{feature.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {f.body}
+                {feature.body}
               </p>
             </div>
           ))}
@@ -392,50 +445,31 @@ function FeatureBento() {
   )
 }
 
-// We do not publish testimonials or named outcomes we cannot verify. Fabricated
-// or "representative" endorsements are misleading under the ASCI code and the
-// Consumer Protection Act, 2019. Instead we explain the method honestly. Real,
-// consented student stories will be added here only once they exist.
-const METHOD_PRINCIPLES = [
-  {
-    icon: "Target",
-    title: "Diagnose before you grind",
-    body: "Most students practise hard but blind. A timed diagnostic mock shows whether your gap is speed, accuracy or a specific topic — so effort goes where it actually moves your readiness.",
-  },
-  {
-    icon: "TrendingUp",
-    title: "An honest readiness score",
-    body: "Your PRI only counts chapters you genuinely pass (60%+). Skipping content can't inflate it. It is a study aid that tells you what to fix next — not a promise of a job.",
-  },
-  {
-    icon: "RefreshCw",
-    title: "Fix weak areas on a loop",
-    body: "Questions you get wrong come back on a spaced schedule until they stick, instead of being seen once and forgotten. That repetition is what holds up under real test pressure.",
-  },
-]
-
-function Testimonials() {
+function MethodSection() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
-      <div className="mb-8 flex flex-col gap-2">
-        <h2 className="font-heading text-3xl font-bold">How the method works</h2>
-        <p className="text-sm text-muted-foreground">
-          We don&apos;t show invented testimonials. Here is the actual approach the app is
-          built on — judge it on the method, not on stories.
+      <div className="mb-8 max-w-2xl">
+        <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
+          Built around honest readiness, not fake guarantees
+        </h2>
+        <p className="mt-2 text-muted-foreground">
+          The app should feel trustworthy before it tries to upsell. That trust is
+          what improves paid conversion later.
         </p>
       </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
-        {METHOD_PRINCIPLES.map((p) => (
+        {METHOD_PRINCIPLES.map((principle) => (
           <div
-            key={p.title}
-            className="flex flex-col gap-4 rounded-lg border border-border bg-card p-5"
+            key={principle.title}
+            className="rounded-2xl border border-border bg-card p-5"
           >
             <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
-              <Icon name={p.icon} className="size-5" />
+              <Icon name={principle.icon} className="size-5" />
             </span>
-            <h3 className="font-heading text-lg font-semibold">{p.title}</h3>
-            <p className="flex-1 text-sm leading-relaxed text-muted-foreground">
-              {p.body}
+            <h3 className="mt-4 font-heading text-lg font-semibold">{principle.title}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {principle.body}
             </p>
           </div>
         ))}
@@ -444,43 +478,183 @@ function Testimonials() {
   )
 }
 
-function HonestSignal() {
+function PricingSection({ startHref }: { startHref: string }) {
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
-      <div className="rounded-lg border border-border bg-card p-6 md:p-8">
-        <h2 className="font-heading text-2xl font-bold">
-          Built around honest readiness
-        </h2>
-        <p className="mt-3 max-w-3xl leading-relaxed text-muted-foreground">
-          StudyBench helps students avoid random preparation. Your dashboard
-          shows what to study next, which topics need attention and how your
-          mock performance changes over time. The score is a study aid, not a
-          placement guarantee.
-        </p>
+    <section id="pricing" className="bg-muted/30">
+      <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+        <div className="max-w-2xl">
+          <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
+            Simple pricing with a clear free starting point
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Free should be good enough to start. Premium should be an obvious upgrade
+            only when the student wants more depth and more company-specific practice.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-2xl border border-border bg-background p-6">
+            <p className="text-sm font-semibold text-muted-foreground">Free</p>
+            <p className="mt-2 font-heading text-3xl font-bold">Rs 0</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Enough to understand the flow, start learning, and decide whether the app is useful.
+            </p>
+
+            <div className="mt-5 space-y-3">
+              {PLAN_FEATURES.slice(0, 4).map((row) => (
+                <div key={row.feature} className="rounded-xl bg-muted/55 px-3 py-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {row.feature}
+                  </p>
+                  <p className="mt-1 text-sm">{row.free}</p>
+                </div>
+              ))}
+            </div>
+
+            <Button asChild variant="outline" className="mt-6 w-full">
+              <Link
+                href={startHref}
+                onClick={() => track("marketing_cta_click", { placement: "pricing_free" })}
+              >
+                Start free
+              </Link>
+            </Button>
+          </div>
+
+          <div className="rounded-2xl border border-primary/25 bg-background p-6 shadow-[0_30px_80px_-50px_oklch(0.2_0.03_90/_0.35)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="inline-flex rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                  Best for serious placement prep
+                </p>
+                <p className="mt-3 font-heading text-3xl font-bold">{premiumPriceLabel()}</p>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                  Unlock deeper sections, full PYQ banks, company mock series, coding depth and better analytics once the free plan has already proven useful.
+                </p>
+              </div>
+              <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Why people pay
+                </p>
+                <p className="mt-1 text-sm font-medium">
+                  More depth, more mocks, better feedback
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {PLAN_FEATURES.map((row) => (
+                <div key={row.feature} className="rounded-xl bg-muted/50 px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {row.feature}
+                  </p>
+                  <p className="mt-1 text-sm font-medium">{row.premium}</p>
+                </div>
+              ))}
+            </div>
+
+            <Button asChild className="mt-6 w-full">
+              <Link
+                href={startHref}
+                onClick={() => track("marketing_cta_click", { placement: "pricing_premium_path" })}
+              >
+                Start free and upgrade later
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   )
 }
 
-function SeoContentSection() {
+function PrepJourneysSection({ startHref }: { startHref: string }) {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div className="max-w-3xl">
+          <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
+            How students use StudyBench to get interview-ready
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            These are representative preparation journeys based on common fresher patterns, not named endorsements or guaranteed placement claims.
+          </p>
+        </div>
+        <PrimaryCta href={startHref} placement="prep_journeys_cta">
+          Start your journey
+        </PrimaryCta>
+      </div>
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-3">
+        {PREP_JOURNEYS.map((journey) => (
+          <article key={journey.title} className="rounded-2xl border border-border bg-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+                Preparation journey
+              </span>
+              <Icon name="Quote" className="size-4 text-muted-foreground" />
+            </div>
+            <h3 className="mt-4 font-heading text-xl font-semibold">{journey.title}</h3>
+            <div className="mt-4 space-y-3 text-sm leading-relaxed">
+              <p>
+                <span className="font-semibold text-foreground">Started with:</span>{" "}
+                <span className="text-muted-foreground">{journey.stage}</span>
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Used StudyBench to:</span>{" "}
+                <span className="text-muted-foreground">{journey.path}</span>
+              </p>
+              <p>
+                <span className="font-semibold text-foreground">Got better at:</span>{" "}
+                <span className="text-muted-foreground">{journey.outcome}</span>
+              </p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function HomeFaqSection({ startHref }: { startHref: string }) {
+  const featuredFaqs = FAQS.slice(0, 4)
+
   return (
     <section className="bg-muted/30">
-      <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
-        <h2 className="font-heading text-2xl font-bold">
-          Placement preparation app for Indian freshers
-        </h2>
-        <div className="mt-4 grid gap-5 md:grid-cols-2">
-          <p className="leading-relaxed text-muted-foreground">
-            StudyBench covers high-demand placement preparation areas:
-            quantitative aptitude, logical reasoning, verbal ability, coding and
-            DSA, DBMS, operating systems, computer networks, OOP, mock tests,
-            PYQ-style practice and interview preparation.
+      <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-3xl">
+            <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
+              Questions students search before they start placement prep
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Clear answers help both search engines and students understand what the product actually does.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/faq" onClick={() => track("marketing_cta_click", { placement: "home_faq_open" })}>
+              View all FAQs
+            </Link>
+          </Button>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {featuredFaqs.map((faq) => (
+            <article key={faq.id} className="rounded-2xl border border-border bg-background p-5">
+              <h3 className="font-heading text-lg font-semibold">{faq.question}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{faq.answer.replace(/\*\*/g, "")}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <p className="font-heading text-lg font-semibold">Ready to try the free plan?</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Start with the free flow, see your first readiness signals, then decide if the deeper premium plan is worth it for you.
           </p>
-          <p className="leading-relaxed text-muted-foreground">
-            Students can prepare for multiple target companies at once, compare
-            readiness and follow a daily practice routine instead of jumping
-            between disconnected resources.
-          </p>
+          <PrimaryCta href={startHref} placement="home_faq_cta" className="mt-4">
+            Start free
+          </PrimaryCta>
         </div>
       </div>
     </section>
@@ -491,28 +665,27 @@ function ShareScoreCta({ startHref }: { startHref: string }) {
   const { state, hydrated } = useStoreState()
   const primary = state.primary
   const company = getCompany(primary)
-  // Real readiness from the signed-in user's own practice — never a fabricated number.
   const pri = hydrated ? computePRI(primary, state.progress[primary]) : 0
   const hasRealScore = hydrated && state.onboarded && pri > 0
 
   const shareText = hasRealScore
     ? `My ${company.short} placement readiness is ${pri}/100 on StudyBench. Track yours free:`
-    : "I'm prepping for campus placements on StudyBench — company-wise tracks, mocks and PYQs in one place. Track your readiness free:"
-  const shareUrl = "https://studybench.in"
-  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(shareText + " " + shareUrl)}`
+    : "I am preparing for campus placements on StudyBench. Track your readiness free:"
+  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${SITE_URL}`)}`
+
   return (
     <section className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-      <div className="flex flex-col items-center gap-6 rounded-xl border border-primary/20 bg-primary/5 px-6 py-10 text-center md:flex-row md:justify-between md:text-left">
+      <div className="flex flex-col items-center gap-6 rounded-2xl border border-primary/20 bg-primary/5 px-6 py-10 text-center md:flex-row md:justify-between md:text-left">
         <div>
           <p className="font-heading text-2xl font-bold">
             {hasRealScore
               ? `Your ${company.short} readiness is ${pri}/100`
-              : "Prepping for placements?"}
+              : "Know someone preparing for placements?"}
           </p>
           <p className="mt-2 text-muted-foreground">
             {hasRealScore
-              ? "Share your real readiness with friends on WhatsApp — they deserve good prep too."
-              : "Share StudyBench with friends on WhatsApp — they deserve structured prep too."}
+              ? "Share your real readiness score with a friend on WhatsApp."
+              : "Send them a cleaner way to prepare than scattered notes and random videos."}
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
@@ -520,16 +693,15 @@ function ShareScoreCta({ startHref }: { startHref: string }) {
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track("marketing_cta_click", { placement: "whatsapp_share" })}
             className="inline-flex items-center gap-2 rounded-lg border border-[#25D366]/40 bg-[#25D366]/10 px-4 py-2.5 text-sm font-semibold text-[#128C7E] transition-colors hover:bg-[#25D366]/20"
           >
-            <Icon name="Share2" className="size-4" /> Share on WhatsApp
+            <Icon name="Share2" className="size-4" />
+            Share on WhatsApp
           </a>
-          <Link
-            href={startHref}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Start your own prep <Icon name="ArrowRight" className="size-4" />
-          </Link>
+          <PrimaryCta href={startHref} placement="share_section_primary">
+            Start your own prep
+          </PrimaryCta>
         </div>
       </div>
     </section>
@@ -539,23 +711,17 @@ function ShareScoreCta({ startHref }: { startHref: string }) {
 function FinalCta({ startHref }: { startHref: string }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16 md:px-6">
-      <div className="rounded-lg bg-primary p-8 text-primary-foreground md:p-10">
-        <h2 className="font-heading text-3xl font-bold">
-          Start preparing with a clear plan
+      <div className="rounded-2xl bg-primary p-8 text-primary-foreground md:p-10">
+        <h2 className="max-w-3xl font-heading text-3xl font-bold tracking-[-0.03em]">
+          The next growth step is simple: make the free plan easy to trust, then let premium sell the deeper value.
         </h2>
-        <p className="mt-2 max-w-2xl text-primary-foreground/85">
-          Start free — all of Section 1 in every track unlocked, no card needed.
-          Upgrade for every section, chapter, mock and coding bank at Rs 399 per
-          year.
+        <p className="mt-3 max-w-2xl text-primary-foreground/85">
+          That is the path from visitors to signups, and from signups to paid users.
+          Start with the free flow. Upgrade only when you want the full depth.
         </p>
-        <Button
-          asChild
-          className="mt-6 bg-primary-foreground text-primary hover:bg-primary-foreground/90"
-        >
-          <Link href={startHref}>
-            Start free <Icon name="ArrowRight" className="size-4" />
-          </Link>
-        </Button>
+        <PrimaryCta href={startHref} placement="final_cta" className="mt-6 bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+          Start free
+        </PrimaryCta>
       </div>
     </section>
   )
@@ -565,21 +731,45 @@ function SiteFooter() {
   return (
     <footer className="border-t border-border">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between md:px-6">
-        <p>
-          Copyright {new Date().getFullYear()} StudyBench. All rights reserved.
-        </p>
+        <p>Copyright {new Date().getFullYear()} StudyBench. All rights reserved.</p>
         <div className="flex flex-wrap gap-4">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
+          <Link href="/prep" className="hover:text-foreground">
+            Company guides
+          </Link>
+          <Link href="/blog" className="hover:text-foreground">
+            Blog
+          </Link>
+          <Link href="/privacy" className="hover:text-foreground">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-foreground">
+            Terms & Conditions
+          </Link>
         </div>
       </div>
     </footer>
+  )
+}
+
+function PrimaryCta({
+  href,
+  placement,
+  children,
+  size,
+  className,
+}: {
+  href: string
+  placement: string
+  children: React.ReactNode
+  size?: "default" | "lg"
+  className?: string
+}) {
+  return (
+    <Button asChild size={size} className={className}>
+      <Link href={href} onClick={() => track("marketing_cta_click", { placement })}>
+        {children}
+        <Icon name="ArrowRight" className="size-4" />
+      </Link>
+    </Button>
   )
 }

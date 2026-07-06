@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { PREMIUM_OFFER_DURATION_MS } from "@/lib/access"
-import { useStoreState } from "@/lib/store"
+import { useStoreSelector } from "@/lib/store"
 
 export interface LaunchOfferState {
   /** True once we have a real registration anchor + a client clock. */
@@ -22,14 +22,18 @@ export interface LaunchOfferState {
  * live timer. Signed-out users (no anchor) get `ready: false` → nothing shown.
  */
 export function useLaunchOffer(): LaunchOfferState {
-  const { userCreatedAt } = useStoreState()
+  const userCreatedAt = useStoreSelector((store) => store.userCreatedAt)
   const [now, setNow] = React.useState<number | null>(null)
 
   React.useEffect(() => {
+    if (!userCreatedAt) {
+      setNow(null)
+      return
+    }
     setNow(Date.now())
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [userCreatedAt])
 
   const anchor = userCreatedAt ? Date.parse(userCreatedAt) : NaN
 
