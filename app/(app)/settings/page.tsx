@@ -242,7 +242,7 @@ export default function SettingsPage() {
                   disabled={checkingOut}
                   className="shrink-0"
                 >
-                  {checkingOut ? "Opening checkout..." : "Claim launch offer"}
+                  {checkingOut ? "Opening checkout..." : "Upgrade now"}
                   {!checkingOut ? <Icon name="ArrowRight" className="size-4" /> : null}
                 </Button>
               </div>

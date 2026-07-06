@@ -128,7 +128,7 @@ interface StoreStateValue {
   state: AppState
   hydrated: boolean
   userId: string | null
-  /** Account registration timestamp (ISO) — anchors the first-time launch offer. */
+  /** Account registration timestamp (ISO). */
   userCreatedAt: string | null
 }
 

@@ -27,7 +27,7 @@ export function UpgradeBanner() {
         </div>
       </div>
       <Button asChild className="shrink-0">
-        <Link href="/settings">Claim launch offer</Link>
+        <Link href="/settings">View premium</Link>
       </Button>
     </div>
   )

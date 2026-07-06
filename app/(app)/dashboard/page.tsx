@@ -6,7 +6,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Icon } from "@/components/app/icon"
-import { LaunchOfferBanner } from "@/components/app/launch-offer"
 import { PriRing } from "@/components/app/pri-ring"
 import {
   CompanyAvatar,
@@ -107,9 +106,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* First-time welcome launch offer — auto-hides after the window / for premium */}
-      <LaunchOfferBanner />
-
       {/* Hero — greeting, readiness snapshot and the single highest-impact action */}
       <Card className="animate-in overflow-hidden border-primary/15 shadow-[0_28px_80px_-52px_oklch(0.25_0.12_260_/_55%)] duration-500 fade-in slide-in-from-bottom-2 motion-reduce:animate-none">
         <CardContent className="grid gap-6 p-5 sm:p-6 md:grid-cols-[minmax(0,15rem)_1fr] md:gap-8">
