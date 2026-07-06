@@ -92,18 +92,6 @@ export default function DashboardPage() {
     [others, state.progress]
   )
 
-  // Memoize "All tracks" PRIs — one per track, called every render without this.
-  const trackPRIs = React.useMemo(
-    () =>
-      Object.fromEntries(
-        ALL_TRACK_IDS.map((id) => [
-          id,
-          computePRI(id, state.progress[id] ?? EMPTY_PROGRESS),
-        ])
-      ),
-    [state.progress]
-  )
-
   return (
     <div className="space-y-8">
       {/* Hero — greeting, readiness snapshot and the single highest-impact action */}
@@ -325,7 +313,8 @@ export default function DashboardPage() {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {ALL_TRACK_IDS.map((id, i) => {
-              const cp = trackPRIs[id] ?? 0
+              const isPrimary = id === primary
+              const isTracked = state.interested.includes(id)
               return (
                 <Link
                   key={id}
@@ -335,14 +324,21 @@ export default function DashboardPage() {
                 >
                   <div className="flex items-center justify-between">
                     <CompanyAvatar id={id} size={40} />
-                    {id === primary ? (
+                    {isPrimary ? (
                       <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                         Primary
+                      </span>
+                    ) : isTracked ? (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                        Tracking
                       </span>
                     ) : null}
                   </div>
                   <p className="mt-3 font-semibold">{getCompany(id).short}</p>
-                  <p className="text-xs tabular-nums text-muted-foreground">PRI {cp}/100</p>
+                  <p className="text-xs text-muted-foreground">
+                    Open track
+                    {isTracked ? " and continue your progress" : " to view roadmap and practice"}
+                  </p>
                 </Link>
               )
             })}
