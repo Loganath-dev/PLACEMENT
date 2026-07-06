@@ -145,9 +145,7 @@ export default function OnboardingPage() {
                   inputMode="decimal"
                 />
               </Field>
-              <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
-                You can change these later in Settings. The only required details right now are your name and graduation year.
-              </div>
+              {/* Removed informational note per request */}
               <div className="flex justify-end pt-2">
                 <Button disabled={!canNextProfile} onClick={() => setStep(1)}>
                   Continue <Icon name="ChevronRight" className="size-4" />
