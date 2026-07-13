@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Frequently asked questions. Answers are written "answer-first" and self-
  * contained for AEO (Answer Engine Optimization) - each answer can stand alone
  * as a direct response in a search/AI snippet. No third-party company names are
@@ -46,7 +46,7 @@ export const FAQS: FaqItem[] = [
     category: "Pricing",
     question: "Is StudyBench free? What does Premium include?",
     answer:
-      "StudyBench has a free tier that opens all 13 company tracks with Section 1, Chapter 1 plus sample practice. Premium costs Rs 399 per year and unlocks every section, every chapter, the full previous-year question bank, every mock test, the complete interview question bank with trainer guidance, and detailed analytics.",
+      "StudyBench has a free tier that opens all 13 company tracks with Section 1, Chapter 1 plus sample practice. Premium costs Rs 249 per year and unlocks every section, every chapter, the full previous-year question bank, every mock test, the complete interview question bank with trainer guidance, and detailed analytics.",
   },
   {
     id: "seventy-percent-gate",

@@ -1,3 +1,4 @@
+import { PREMIUM_PRICE_INR } from "@/lib/access"
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/content/blocks"
 
 const KEYWORDS = [
@@ -86,7 +87,7 @@ export function softwareApplicationJsonLd() {
     },
     offers: {
       "@type": "Offer",
-      price: "399",
+      price: String(PREMIUM_PRICE_INR),
       priceCurrency: "INR",
       category: "subscription",
     },

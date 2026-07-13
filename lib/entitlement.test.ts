@@ -67,7 +67,7 @@ const PAYMENT: PaymentInput = {
   paymentId: "pay_123",
   orderId: "order_456",
   userId: "user-a",
-  amount: 39900,
+  amount: 24900,
   currency: "INR",
   source: "verify",
 }
@@ -82,7 +82,7 @@ describe("recordPaymentOnce", () => {
       payment_id: "pay_123",
       order_id: "order_456",
       user_id: "user-a",
-      amount: 39900,
+      amount: 24900,
       currency: "INR",
       source: "verify",
     })

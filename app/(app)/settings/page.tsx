@@ -29,7 +29,12 @@ import { Icon } from "@/components/app/icon"
 import { LaunchOffer } from "@/components/app/launch-offer"
 import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
-import { PLAN_FEATURES } from "@/lib/access"
+import {
+  PLAN_FEATURES,
+  PREMIUM_FOOD_COMPARISON_LABEL,
+  PREMIUM_MONTHLY_EQUIVALENT_INR,
+  premiumPriceLabel,
+} from "@/lib/access"
 import { SELECTABLE_COMPANIES, getCompany } from "@/lib/data/companies"
 import { referralLink } from "@/lib/referral"
 import { useStore } from "@/lib/store"
@@ -232,8 +237,9 @@ export default function SettingsPage() {
                   <p className="font-heading text-lg font-semibold">StudyBench Premium</p>
                   <LaunchOffer />
                   <p className="max-w-2xl text-sm text-muted-foreground">
-                    Upgrade when you want deeper company preparation, more mocks and better feedback for{" "}
-                    {premiumTargetNames.join(", ")}.
+                    Pay {premiumPriceLabel()} through Razorpay to unlock deeper company
+                    preparation, more mocks and better feedback for {premiumTargetNames.join(", ")}.
+                    That is about Rs {PREMIUM_MONTHLY_EQUIVALENT_INR}/month - {PREMIUM_FOOD_COMPARISON_LABEL.toLowerCase()}.
                   </p>
                 </div>
                 <Button
@@ -242,27 +248,24 @@ export default function SettingsPage() {
                   disabled={checkingOut}
                   className="shrink-0"
                 >
-                  {checkingOut ? "Opening checkout..." : "Upgrade now"}
+                  {checkingOut ? "Opening checkout..." : `Pay ${premiumPriceLabel()}`}
                   {!checkingOut ? <Icon name="ArrowRight" className="size-4" /> : null}
                 </Button>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-3">
-                <UpgradeReasonCard
-                  icon="BookOpenCheck"
-                  title="Go past the free section"
-                  body="Free gets you started. Premium unlocks the full chapter depth in every company track you selected."
-                />
-                <UpgradeReasonCard
-                  icon="ClipboardCheck"
-                  title="Practice with real pressure"
-                  body="Unlock the company mock series, not just the starter experience, so you can compare performance across more rounds."
-                />
-                <UpgradeReasonCard
-                  icon="Code2"
-                  title="Use coding and analytics together"
-                  body="Pair coding practice, hidden edge cases, deeper PYQs and detailed analytics in the same prep loop."
-                />
+              <div className="rounded-xl border border-border/80 bg-background/80 p-4">
+                <p className="text-sm font-semibold">Why people upgrade</p>
+                <div className="mt-3 grid gap-3 text-sm text-muted-foreground sm:grid-cols-3">
+                  <p className="rounded-xl bg-muted/45 px-3 py-2">
+                    Go past the starter section and keep moving through the full track.
+                  </p>
+                  <p className="rounded-xl bg-muted/45 px-3 py-2">
+                    Practice with the full mock series instead of a single sample.
+                  </p>
+                  <p className="rounded-xl bg-muted/45 px-3 py-2">
+                    Use coding, PYQs and analytics together instead of in separate places.
+                  </p>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border/80 bg-background/80 p-4">
@@ -789,26 +792,6 @@ function NotificationSettings() {
         </p>
       </CardContent>
     </Card>
-  )
-}
-
-function UpgradeReasonCard({
-  icon,
-  title,
-  body,
-}: {
-  icon: string
-  title: string
-  body: string
-}) {
-  return (
-    <div className="rounded-2xl border border-border/70 bg-background/85 p-4">
-      <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-        <Icon name={icon} className="size-5" />
-      </span>
-      <p className="mt-3 font-heading text-base font-semibold">{title}</p>
-      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{body}</p>
-    </div>
   )
 }
 

@@ -83,25 +83,8 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell title="Create your account" subtitle="Start preparing for your dream company - free.">
+    <AuthShell title="Create your account" subtitle="It takes a minute to set up your prep route.">
       <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <div className="mb-4 rounded-xl border border-primary/15 bg-primary/5 p-3">
-          <p className="text-sm font-semibold text-foreground">What you get immediately</p>
-          <div className="mt-2 grid gap-1.5 text-sm text-muted-foreground">
-            <p className="flex items-center gap-2">
-              <Icon name="Check" className="size-4 text-primary" />
-              All of Section 1 unlocked in every company track
-            </p>
-            <p className="flex items-center gap-2">
-              <Icon name="Check" className="size-4 text-primary" />
-              Daily challenge, PYQs, mocks and readiness tracking
-            </p>
-            <p className="flex items-center gap-2">
-              <Icon name="Check" className="size-4 text-primary" />
-              No card needed to start
-            </p>
-          </div>
-        </div>
         <GoogleButton label="Sign up with Google" source="signup" />
         <div className="my-4">
           <OrDivider />
@@ -154,7 +137,7 @@ export default function SignupPage() {
             <Link href="/privacy" className="text-primary hover:underline">
               Privacy Policy
             </Link>
-            . No card required.
+            .
           </p>
         </form>
         <p className="mt-5 text-center text-sm text-muted-foreground">
@@ -167,4 +150,3 @@ export default function SignupPage() {
     </AuthShell>
   )
 }
-

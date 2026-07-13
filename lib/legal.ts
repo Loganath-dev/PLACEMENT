@@ -434,7 +434,7 @@ export const TERMS: LegalDoc = {
         {
           k: "list",
           items: [
-            "The Platform offers a free tier and an optional paid **Premium** plan (currently priced at **Rs 399 per year**, inclusive of applicable taxes unless stated otherwise).",
+            "The Platform offers a free tier and an optional paid **Premium** plan (currently priced at **Rs 249 per year**, inclusive of applicable taxes unless stated otherwise).",
             "Payments are processed by our third-party gateway (Razorpay). By purchasing, you also agree to the gateway's terms. We do not store your card or UPI credentials.",
             "Prices, features and taxes (including GST) may change prospectively; the price applicable at the time of your purchase governs that purchase.",
             "Unless expressly stated as auto-renewing at checkout, subscriptions do not auto-renew, and you will need to renew manually to continue Premium access.",

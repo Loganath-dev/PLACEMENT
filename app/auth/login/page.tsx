@@ -131,6 +131,12 @@ function LoginForm() {
             Resend confirmation email
           </Button>
         ) : null}
+        {needsConfirm ? (
+          <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+            If the mail takes a minute to arrive, check spam once. Then come back
+            here and sign in without starting over.
+          </p>
+        ) : null}
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? (
             <span className="size-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
@@ -155,7 +161,7 @@ export default function LoginPage() {
   return (
     <AuthShell
       title="Welcome back"
-      subtitle="Sign in to continue your placement prep."
+      subtitle="Pick up where you left off."
     >
       <React.Suspense>
         <LoginForm />

@@ -83,6 +83,21 @@ export default function OnboardingPage() {
     <div className="min-h-svh bg-background">
       <div className="mx-auto flex min-h-svh max-w-xl flex-col justify-center px-4 py-10">
         <StudyBenchWordmark href="/" className="mb-6" />
+        <div className="mb-4 rounded-full bg-muted/60 p-1">
+          <div className="grid grid-cols-3 gap-1">
+            {["Basics", "Targets", "Start"].map((label, index) => (
+              <div
+                key={label}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.12em]",
+                  index <= step ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
 
         <Stepper step={step} />
 
@@ -251,7 +266,8 @@ export default function OnboardingPage() {
                 </div>
               ) : null}
               <div className="rounded-xl border border-primary/15 bg-primary/5 p-3 text-sm text-muted-foreground">
-                Free gives you the full first section in every track. Premium opens all chapters, deep PYQ banks, company mocks and coding depth.
+                Free gives you a starter path in every track. Premium opens the deeper chapters,
+                full PYQ banks, company mocks and coding depth when you are ready.
               </div>
               <div className="flex justify-between pt-2">
                 <Button variant="ghost" onClick={() => setStep(0)}>

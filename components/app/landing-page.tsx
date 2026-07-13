@@ -18,6 +18,8 @@ import { CompanyAvatar } from "@/components/app/ui-bits"
 import { PriRing } from "@/components/app/pri-ring"
 import {
   PLAN_FEATURES,
+  PREMIUM_FOOD_COMPARISON_LABEL,
+  PREMIUM_MONTHLY_EQUIVALENT_INR,
   premiumPriceLabel,
 } from "@/lib/access"
 import { track } from "@/lib/analytics"
@@ -45,12 +47,12 @@ const PREVIEW: { id: CompanyId; pri: number; prob: number }[] = [
 const HERO_POINTS = [
   "All of Section 1 unlocked in every company track",
   "Company-wise PYQs, mocks, coding and interview prep",
-  "Start free. Upgrade later only if the depth helps you",
+  "Start free. Upgrade only if the deeper work earns it",
 ]
 
 const PROOF_POINTS = [
   { label: "Tracks", value: "13 company + core tracks" },
-  { label: "Free access", value: "Full Section 1 in every track" },
+  { label: "Free access", value: "Starter path in every track" },
   { label: "Premium", value: `${premiumPriceLabel()} for 1 year` },
   { label: "Focus", value: "PYQs, mocks, coding, HR and CS core" },
 ]
@@ -103,6 +105,7 @@ export function LandingPage() {
     <div className="min-h-svh bg-background">
       <SiteHeader startHref={startHref} signedUp={signedUp} />
       <Hero startHref={startHref} />
+      <WhyJoinSection startHref={startHref} />
       <ProofStrip />
       <ProblemSection startHref={startHref} />
       <FeatureBento />
@@ -216,13 +219,13 @@ function Hero({ startHref }: { startHref: string }) {
             Campus placement prep for Indian freshers
           </span>
           <h1 className="mt-5 max-w-3xl text-balance font-heading text-4xl leading-[1.03] font-extrabold tracking-[-0.04em] md:text-5xl lg:text-6xl">
-            Stop preparing randomly.
+            Prepare with a little more honesty.
             <span className="block text-primary">
               Know what to study next for the company you want.
             </span>
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            StudyBench turns placement prep into a daily system: company-wise tracks,
+            StudyBench keeps your prep in one place: company-wise tracks,
             section-wise practice, timed mocks, coding drills and one honest readiness score.
           </p>
 
@@ -250,10 +253,6 @@ function Hero({ startHref }: { startHref: string }) {
               </Link>
             </Button>
           </div>
-
-          <p className="mt-3 text-sm text-muted-foreground">
-            No card needed. Free users get the full first section in every track.
-          </p>
         </div>
 
         <div className="relative animate-in duration-700 [animation-delay:120ms] fade-in slide-in-from-bottom-6 motion-reduce:animate-none">
@@ -293,13 +292,106 @@ function Hero({ startHref }: { startHref: string }) {
               })}
             </div>
 
-            <div className="mt-5 rounded-xl border border-primary/15 bg-primary/5 p-4">
-              <p className="text-sm font-semibold text-foreground">What improves paid conversion later</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                Students convert when they already trust the free flow, see their weak areas,
-                and want deeper mocks, chapter depth and coding practice.
-              </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function WhyJoinSection({ startHref }: { startHref: string }) {
+  const reasons = [
+    "Because random preparation feels busy, but it rarely gets you selected.",
+    "Because one honest system beats ten open tabs and three half-finished playlists.",
+    "Because the student who knows exactly what to improve usually wins over the student who only studies longer.",
+  ]
+
+  return (
+    <section className="bg-[linear-gradient(135deg,#0f172a_0%,#14213d_54%,#1d4ed8_100%)] text-white">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-12 md:grid-cols-[1.2fr_.8fr] md:px-6 md:py-14">
+        <div className="space-y-5">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/16 bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.18em] uppercase text-white/82">
+            <span className="size-2 rounded-full bg-emerald-300" />
+            Why join StudyBench
+          </div>
+          <div className="space-y-3">
+            <h2 className="max-w-3xl font-heading text-3xl leading-tight font-bold tracking-[-0.03em] md:text-[2.45rem]">
+              You are not here to look prepared. You are here to get placed.
+            </h2>
+            <p className="max-w-3xl text-sm leading-7 text-white/78 md:text-[15px]">
+              StudyBench is for serious students who are done with scattered prep,
+              recycled advice and fake confidence. It gives you one place to see
+              what is weak, what to study next and how close you really are to a
+              company-level cutoff. Start free. Then go Premium when you want the
+              full depth that actually moves your odds.
+            </p>
+          </div>
+
+          <div className="grid gap-2.5">
+            {reasons.map((reason) => (
+              <div
+                key={reason}
+                className="flex items-start gap-3 rounded-2xl border border-white/12 bg-white/8 px-4 py-3 backdrop-blur-sm"
+              >
+                <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-white text-slate-950">
+                  <Icon name="Check" className="size-3.5" />
+                </span>
+                <p className="text-sm leading-6 text-white/90">{reason}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-3 pt-1">
+            <PrimaryCta
+              href={startHref}
+              placement="why_join_primary"
+              className="bg-white text-slate-950 hover:bg-white/92"
+            >
+              Create your account
+            </PrimaryCta>
+            <Button asChild variant="outline" className="border-white/25 bg-white/8 text-white hover:bg-white/14 hover:text-white">
+              <Link
+                href="#pricing"
+                onClick={() => track("marketing_cta_click", { placement: "why_join_pricing" })}
+              >
+                See Premium
+              </Link>
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex h-full flex-col justify-between gap-4 rounded-[28px] border border-white/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.14),rgba(255,255,255,0.05))] p-5 backdrop-blur-sm">
+          <div>
+            <p className="text-sm font-semibold text-white/82">
+              What strong students pay for
+            </p>
+            <div className="mt-4 space-y-3">
+              <MetricLine label="Next step clarity" value="Daily" />
+              <MetricLine label="Full company depth" value="Unlocked" />
+              <MetricLine label="Mock pressure practice" value="Real" />
+              <MetricLine label="Weak-topic repair" value="Faster" />
             </div>
+          </div>
+
+          <div className="rounded-2xl bg-[#fff7ed] p-4 text-slate-950">
+            <p className="text-xs font-semibold tracking-[0.14em] uppercase text-slate-500">
+              Premium
+            </p>
+            <p className="mt-2 font-heading text-3xl font-bold">
+              {premiumPriceLabel()}
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              ~Rs {PREMIUM_MONTHLY_EQUIVALENT_INR}/month. {PREMIUM_FOOD_COMPARISON_LABEL}.
+            </p>
+            <Button asChild className="mt-4 w-full bg-slate-950 text-white hover:bg-slate-900">
+              <Link
+                href={startHref}
+                onClick={() => track("marketing_cta_click", { placement: "why_join_join_now" })}
+              >
+                Join now
+                <Icon name="ArrowRight" className="size-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </div>
@@ -324,6 +416,17 @@ function ProofStrip() {
   )
 }
 
+function MetricLine({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-black/10 px-3 py-3">
+      <span className="text-sm text-white/72">{label}</span>
+      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-950">
+        {value}
+      </span>
+    </div>
+  )
+}
+
 function ProblemSection({ startHref }: { startHref: string }) {
   const cards = [
     {
@@ -338,8 +441,8 @@ function ProblemSection({ startHref }: { startHref: string }) {
     },
     {
       icon: "TrendingUp",
-      title: "Paid users appear after value becomes obvious",
-      body: "Users upgrade when the free plan gets them started and the premium plan clearly unlocks more depth, more mocks and better feedback.",
+      title: "People upgrade after the free plan proves itself",
+      body: "When the free path is genuinely useful, Premium feels like a sensible next step rather than a pushy one.",
     },
   ]
 
@@ -453,8 +556,8 @@ function MethodSection() {
           Built around honest readiness, not fake guarantees
         </h2>
         <p className="mt-2 text-muted-foreground">
-          The app should feel trustworthy before it tries to upsell. That trust is
-          what improves paid conversion later.
+          The app should feel trustworthy before it tries to ask for money. That trust is
+          what makes the upgrade feel natural later.
         </p>
       </div>
 
@@ -484,11 +587,11 @@ function PricingSection({ startHref }: { startHref: string }) {
       <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
         <div className="max-w-2xl">
           <h2 className="font-heading text-3xl font-bold tracking-[-0.03em]">
-            Simple pricing with a clear free starting point
+            Free is the trial. Premium is the serious placement plan.
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Free should be good enough to start. Premium should be an obvious upgrade
-            only when the student wants more depth and more company-specific practice.
+            Free proves the product. Premium gives the student the depth, repetition
+            and accountability that usually separates interest from actual readiness.
           </p>
         </div>
 
@@ -497,7 +600,7 @@ function PricingSection({ startHref }: { startHref: string }) {
             <p className="text-sm font-semibold text-muted-foreground">Free</p>
             <p className="mt-2 font-heading text-3xl font-bold">Rs 0</p>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Enough to understand the flow, start learning, and decide whether the app is useful.
+              Enough to understand the flow, start learning, and see whether the system fits your pace.
             </p>
 
             <div className="mt-5 space-y-3">
@@ -537,7 +640,7 @@ function PricingSection({ startHref }: { startHref: string }) {
                   Why people pay
                 </p>
                 <p className="mt-1 text-sm font-medium">
-                  More depth, more mocks, better feedback
+                  More depth, more reps, better odds
                 </p>
               </div>
             </div>

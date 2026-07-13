@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin"
+import { PREMIUM_PRICE_INR } from "@/lib/access"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 export const dynamic = "force-dynamic"
@@ -133,7 +134,7 @@ async function getMetrics() {
 
   const conversionRate =
     signupsMonth > 0 ? ((premiumUpgradesMonth / signupsMonth) * 100).toFixed(1) : "0.0"
-  const revenueMonthInr = premiumUpgradesMonth * 399
+  const revenueMonthInr = premiumUpgradesMonth * PREMIUM_PRICE_INR
 
   return {
     signupsToday,

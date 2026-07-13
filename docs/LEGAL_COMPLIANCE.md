@@ -54,7 +54,7 @@ for the signed record.
    Required under IT Rules 2021 r.3(2) and DPDP.
 3. **Seat / jurisdiction city** for arbitration and courts (Terms §20; Privacy §18).
 4. **Working contact mailboxes** — `privacy@`, `support@`, `grievance@studybench.in`.
-5. Confirm the **Premium price (₹399/yr)**, GST treatment, and whether the plan
+5. Confirm the **Premium price (₹249/yr)**, GST treatment, and whether the plan
    **auto-renews** (Terms §7 currently states *non-auto-renew unless stated at checkout*).
 
 ## 4. Recommended operational steps (not yet implemented in-app)

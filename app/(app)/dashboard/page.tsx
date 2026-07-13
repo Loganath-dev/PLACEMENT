@@ -16,6 +16,11 @@ import {
 } from "@/components/app/ui-bits"
 import { SharePriCard } from "@/components/app/share-pri-card"
 import { UpgradeBanner } from "@/components/app/upgrade-prompt"
+import {
+  PREMIUM_FOOD_COMPARISON_LABEL,
+  PREMIUM_MONTHLY_EQUIVALENT_INR,
+  premiumPriceLabel,
+} from "@/lib/access"
 import { getCompany, SELECTABLE_COMPANIES } from "@/lib/data/companies"
 import { getSections } from "@/lib/data/content"
 import {
@@ -120,7 +125,7 @@ export default function DashboardPage() {
                   {greeting()}, {state.profile.name?.split(" ")[0] || "there"}
                 </p>
                 <h1 className="mt-0.5 font-heading text-2xl font-bold tracking-tight md:text-[1.75rem]">
-                  Your plan for today
+                  Today&apos;s next move
                 </h1>
               </div>
               <Button asChild variant="outline" size="sm" className="shrink-0">
@@ -148,7 +153,7 @@ export default function DashboardPage() {
                         <Icon name="Clock" className="size-3.5" /> ~
                         {Math.max(5, nextMinutes)} min
                       </span>
-                      {nextGain > 0 ? (
+                    {nextGain > 0 ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 font-medium text-[color:var(--success)]">
                           <Icon name="TrendingUp" className="size-3.5" /> +
                           {nextGain} PRI when you pass
@@ -164,6 +169,10 @@ export default function DashboardPage() {
                         ({weakest.accuracy}%)
                       </p>
                     ) : null}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      One good session here moves the score more than another hour of
+                      unfocused scrolling.
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -209,7 +218,12 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {!state.premium && <UpgradeBanner />}
+      {!state.premium && (
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_.8fr]">
+          <UpgradeBanner />
+          <PaymentValueCard />
+        </div>
+      )}
 
       {/* Zone 2 — Keep momentum: daily reps, other targets, the drive path */}
       <section className="space-y-4">
@@ -409,6 +423,36 @@ function DailyCard() {
             </Link>
           )
         })}
+      </CardContent>
+    </Card>
+  )
+}
+
+function PaymentValueCard() {
+  return (
+    <Card className="border-primary/20 bg-[linear-gradient(145deg,var(--primary),oklch(0.48_0.14_250))] text-primary-foreground shadow-[0_24px_70px_-48px_oklch(0.25_0.12_260_/_60%)]">
+      <CardContent className="flex h-full flex-col justify-between gap-4 p-5">
+        <div>
+          <p className="flex items-center gap-2 text-sm font-semibold text-primary-foreground/85">
+            <Icon name="CreditCard" className="size-4" /> Premium value
+          </p>
+          <div className="mt-3 flex items-end gap-2">
+            <p className="font-heading text-3xl font-bold">{premiumPriceLabel()}</p>
+            <p className="pb-1 text-sm text-primary-foreground/75">
+              ~Rs {PREMIUM_MONTHLY_EQUIVALENT_INR}/month
+            </p>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-primary-foreground/82">
+            {PREMIUM_FOOD_COMPARISON_LABEL}, but it unlocks the full company prep
+            depth for the entire year.
+          </p>
+        </div>
+        <Button asChild variant="secondary" className="w-full justify-between">
+          <Link href="/settings">
+            Pay and unlock Premium
+            <Icon name="ArrowRight" className="size-4" />
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   )

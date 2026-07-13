@@ -97,6 +97,6 @@ describe("plan access", () => {
   })
 
   it("keeps premium pricing centralized", () => {
-    expect(premiumPriceLabel()).toBe("Rs 399/year")
+    expect(premiumPriceLabel()).toBe("Rs 249/year")
   })
 })

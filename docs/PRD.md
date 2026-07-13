@@ -15,7 +15,7 @@
 | Owner | CEO / Product |
 | Date | 05 June 2026 |
 | Platforms | **Web (Phase 1 — primary)** → Android (Phase 2) → iOS (future) |
-| Pricing | Free tier + Premium ₹399 / year (Razorpay) |
+| Pricing | Free tier + Premium ₹249 / year (Razorpay) |
 | UI direction | **Light & modern** — learning-blue primary on near-white surfaces; emerald = readiness, amber = streak/XP |
 
 ### Revision history
@@ -55,7 +55,7 @@ No competitor presents "how ready am I, and how likely am I, for each of my comp
 
 ### 3.1 Business goals
 1. Acquire and retain students preparing for multiple companies.
-2. Convert free users to ₹399/year Premium.
+2. Convert free users to ₹249/year Premium.
 3. Win on **content quality** and an honest, marketable **PRI + Placement Probability**.
 
 ### 3.2 Non-goals (out of scope for MVP)
@@ -101,7 +101,7 @@ Bulk/institutional licensing · AI features (AI mocks, adaptive learning, AI dou
 14. **Mock tests** (company-pattern) + final interview-round quiz.
 15. **Analytics** page — per-company progress **+ Weakest Topics + Strongest Topics**.
 16. Free vs Premium gating + ads on free tier.
-17. **Razorpay** payment (₹399/year).
+17. **Razorpay** payment (₹249/year).
 18. **Settings** — target companies (primary + interested), account, notifications, subscription.
 
 ---
@@ -239,7 +239,7 @@ XP for actions (§10.2) · Levels from cumulative XP (§10.3) · Daily streak wi
 
 ### 9.16 Free vs Premium and ads
 
-| Capability | Free | Premium (₹399/yr) |
+| Capability | Free | Premium (₹249/yr) |
 |---|---|---|
 | Chapters per section | First chapter only | All chapters, all 7 tracks |
 | Ads | Yes | None |
@@ -254,7 +254,7 @@ XP for actions (§10.2) · Levels from cumulative XP (§10.3) · Daily streak wi
 - **FR-9.16.2** Ads never interrupt an in-progress quiz.
 
 ### 9.17 Payments — Razorpay
-Single plan ₹399/year · Razorpay Checkout (UPI/card/netbanking/wallet) · server-side signature verification + webhooks · immediate entitlement on success · invoice email · status/expiry in Settings · renewal reminders (auto-renew vs manual — O-3) · no card data stored (Razorpay PCI flow).
+Single plan ₹249/year · Razorpay Checkout (UPI/card/netbanking/wallet) · server-side signature verification + webhooks · immediate entitlement on success · invoice email · status/expiry in Settings · renewal reminders (auto-renew vs manual — O-3) · no card data stored (Razorpay PCI flow).
 
 ### 9.18 Settings
 Target Companies (Primary + Interested, "Change Target Company") · add/remove interested companies (progress preserved) · edit profile (CGPA, year, drive date), notifications, subscription, account deletion.
