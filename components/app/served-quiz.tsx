@@ -54,8 +54,6 @@ export function ServedQuiz({ section, company }: { section?: string; company?: s
 
   React.useEffect(() => {
     let cancelled = false
-    setState({ status: "loading" })
-    setPlaying(false)
     const params = new URLSearchParams()
     if (section && section !== "all") params.set("section", section)
     if (company) params.set("company", company)

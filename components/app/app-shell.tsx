@@ -1,10 +1,11 @@
-﻿"use client"
+"use client"
 
 import { useRouter } from "next/navigation"
 import * as React from "react"
 import { AppSidebar, AppTopbar } from "@/components/app/nav"
 import { SyncErrorBanner } from "@/components/app/sync-error-banner"
 import { StudyTimer } from "@/components/app/study-timer"
+import { OnboardingModal } from "@/components/app/onboarding-modal"
 import { useStoreSelector } from "@/lib/store"
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -51,6 +52,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
       <StudyTimer />
+      <OnboardingModal />
     </div>
   )
 }

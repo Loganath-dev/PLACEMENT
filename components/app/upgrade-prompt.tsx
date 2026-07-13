@@ -17,11 +17,10 @@ export function UpgradeBanner() {
         </span>
         <div>
           <div className="flex items-center gap-2">
-            <p className="font-heading text-sm font-semibold">Unlock your full repair plan</p>
+            <p className="font-heading text-sm font-semibold">Continue with the full practice set</p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Turn weak topics into exact chapters, full PYQ sets, complete mocks and
-            detailed company-wise readiness.
+            Get the remaining chapters, practice sets, mocks and company comparison tools.
           </p>
           <LaunchOffer variant="compact" className="mt-1.5" />
         </div>
@@ -54,8 +53,7 @@ export function LockedFeatureCard({
       <p className="mt-3 font-heading text-lg font-semibold">{title}</p>
       <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
       <p className="mx-auto mt-2 max-w-md text-xs text-muted-foreground">
-        Premium is {premiumPriceLabel()} and turns your quiz and mock data into
-        full practice depth across every target company.
+        Full access is {premiumPriceLabel()} and includes the remaining practice for your target companies.
       </p>
       <Button asChild className="mt-4">
         <Link href="/settings">

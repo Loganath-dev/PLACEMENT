@@ -3,11 +3,10 @@ import type { CompanyId } from "@/lib/types"
 export const PREMIUM_PRICE_INR = 249
 export const PREMIUM_DURATION_LABEL = "year"
 export const PREMIUM_MONTHLY_EQUIVALENT_INR = Math.ceil(PREMIUM_PRICE_INR / 12)
-export const PREMIUM_FOOD_COMPARISON_LABEL = "Less than one canteen snack a month"
 export const FREE_PYQ_LIMIT = 15
 export const FREE_INTERVIEW_LIMIT = 12
 // Coding practice is a Premium-only surface: free users see the locked page.
-export const FREE_CODING_PROBLEM_LIMIT = 0
+export const FREE_CODING_PROBLEM_LIMIT = 3
 export const FREE_CHAPTER_PRACTICE_LIMIT = 50
 export const FREE_SECTION_INDEX = 0
 export const FREE_MOCK_LIMIT = 1
@@ -16,18 +15,18 @@ export const FREE_MOCK_COMPANY: CompanyId = "general"
 export const PLAN_FEATURES = [
   {
     feature: "Company tracks",
-    free: "All 13 tracks visible so students can see the full path",
-    premium: "Full depth in all 13 tracks with ongoing practice and progression",
+    free: "Browse all 13 company and core-prep tracks",
+    premium: "Complete every track with all practice sets",
   },
   {
     feature: "Learning chapters",
-    free: "Starter access to Section 1 in every track to prove the flow",
-    premium: "Every section and chapter including advanced placement-level content",
+    free: "The full first section in every track",
+    premium: "Every section and chapter, including advanced topics",
   },
   {
     feature: "PYQ bank",
-    free: `${FREE_PYQ_LIMIT} questions per company for pattern sampling`,
-    premium: "Full company-wise bank with 400+ pattern questions per major track",
+    free: `${FREE_PYQ_LIMIT} questions per company`,
+    premium: "Complete company-wise practice bank",
   },
   {
     feature: "Interview questions",
@@ -47,12 +46,12 @@ export const PLAN_FEATURES = [
   {
     feature: "Mock tests",
     free: `${FREE_MOCK_LIMIT} Core Prep mock with full analysis`,
-    premium: "Complete mock series for all companies with deeper review loops",
+    premium: "Mock series for every company with detailed review",
   },
   {
-    feature: "Analytics and readiness",
-    free: "Basic progress and streak tracking",
-    premium: "Detailed analytics, PRI comparison, weak-topic drill and next steps",
+    feature: "Progress and weak topics",
+    free: "Progress, streaks and a readiness score",
+    premium: "Company comparison and detailed weak-topic review",
   },
 ] as const
 

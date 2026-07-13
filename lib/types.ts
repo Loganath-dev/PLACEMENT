@@ -297,6 +297,7 @@ export interface AppState {
   xp: number
   streak: { count: number; lastActive: string }
   badges: string[]
+  goals: { dailyXp: number; targetXp: number; lastUpdated: string }
   progress: Record<string, CompanyProgress>
   /** Topic accuracy aggregated across all quizzes — powers weak/strong topics. */
   topicStats: Record<string, TopicStat>

@@ -163,8 +163,7 @@ export default async function BlogPostPage({
               Turn this into a real plan
             </p>
             <p className="max-w-md text-sm text-muted-foreground">
-              StudyBench gives you company-pattern tracks, mocks, and an honest readiness score -
-              free to start.
+              StudyBench gives you company-pattern tracks, mocks, and progress tools to guide your next study session.
             </p>
             <Link
               href="/auth/signup"

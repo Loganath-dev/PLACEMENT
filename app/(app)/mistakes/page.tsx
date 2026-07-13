@@ -26,10 +26,8 @@ type Mode = "idle" | "due" | "all"
 export default function MistakesPage() {
   const { state, clearMistake, clearMistakes, reviewMistake } = useStore()
   const [mode, setMode] = React.useState<Mode>("idle")
-  const mistakes = state.mistakes ?? []
-
-  // Recompute "now" once per render so due labels and the queue agree.
-  const now = Date.now()
+  const mistakes = React.useMemo(() => state.mistakes ?? [], [state.mistakes])
+  const [now] = React.useState(() => Date.now())
   const dueCards = React.useMemo(() => dueForReview(mistakes, now), [mistakes, now])
   const mastery = masteryPercent(mistakes)
 

@@ -11,23 +11,23 @@ import { cn } from "@/lib/utils"
 export function Prose({ body }: { body: string }) {
   const blocks = body.split("\n\n")
   return (
-    <div className="space-y-3 text-[15px] leading-relaxed text-foreground/90">
+    <div className="space-y-4 text-base leading-7 text-foreground/90 tracking-[0.01em]">
       {blocks.map((block, i) => {
         const section = proseSection(block)
         if (section) {
           return (
-            <div
+              <div
               key={i}
               className={cn(
-                "rounded-lg border p-3.5",
+                "rounded-xl border p-4 shadow-sm",
                 section.tone === "example" && "border-primary/20 bg-primary/[0.06]",
                 section.tone === "tip" && "border-success/25 bg-success/[0.08]",
                 section.tone === "mistake" && "border-warning/30 bg-warning/[0.12]",
                 section.tone === "practice" && "border-border bg-muted/45",
               )}
             >
-              <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Icon name={section.icon} className="size-3.5" />
+              <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+                <Icon name={section.icon} className="size-4" />
                 {section.label}
               </p>
               <div>{renderInline(section.body)}</div>
@@ -37,7 +37,7 @@ export function Prose({ body }: { body: string }) {
 
         if (isListBlock(block)) {
           return (
-            <div key={i} className="rounded-lg bg-muted/35 p-3.5">
+            <div key={i} className="rounded-xl bg-muted/35 p-4 shadow-sm">
               {renderListBlock(block)}
             </div>
           )
@@ -94,8 +94,8 @@ function renderListBlock(block: string) {
         const unordered = trimmed.match(/^-\s+(.*)$/)
         if (ordered) {
           return (
-            <div key={index} className="flex gap-2">
-              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-background text-[11px] font-semibold text-primary ring-1 ring-border">
+            <div key={index} className="flex gap-3">
+              <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-md bg-background text-xs font-bold text-primary ring-1 ring-border shadow-sm">
                 {ordered[1]}
               </span>
               <span>{renderInline(ordered[2])}</span>
@@ -104,8 +104,8 @@ function renderListBlock(block: string) {
         }
         if (unordered) {
           return (
-            <div key={index} className="flex gap-2">
-              <span className="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+            <div key={index} className="flex gap-3">
+              <span className="mt-2.5 size-1.5 shrink-0 rounded-full bg-primary/70" />
               <span>{renderInline(unordered[1])}</span>
             </div>
           )

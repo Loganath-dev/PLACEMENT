@@ -183,7 +183,7 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         q: "How do I know if I am ready for placements?",
-        a: "Track your preparation with an honest readiness index that combines aptitude, coding, CS core, communication and mock performance - and take full, timed mock tests in each recruiter's pattern.",
+        a: "Track your preparation across aptitude, coding, CS core, communication and mock performance. Use timed mocks to see which topics need another study session.",
       },
     ],
   },
@@ -578,11 +578,11 @@ export const BLOG_POSTS: BlogPost[] = [
   // ========================================================================
   {
     slug: "what-is-placement-readiness-index",
-    title: "What Is a Placement Readiness Index - and Why It Beats Guesswork",
+    title: "How to Use a Placement Readiness Score",
     description:
-      "Learn what a Placement Readiness Index (PRI) is, how it measures your true placement preparation, and why an honest readiness score beats guessing.",
+      "Learn how a placement readiness score reflects your study progress and helps you decide what to revise next.",
     excerpt:
-      "Stop guessing whether you're ready. A readiness index turns scattered prep into one honest number you can actually improve.",
+      "A readiness score turns scattered prep into one clear signal you can improve.",
     datePublished: "2026-06-02",
     dateModified: "2026-06-06",
     readMins: 6,
@@ -596,7 +596,7 @@ export const BLOG_POSTS: BlogPost[] = [
     ],
     intro: [
       "Ask most students how prepared they are for placements and you'll hear 'maybe 60%?' - a guess with nothing behind it. That uncertainty is exactly why preparation drifts.",
-      "A Placement Readiness Index (PRI) replaces the guess with an honest, data-backed number. Here is what it measures and how to use it.",
+      "A placement readiness score gives you a useful progress signal. Here is what it measures and how to use it.",
     ],
     sections: [
       {
@@ -635,15 +635,15 @@ export const BLOG_POSTS: BlogPost[] = [
       },
       {
         id: "honest",
-        heading: "Why an honest score matters",
+        heading: "Why a consistent score matters",
         blocks: [
           {
             k: "p",
-            text: "A readiness score is only useful if it can't be gamed. The right design counts only the chapters you genuinely pass - for example, scoring at least 60% - so skipping or skimming never inflates your number. That honesty is the whole point: the score tells you the truth, even when it's uncomfortable.",
+            text: "A readiness score works best when it is based on completed chapters and mock results. Passing a chapter with at least 60% keeps the score tied to work you have actually done.",
           },
           {
             k: "quote",
-            text: "A number you can fool is a number that fools you. An honest readiness score is worth more than a flattering one.",
+            text: "Use the score as a study signal, then spend your time on the topic that needs work.",
           },
         ],
       },
@@ -1635,6 +1635,5 @@ export function breadcrumbJsonLd(post: BlogPost) {
     ],
   }
 }
-
 
 

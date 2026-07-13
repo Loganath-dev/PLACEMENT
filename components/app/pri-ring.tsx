@@ -17,7 +17,7 @@ export function PriRing({
   value,
   size = 132,
   stroke = 11,
-  label = "PRI",
+  label = "Readiness",
   tone = "info",
   sublabel,
   className,

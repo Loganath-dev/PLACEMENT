@@ -31,7 +31,6 @@ import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import {
   PLAN_FEATURES,
-  PREMIUM_FOOD_COMPARISON_LABEL,
   PREMIUM_MONTHLY_EQUIVALENT_INR,
   premiumPriceLabel,
 } from "@/lib/access"
@@ -239,7 +238,7 @@ export default function SettingsPage() {
                   <p className="max-w-2xl text-sm text-muted-foreground">
                     Pay {premiumPriceLabel()} through Razorpay to unlock deeper company
                     preparation, more mocks and better feedback for {premiumTargetNames.join(", ")}.
-                    That is about Rs {PREMIUM_MONTHLY_EQUIVALENT_INR}/month - {PREMIUM_FOOD_COMPARISON_LABEL.toLowerCase()}.
+                    That works out to about Rs {PREMIUM_MONTHLY_EQUIVALENT_INR}/month for a year of access.
                   </p>
                 </div>
                 <Button

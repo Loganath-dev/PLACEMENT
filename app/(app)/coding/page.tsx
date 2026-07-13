@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/app/page-header"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { CompanyPicker } from "@/components/app/company-picker"
 import { LockedFeatureCard } from "@/components/app/upgrade-prompt"
-import { visibleCodingTestsForPlan } from "@/lib/access"
+import { FREE_CODING_PROBLEM_LIMIT, visibleCodingTestsForPlan, visibleForPlan } from "@/lib/access"
 import {
   CODING_TIMEOUT_MS,
   CODING_WORKER_SOURCE,
@@ -70,24 +70,7 @@ export default function CodingPage() {
     return map
   }, [state.codingAttempts])
 
-  // Coding practice is Premium-only: free users see the locked state, never
-  // the problem list (FREE_CODING_PROBLEM_LIMIT is 0 in lib/access.ts).
-  if (!state.premium) {
-    return (
-      <div className="space-y-6">
-        <PageHeader
-          eyebrow="Problem solving"
-          title="Coding Practice"
-          description="Original problems with sample cases, constraints and step-by-step editorials to study and dry-run."
-        />
-        <LockedFeatureCard
-          title="Coding practice is a Premium feature"
-          description="Unlock the full company-wise coding ladder — original problems with sample cases, hidden edge cases, step-by-step editorials and an in-browser runner."
-          cta="Go Premium"
-        />
-      </div>
-    )
-  }
+  const visibleProblems = visibleForPlan(problems, state.premium, FREE_CODING_PROBLEM_LIMIT)
 
   return (
     <div className="space-y-6">
@@ -120,7 +103,7 @@ export default function CodingPage() {
       </Card>
 
       <div className="space-y-3">
-        {problems.map((problem) => (
+        {visibleProblems.map((problem) => (
           <ProblemCard
             key={problem.id}
             problem={problem}
@@ -144,6 +127,13 @@ export default function CodingPage() {
           />
         ))}
       </div>
+      {!state.premium && problems.length > visibleProblems.length ? (
+        <LockedFeatureCard
+          title="More coding practice is available"
+          description="Try the starter problems first. Full access adds the remaining company-wise problems and hidden edge cases."
+          cta="See full access"
+        />
+      ) : null}
     </div>
   )
 }

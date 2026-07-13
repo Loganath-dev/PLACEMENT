@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import type { Session } from "@supabase/supabase-js"
+import type { Session, User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import {
   deleteAllMistakes,
@@ -37,6 +37,37 @@ const MISTAKE_CAP = 60
 
 const STORAGE_KEY = "studybench.state.v1"
 const LEGACY_STORAGE_KEY = "placeready.state.v1"
+const HYDRATION_TIMEOUT_MS = 8_000
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  label: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${timeoutMs}ms`))
+    }, timeoutMs)
+  })
+
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  })
+}
+
+function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = HYDRATION_TIMEOUT_MS,
+): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => {
+    clearTimeout(timer)
+  })
+}
 
 const DEFAULT_STATE: AppState = {
   onboarded: false,
@@ -49,6 +80,7 @@ const DEFAULT_STATE: AppState = {
   xp: 0,
   streak: { count: 0, lastActive: "" },
   badges: [],
+  goals: { dailyXp: 0, targetXp: 50, lastUpdated: "" },
   progress: {},
   topicStats: {},
   daily: { date: "", general: false, aptitude: false, coding: false },
@@ -87,6 +119,22 @@ function ensureProgress(state: AppState, id: CompanyId) {
   return state.progress[id]
 }
 
+function awardXp(state: AppState, amount: number) {
+  if (amount <= 0) return
+  state.xp += amount
+  
+  const t = today()
+  if (state.goals.lastUpdated !== t) {
+    state.goals.dailyXp = 0
+    state.goals.lastUpdated = t
+  }
+  state.goals.dailyXp += amount
+  
+  if (state.goals.dailyXp >= state.goals.targetXp) {
+    if (!state.badges.includes("goal-crusher")) state.badges.push("goal-crusher")
+  }
+}
+
 function bumpStreak(state: AppState): number {
   const t = today()
   let milestoneXp = 0
@@ -94,10 +142,19 @@ function bumpStreak(state: AppState): number {
   const prev = state.streak.count
   const count = state.streak.lastActive === yesterday(t) ? prev + 1 : 1
   state.streak = { count, lastActive: t }
-  if (count === 7 && prev < 7) milestoneXp = XP.streak7
-  if (count === 30 && prev < 30) milestoneXp = XP.streak30
-  if (count === 100 && prev < 100) milestoneXp = XP.streak100
-  state.xp += milestoneXp
+  if (count === 7 && prev < 7) {
+    milestoneXp = XP.streak7
+    if (!state.badges.includes("streak-7")) state.badges.push("streak-7")
+  }
+  if (count === 30 && prev < 30) {
+    milestoneXp = XP.streak30
+    if (!state.badges.includes("streak-30")) state.badges.push("streak-30")
+  }
+  if (count === 100 && prev < 100) {
+    milestoneXp = XP.streak100
+    if (!state.badges.includes("streak-100")) state.badges.push("streak-100")
+  }
+  awardXp(state, milestoneXp)
   return milestoneXp
 }
 
@@ -199,12 +256,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   // ── hydrate: localStorage first (fast), then Supabase (authoritative) ──
   React.useEffect(() => {
+    let cancelled = false
     async function hydrate() {
       // 1. Restore from localStorage immediately so UI doesn't flash blank.
       let restoredFromCache = false
       try {
         const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
         if (raw) {
+          if (cancelled) return
           setState(normalizeEntitlement({ ...DEFAULT_STATE, ...JSON.parse(raw) }))
           restoredFromCache = true
           // Returning users can use the cached app immediately while Supabase
@@ -221,9 +280,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       // 2. Check Supabase session.
       const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const user = await withTimeout<{ data: { user: User | null } }>(
+        supabase.auth.getUser() as Promise<{ data: { user: User | null } }>,
+        HYDRATION_TIMEOUT_MS,
+        "Supabase auth",
+      )
+        .then((res) => res.data.user)
+        .catch(() => null)
+
+      if (cancelled) return
 
       if (user) {
         setUserId(user.id)
@@ -232,29 +297,40 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         // 3. Refresh state and entitlement concurrently; neither depends on the
         // other and serializing them adds an avoidable network round trip.
         try {
-          const [remote, statusResponse] = await Promise.all([
-            loadUserState(user.id),
-            fetch("/api/premium/status", { cache: "no-store" }),
+          const [remoteResult, statusResult] = await Promise.allSettled([
+            withTimeout(loadUserState(user.id), HYDRATION_TIMEOUT_MS, "Supabase state"),
+            fetchWithTimeout("/api/premium/status", { cache: "no-store" }),
           ])
+          if (cancelled) return
+          const remote = remoteResult.status === "fulfilled" ? remoteResult.value : null
           if (remote) {
             const normalized = normalizeEntitlement({ ...DEFAULT_STATE, ...remote })
-            if (statusResponse.ok) {
-              const entitlement = (await statusResponse.json()) as {
-                premium: boolean
-                premiumUntil: string | null
-                source: "creator" | "purchase" | "free"
+            if (statusResult.status === "fulfilled" && statusResult.value.ok) {
+              try {
+                const entitlement = (await statusResult.value.json()) as {
+                  premium: boolean
+                  premiumUntil: string | null
+                  source: "creator" | "purchase" | "free"
+                }
+                if (cancelled) return
+                setState({
+                  ...normalized,
+                  premium: entitlement.premium,
+                  premiumUntil: entitlement.premiumUntil ?? undefined,
+                  entitlementSource: entitlement.source,
+                })
+              } catch {
+                setState(normalized)
               }
-              setState({
-                ...normalized,
-                premium: entitlement.premium,
-                premiumUntil: entitlement.premiumUntil ?? undefined,
-                entitlementSource: entitlement.source,
-              })
             } else {
               setState(normalized)
             }
-          } else {
-            await ensureUserState(user.id, DEFAULT_STATE)
+          } else if (remoteResult.status === "fulfilled") {
+            await withTimeout(
+              ensureUserState(user.id, DEFAULT_STATE),
+              HYDRATION_TIMEOUT_MS,
+              "Supabase state initialization",
+            )
           }
         } catch {
           /* offline — localStorage fallback stays */
@@ -265,7 +341,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       // First-time users have no safe cached routing state, so they wait for
       // the authoritative load. Returning users were already released above.
-      if (!restoredFromCache) setHydrated(true)
+      if (!cancelled && !restoredFromCache) setHydrated(true)
     }
 
     void hydrate()
@@ -275,10 +351,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+      if (cancelled) return
       setUserId(session?.user?.id ?? null)
       setUserCreatedAt(session?.user?.created_at ?? null)
     })
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
   }, [])
 
   React.useEffect(() => {
@@ -332,6 +412,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           outcomes: prev.outcomes ? [...prev.outcomes] : [],
           codingAttempts: prev.codingAttempts ? [...prev.codingAttempts] : [],
           badges: [...prev.badges],
+          goals: { ...prev.goals },
           interested: [...prev.interested],
         }
         out = fn(draft)
@@ -403,17 +484,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // already happened in the verify route / webhook via the service role —
       // clients can no longer write entitlement columns (DB trigger).
       activatePremium: (premiumUntil, source = "purchase") =>
-        mutate((d) => {
-          const next = normalizeEntitlement({
-            ...d,
-            premium: true,
-            premiumUntil,
-          })
-          d.premium = next.premium
-          d.premiumUntil = next.premiumUntil
-          d.entitlementSource = source
-          track("premium_upgrade", { premium_until: premiumUntil ?? null })
-        }),
+        mutate(
+          (d) => {
+            const next = normalizeEntitlement({
+              ...d,
+              premium: true,
+              premiumUntil,
+            })
+            d.premium = next.premium
+            d.premiumUntil = next.premiumUntil
+            d.entitlementSource = source
+            track("premium_upgrade", { premium_until: premiumUntil ?? null })
+          },
+          syncUserState,
+        ),
 
       updateProfile: (p) =>
         mutate(
@@ -447,7 +531,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             let xpGained = correct * XP.correctFirst
             const newlyPassed = passed && !wasPassed
             if (newlyPassed) xpGained += XP.quizPass
-            d.xp += xpGained
+            awardXp(d, xpGained)
             xpGained += bumpStreak(d)
             void sectionId
             track("quiz_attempt", { company: companyId, chapter: chapterId, score, passed, newly_passed: newlyPassed })
@@ -488,7 +572,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
               d.daily[category] = true
               xpGained += XP.daily
             }
-            d.xp += xpGained
+            awardXp(d, xpGained)
             xpGained += bumpStreak(d)
             return { xpGained }
           },
@@ -504,7 +588,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const prog = ensureProgress(d, companyId)
             prog.mockScores.push(score)
             let xpGained = XP.mock
-            d.xp += XP.mock
+            awardXp(d, xpGained)
             xpGained += bumpStreak(d)
             track("mock_complete", { company: companyId, score })
             return { xpGained }
@@ -662,7 +746,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     () => ({ state, hydrated, userId, userCreatedAt }),
     [state, hydrated, userId, userCreatedAt],
   )
-  snapshotRef.current = stateValue
 
   const subscriptionValue = React.useMemo<StoreSubscriptionValue>(
     () => ({
@@ -676,6 +759,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   )
 
   React.useEffect(() => {
+    snapshotRef.current = stateValue
     for (const listener of listenersRef.current) listener()
   }, [stateValue])
 
