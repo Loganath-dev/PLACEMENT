@@ -3,18 +3,20 @@ import { cn } from "@/lib/utils"
 const TONE_VAR: Record<string, string> = {
   danger: "var(--destructive)",
   warning: "var(--warning)",
-  info: "#2563eb", // Using a rich cobalt blue instead of default primary for a non-AI aesthetic
+  info: "var(--primary)",
   success: "var(--success)",
 }
 
 /**
  * Signature readiness gauge (PRI). Pure SVG — no client JS — so it renders on
- * the server and still draws on. Enhanced with premium aesthetics.
+ * the server and still draws on. The look is StudyBench's own: a gradient arc
+ * with a tinted glow over a faint graduation ring, so the score reads like an
+ * instrument rather than a generic progress circle.
  */
 export function PriRing({
   value,
-  size = 140,
-  stroke = 14,
+  size = 132,
+  stroke = 11,
   label = "Readiness",
   tone = "info",
   sublabel,
@@ -47,21 +49,10 @@ export function PriRing({
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
         <defs>
           <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={color} stopOpacity="0.8" />
+            <stop offset="0%" stopColor="var(--primary)" />
             <stop offset="100%" stopColor={color} />
           </linearGradient>
         </defs>
-
-        {/* Track with subtle inner shadow feel */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke="var(--muted)"
-          strokeOpacity={0.5}
-          strokeWidth={stroke}
-        />
 
         {/* Graduation ring */}
         <circle
@@ -70,9 +61,19 @@ export function PriRing({
           r={tickR > 0 ? tickR : 0}
           fill="none"
           stroke="var(--muted-foreground)"
-          strokeOpacity={0.2}
-          strokeWidth={1}
-          strokeDasharray={`1.5 ${Math.max(6, tickC / 36 - 1.5)}`}
+          strokeOpacity={0.22}
+          strokeWidth={1.5}
+          strokeDasharray={`1.25 ${Math.max(6, tickC / 36 - 1.25)}`}
+        />
+
+        {/* Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke="var(--muted)"
+          strokeWidth={stroke}
         />
 
         {/* Progress arc — gradient + tinted glow, draws on from empty */}
@@ -86,44 +87,27 @@ export function PriRing({
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={offset}
-          className="transition-all duration-1000 ease-out"
+          className="animate-pri-draw"
           style={
             {
               "--pri-c": `${c}`,
               "--pri-offset": `${offset}`,
-              filter: `drop-shadow(0 4px 8px color-mix(in oklch, ${color} 30%, transparent))`,
-              transition: "stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1)",
+              filter: `drop-shadow(0 0 5px color-mix(in oklch, ${color} 42%, transparent))`,
+              transition: "stroke-dashoffset 700ms var(--ease-signature)",
             } as React.CSSProperties
           }
         />
-        
-        {/* Empty state pulsing ring when score is 0 */}
-        {clamped === 0 && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={r}
-            fill="none"
-            stroke={color}
-            strokeOpacity={0.15}
-            strokeWidth={stroke}
-            strokeLinecap="round"
-            strokeDasharray={`1 8`}
-            className="animate-spin"
-            style={{ transformOrigin: "center", animationDuration: "12s" }}
-          />
-        )}
       </svg>
 
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-heading text-4xl font-extrabold tabular-nums tracking-tight text-foreground">
+        <span className="font-heading text-3xl font-bold tabular-nums leading-none">
           {clamped}
         </span>
-        <span className="mt-1 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+        <span className="mt-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </span>
         {sublabel ? (
-          <span className="mt-0.5 text-[10px] text-muted-foreground">{sublabel}</span>
+          <span className="mt-0.5 text-[11px] text-muted-foreground">{sublabel}</span>
         ) : null}
       </div>
     </div>

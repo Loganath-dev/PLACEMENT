@@ -205,7 +205,6 @@ export interface CodingProblem extends ContentReviewMeta {
   starterCode: string
   testCases: CodingTestCase[]
   editorial: string
-  solutionCode: string
   estimatedMinutes: number
 }
 

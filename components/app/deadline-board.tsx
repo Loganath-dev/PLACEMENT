@@ -104,7 +104,7 @@ export function DeadlineBoard({ variant = "compact" }: { variant?: "compact" | "
           </p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link href="/dashboard">
+          <Link href="/plan">
             Calendar <Icon name="ArrowRight" className="size-4" />
           </Link>
         </Button>

@@ -28,13 +28,29 @@ export interface NavItem {
  */
 export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
   {
-    label: "Core",
+    label: "Today",
+    items: [{ href: "/dashboard", label: "Study plan", icon: "LayoutDashboard" }],
+  },
+  {
+    label: "Learn",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: "LayoutDashboard" },
-      { href: "/learn", label: "Learn", icon: "GraduationCap" },
-      { href: "/practice", label: "Practice", icon: "BookOpen" },
+      { href: "/learn", label: "Company tracks", icon: "GraduationCap" },
+      { href: "/revision", label: "Revision", icon: "BookMarked" },
+    ],
+  },
+  {
+    label: "Practice",
+    items: [
+      { href: "/practice", label: "PYQs", icon: "BookOpen" },
+      { href: "/coding", label: "Coding", icon: "Code2" },
       { href: "/mock", label: "Mocks", icon: "Target" },
-      { href: "/interview", label: "Interviews", icon: "Users" },
+    ],
+  },
+  {
+    label: "Review",
+    items: [
+      { href: "/mistakes", label: "Mistakes", icon: "BookMarked" },
+      { href: "/readiness", label: "Progress", icon: "TrendingUp" },
     ],
   },
 ]
@@ -43,7 +59,6 @@ export const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
 export const NAV_ITEMS: readonly NavItem[] = NAV_GROUPS.flatMap((g) => g.items)
 
 const FOOTER_ITEMS: NavItem[] = [
-  { href: "/readiness", label: "Progress", icon: "TrendingUp" },
   { href: "/profile", label: "Profile", icon: "User" },
   { href: "/settings", label: "Settings", icon: "Settings" },
 ]
@@ -72,6 +87,8 @@ function NavLink({
       aria-current={active ? "page" : undefined}
       className={cn(
         "group/nav relative flex min-h-10 items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25 active:scale-[0.99]",
+        // Active items carry a left accent bar + primary tint so the current
+        // page reads at a glance, not just a faint ring.
         active
           ? "bg-primary/[0.08] text-foreground ring-1 ring-primary/15 before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-primary"
           : "text-sidebar-foreground/62 hover:bg-background/72 hover:text-sidebar-foreground",
@@ -108,6 +125,9 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="flex flex-1 flex-col gap-1 overflow-y-auto">
       {NAV_GROUPS.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
+          <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase text-sidebar-foreground/45">
+            {group.label}
+          </p>
           {group.items.map((it) => (
             <NavLink key={it.href} {...it} active={isActive(it.href)} onClick={onNavigate} />
           ))}
@@ -196,3 +216,5 @@ function MobileNav() {
     </Sheet>
   )
 }
+
+
