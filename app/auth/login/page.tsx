@@ -47,8 +47,7 @@ function LoginForm() {
     const next = searchParams.get("next")
     const safeNext =
       next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard"
-    router.replace(safeNext)
-    router.refresh()
+    window.location.href = safeNext
   }
 
   async function resendConfirmation() {
