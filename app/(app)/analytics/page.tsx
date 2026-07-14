@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -179,13 +179,13 @@ function NextTasksCard() {
       ? {
           label: `Revise ${weak.topic}`,
           detail: `${weak.accuracy}% accuracy so far`,
-          href: "/mistakes",
+          href: "/practice",
           icon: "Wrench",
         }
       : {
           label: "Attempt adaptive quiz",
           detail: "Create weak-topic data",
-          href: "/challenges",
+          href: "/practice",
           icon: "Target",
         },
     weakestSection

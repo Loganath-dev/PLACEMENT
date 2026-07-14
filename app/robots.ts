@@ -1,4 +1,4 @@
-﻿import type { MetadataRoute } from "next"
+import type { MetadataRoute } from "next"
 import { SITE_URL } from "@/lib/content/blocks"
 
 export default function robots(): MetadataRoute.Robots {
@@ -12,26 +12,16 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/analytics",
           "/auth/",
-          "/bookmarks",
-          "/challenges",
-          "/chapter-practice",
           "/coding",
-          "/communication",
           "/dashboard",
-          "/gd",
           "/interview",
           "/learn",
-          "/mistakes",
           "/mock",
           "/onboarding",
-          "/plan",
           "/practice",
           "/profile",
           "/readiness",
-          "/resume",
-          "/revision",
           "/settings",
-          "/sprint",
         ],
       },
     ],

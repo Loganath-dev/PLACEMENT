@@ -41,6 +41,19 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "0", output: "0", hidden: true },
     ],
     editorial: "Scan the digits with modulo 10. Add each digit to the even or odd bucket, divide n by 10, then return the absolute difference.",
+    solutionCode: `function solve(n) {
+  let evenSum = 0;
+  let oddSum = 0;
+  if (n === 0) return 0;
+  n = Math.abs(n);
+  while (n > 0) {
+    const digit = n % 10;
+    if (digit % 2 === 0) evenSum += digit;
+    else oddSum += digit;
+    n = Math.floor(n / 10);
+  }
+  return Math.abs(evenSum - oddSum);
+}`,
     estimatedMinutes: 12,
     sourceId: "studybench-curriculum",
   }),
@@ -63,6 +76,20 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "a", output: "a1", hidden: true },
     ],
     editorial: "Track the current character and its count. When the character changes, append the previous character and count, then reset.",
+    solutionCode: `function solve(s) {
+  if (!s) return "";
+  let result = "";
+  let count = 1;
+  for (let i = 1; i <= s.length; i++) {
+    if (s[i] === s[i - 1]) {
+      count++;
+    } else {
+      result += s[i - 1] + count;
+      count = 1;
+    }
+  }
+  return result;
+}`,
     estimatedMinutes: 18,
     sourceId: "hackerrank-interview-kit",
   }),
@@ -85,6 +112,12 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "one", output: "1", hidden: true },
     ],
     editorial: "Trim the line. If it is empty, answer 0. Otherwise split on one or more spaces and count the tokens.",
+    solutionCode: `function solve(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return 0;
+  const words = trimmed.split(/\\s+/);
+  return words.length;
+}`,
     estimatedMinutes: 10,
     sourceId: "studybench-curriculum",
   }),
@@ -107,6 +140,14 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "99", output: "invalid", hidden: true },
     ],
     editorial: "Use integer ranges: 100-199, 200-299, 300-399, 400-499 and 500-599.",
+    solutionCode: `function solve(code) {
+  if (code >= 100 && code <= 199) return "informational";
+  if (code >= 200 && code <= 299) return "success";
+  if (code >= 300 && code <= 399) return "redirection";
+  if (code >= 400 && code <= 499) return "client-error";
+  if (code >= 500 && code <= 599) return "server-error";
+  return "invalid";
+}`,
     estimatedMinutes: 8,
     sourceId: "mdn-http",
   }),
@@ -129,6 +170,15 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "1\n7", output: "7", hidden: true },
     ],
     editorial: "Initialize sum to 0, loop through every value, and add only values greater than 0. Return or print sum after the loop.",
+    solutionCode: `function solve(arr) {
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] > 0) {
+      sum += arr[i];
+    }
+  }
+  return sum;
+}`,
     estimatedMinutes: 12,
     sourceId: "hackerrank-interview-kit",
   }),
@@ -151,6 +201,20 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "2 2\n5 6\n7 8", output: "26", hidden: true },
     ],
     editorial: "Add cells where row is first/last or column is first/last. This single condition naturally avoids double-counting.",
+    solutionCode: `function solve(matrix) {
+  if (!matrix || matrix.length === 0) return 0;
+  const r = matrix.length;
+  const c = matrix[0].length;
+  let sum = 0;
+  for (let i = 0; i < r; i++) {
+    for (let j = 0; j < c; j++) {
+      if (i === 0 || i === r - 1 || j === 0 || j === c - 1) {
+        sum += matrix[i][j];
+      }
+    }
+  }
+  return sum;
+}`,
     estimatedMinutes: 20,
     sourceId: "codechef-placement-prep",
   }),
@@ -175,6 +239,22 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     editorial:
       "Use a stack. For each character: if it is an opening bracket, push it. If it is a closing bracket, check the top of the stack — if it matches the corresponding opener, pop; otherwise the sequence is not balanced. After the full scan, the stack must be empty for a balanced result.",
+    solutionCode: `function solve(s) {
+  const stack = [];
+  const map = { ')': '(', '}': '{', ']': '[' };
+  for (let i = 0; i < s.length; i++) {
+    const char = s[i];
+    if (char === '(' || char === '{' || char === '[') {
+      stack.push(char);
+    } else if (char === ')' || char === '}' || char === ']') {
+      if (stack.length === 0 || stack[stack.length - 1] !== map[char]) {
+        return "not balanced";
+      }
+      stack.pop();
+    }
+  }
+  return stack.length === 0 ? "balanced" : "not balanced";
+}`,
     estimatedMinutes: 20,
     sourceId: "studybench-curriculum",
   }),
@@ -199,6 +279,24 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     editorial:
       "Use a monotonic deque that stores indices in decreasing value order. For each element: (1) remove indices that have left the window from the front; (2) remove indices from the back whose values are smaller than the current element (they can never be a maximum while the current element is in the window); (3) push the current index; (4) the front of the deque is the maximum of the current window. O(n) time.",
+    solutionCode: `function solve(arr, k) {
+  if (!arr || arr.length === 0) return [];
+  const deque = [];
+  const result = [];
+  for (let i = 0; i < arr.length; i++) {
+    while (deque.length > 0 && deque[0] < i - k + 1) {
+      deque.shift();
+    }
+    while (deque.length > 0 && arr[deque[deque.length - 1]] < arr[i]) {
+      deque.pop();
+    }
+    deque.push(i);
+    if (i >= k - 1) {
+      result.push(arr[deque[0]]);
+    }
+  }
+  return result.join(" ");
+}`,
     estimatedMinutes: 35,
     sourceId: "gfg-dsa",
   }),
@@ -223,6 +321,17 @@ export const CODING_PROBLEMS: CodingProblem[] = [
     ],
     editorial:
       "Negative numbers are immediately not palindromes. For non-negatives: reverse the number by extracting digits with %10 and building the reverse with *10. Compare the reversed number to the original. Caution: numbers ending in 0 (except 0 itself) are not palindromes.",
+    solutionCode: `function solve(n) {
+  if (n < 0) return "not palindrome";
+  if (n !== 0 && n % 10 === 0) return "not palindrome";
+  let rev = 0;
+  let temp = n;
+  while (temp > 0) {
+    rev = rev * 10 + (temp % 10);
+    temp = Math.floor(temp / 10);
+  }
+  return rev === n ? "palindrome" : "not palindrome";
+}`,
     estimatedMinutes: 14,
     sourceId: "studybench-curriculum",
   }),
@@ -245,6 +354,16 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "swiss", output: "w", hidden: true },
     ],
     editorial: "Build a frequency map, then scan the string again and return the first character with frequency 1.",
+    solutionCode: `function solve(s) {
+  const map = {};
+  for (let i = 0; i < s.length; i++) {
+    map[s[i]] = (map[s[i]] || 0) + 1;
+  }
+  for (let i = 0; i < s.length; i++) {
+    if (map[s[i]] === 1) return s[i];
+  }
+  return "-1";
+}`,
     estimatedMinutes: 18,
     sourceId: "python-docs-data-structures",
   }),
@@ -267,6 +386,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "0", output: "0", hidden: true },
     ],
     editorial: "Repeatedly sum the digits using % 10 and / 10 until n < 10. Shortcut (digital root): 0 if n is 0, else 1 + (n - 1) % 9.",
+    solutionCode: `function solve(n) {
+  if (n === 0) return 0;
+  return 1 + ((n - 1) % 9);
+}`,
     estimatedMinutes: 12,
     sourceId: "studybench-curriculum",
   }),
@@ -289,6 +412,9 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "keep it simple", output: "simple it keep", hidden: true },
     ],
     editorial: "Split the line on spaces into a list, reverse the list, then join the words with single spaces.",
+    solutionCode: `function solve(line) {
+  return line.split(" ").reverse().join(" ");
+}`,
     estimatedMinutes: 15,
     sourceId: "studybench-curriculum",
   }),
@@ -311,6 +437,10 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "aaaa", output: "1", hidden: true },
     ],
     editorial: "Insert each character into a set and return the set's size; a set automatically discards repeats.",
+    solutionCode: `function solve(s) {
+  const set = new Set(s);
+  return set.size;
+}`,
     estimatedMinutes: 10,
     sourceId: "studybench-curriculum",
   }),
@@ -333,6 +463,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "13", output: "YES", hidden: true },
     ],
     editorial: "Numbers below 2 are not prime. Test divisors from 2 up to sqrt(n); if any divides n evenly it is not prime. This runs in O(sqrt(n)).",
+    solutionCode: `function solve(n) {
+  if (n < 2) return "NO";
+  for (let i = 2; i * i <= n; i++) {
+    if (n % i === 0) return "NO";
+  }
+  return "YES";
+}`,
     estimatedMinutes: 12,
     sourceId: "studybench-curriculum",
   }),
@@ -355,6 +492,13 @@ export const CODING_PROBLEMS: CodingProblem[] = [
       { input: "1", output: "1", hidden: true },
     ],
     editorial: "Multiply the integers from 1 to n, with 0! defined as 1. The constraint n <= 12 keeps the result within 32-bit integer range.",
+    solutionCode: `function solve(n) {
+  let fact = 1;
+  for (let i = 2; i <= n; i++) {
+    fact *= i;
+  }
+  return fact;
+}`,
     estimatedMinutes: 10,
     sourceId: "studybench-curriculum",
   }),
@@ -372,6 +516,7 @@ type CodingTemplate = {
   starterCode: string
   testCases: CodingProblem["testCases"]
   editorial: string
+  solutionCode: string
   estimatedMinutes: number
 }
 
@@ -409,6 +554,19 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "2\n4 9", output: "13", hidden: true },
     ],
     editorial: "Track the largest and second largest values in one pass. Their sum is the answer.",
+    solutionCode: `function solve(arr) {
+  let max1 = -Infinity;
+  let max2 = -Infinity;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] > max1) {
+      max2 = max1;
+      max1 = arr[i];
+    } else if (arr[i] > max2) {
+      max2 = arr[i];
+    }
+  }
+  return max1 + max2;
+}`,
     estimatedMinutes: 14,
   },
   {
@@ -428,6 +586,14 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "zzz", output: "no", hidden: true },
     ],
     editorial: "Scan the string once and count vowels; consonants are length minus vowel count.",
+    solutionCode: `function solve(s) {
+  let vowels = 0;
+  const set = new Set(['a', 'e', 'i', 'o', 'u']);
+  for (let i = 0; i < s.length; i++) {
+    if (set.has(s[i])) vowels++;
+  }
+  return vowels === s.length - vowels ? "yes" : "no";
+}`,
     estimatedMinutes: 12,
   },
   {
@@ -447,6 +613,15 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "1 5\n5", output: "1", hidden: true },
     ],
     editorial: "Maintain a running sum and increment the answer each time the running sum equals k.",
+    solutionCode: `function solve(arr, k) {
+  let sum = 0;
+  let count = 0;
+  for (let i = 0; i < arr.length; i++) {
+    sum += arr[i];
+    if (sum === k) count++;
+  }
+  return count;
+}`,
     estimatedMinutes: 16,
   },
   {
@@ -466,6 +641,15 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "1 100\n9", output: "9", hidden: true },
     ],
     editorial: "Reduce k by n, then split the array at n-k and join the two parts in swapped order.",
+    solutionCode: `function solve(arr, k) {
+  const n = arr.length;
+  k = k % n;
+  if (k === 0) return arr.join(" ");
+  const split = n - k;
+  const right = arr.slice(split);
+  const left = arr.slice(0, split);
+  return right.concat(left).join(" ");
+}`,
     estimatedMinutes: 18,
   },
   {
@@ -485,6 +669,18 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "interview", output: "9", hidden: true },
     ],
     editorial: "Trim the line, split by one or more spaces, and keep the largest token length.",
+    solutionCode: `function solve(line) {
+  const trimmed = line.trim();
+  if (!trimmed) return 0;
+  const words = trimmed.split(/\\s+/);
+  let maxLen = 0;
+  for (let i = 0; i < words.length; i++) {
+    if (words[i].length > maxLen) {
+      maxLen = words[i].length;
+    }
+  }
+  return maxLen;
+}`,
     estimatedMinutes: 10,
   },
   {
@@ -504,6 +700,17 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "1\n5", output: "0", hidden: true },
     ],
     editorial: "For each row i, add matrix[i][i] and matrix[i][n-1-i], then take the absolute difference.",
+    solutionCode: `function solve(matrix) {
+  if (!matrix || matrix.length === 0) return 0;
+  const n = matrix.length;
+  let primary = 0;
+  let secondary = 0;
+  for (let i = 0; i < n; i++) {
+    primary += matrix[i][i];
+    secondary += matrix[i][n - 1 - i];
+  }
+  return Math.abs(primary - secondary);
+}`,
     estimatedMinutes: 18,
   },
   {
@@ -523,6 +730,14 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "5\n1 2 3 4 5", output: "6", hidden: true },
     ],
     editorial: "A hash set gives a clear O(n) approach: insert positives and test answers from 1 upward.",
+    solutionCode: `function solve(arr) {
+  const set = new Set(arr);
+  let ans = 1;
+  while (set.has(ans)) {
+    ans++;
+  }
+  return ans;
+}`,
     estimatedMinutes: 26,
   },
   {
@@ -542,6 +757,13 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "5\n0 0 0 0 0", output: "0", hidden: true },
     ],
     editorial: "Initialize the accumulator to zero and iterate valid indices 0 through n-1, never i <= n.",
+    solutionCode: `function solve(arr) {
+  let sum = 0;
+  for (let i = 0; i < arr.length; i++) {
+    sum += arr[i];
+  }
+  return sum;
+}`,
     estimatedMinutes: 12,
   },
   {
@@ -561,6 +783,18 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "abc\nabcc", output: "no", hidden: true },
     ],
     editorial: "If lengths differ, answer no. Otherwise compare frequency counts for all characters.",
+    solutionCode: `function solve(a, b) {
+  if (a.length !== b.length) return "no";
+  const count = {};
+  for (let i = 0; i < a.length; i++) {
+    count[a[i]] = (count[a[i]] || 0) + 1;
+    count[b[i]] = (count[b[i]] || 0) - 1;
+  }
+  for (const key in count) {
+    if (count[key] !== 0) return "no";
+  }
+  return "yes";
+}`,
     estimatedMinutes: 16,
   },
   {
@@ -580,6 +814,11 @@ const CODING_TEMPLATES: CodingTemplate[] = [
       { input: "10 20 1 9", output: "no", hidden: true },
     ],
     editorial: "Two closed intervals overlap when max(start values) <= min(end values).",
+    solutionCode: `function solve(a, b, c, d) {
+  const start = Math.max(a, c);
+  const end = Math.min(b, d);
+  return start <= end ? "yes" : "no";
+}`,
     estimatedMinutes: 14,
   },
   {
@@ -601,6 +840,22 @@ const CODING_TEMPLATES: CodingTemplate[] = [
     ],
     editorial:
       "Insert all elements into a HashSet. For each element x, only start a new count if x-1 is NOT in the set (x is a sequence start). Count upward from x while the next element exists. This gives O(n) time overall because each element is visited at most twice.",
+    solutionCode: `function solve(arr) {
+  const set = new Set(arr);
+  let maxLen = 0;
+  for (const num of set) {
+    if (!set.has(num - 1)) {
+      let currentNum = num;
+      let currentLen = 1;
+      while (set.has(currentNum + 1)) {
+        currentNum++;
+        currentLen++;
+      }
+      maxLen = Math.max(maxLen, currentLen);
+    }
+  }
+  return maxLen;
+}`,
     estimatedMinutes: 28,
   },
 ]
@@ -623,6 +878,7 @@ function generatedCodingProblem(companyId: CompanyId, index: number): CodingProb
     starterCode: template.starterCode,
     testCases: template.testCases,
     editorial: template.editorial,
+    solutionCode: template.solutionCode,
     estimatedMinutes: companyId === "zoho" ? template.estimatedMinutes + 6 : template.estimatedMinutes,
     sourceId: focus.sourceId,
   })
