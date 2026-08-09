@@ -18,7 +18,7 @@ import { Icon } from "@/components/app/icon"
 import { CompanyAvatar } from "@/components/app/ui-bits"
 import { SELECTABLE_COMPANIES, getCompany } from "@/lib/data/companies"
 import { getSections } from "@/lib/data/content"
-import { useStore } from "@/lib/store"
+import { useStore, useStoreSelector } from "@/lib/store"
 import type { CompanyId, Profile } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -28,7 +28,12 @@ const GRAD_YEARS = Array.from({ length: 10 }, (_, i) => String(2026 + i))
 export default function OnboardingPage() {
   const router = useRouter()
   const { completeOnboarding } = useStore()
+  const hydrated = useStoreSelector((store) => store.hydrated)
+  const onboarded = useStoreSelector((store) => store.state.onboarded)
+  const userId = useStoreSelector((store) => store.userId)
   const [step, setStep] = React.useState(0)
+  const [submitting, setSubmitting] = React.useState(false)
+  const [saveError, setSaveError] = React.useState<string | null>(null)
   const [profile, setProfile] = React.useState<Profile>({
     name: "",
     college: "",
@@ -55,12 +60,29 @@ export default function OnboardingPage() {
   const canNextProfile = profile.name.trim() && profile.gradYear
   const canNextCompanies = interested.length > 0
 
-  function finish() {
+  React.useEffect(() => {
+    if (hydrated && onboarded && userId) router.replace("/dashboard")
+  }, [hydrated, onboarded, userId, router])
+
+  async function finish() {
+    if (submitting) return
+    setSubmitting(true)
+    setSaveError(null)
     const prim = (primary || interested[0] || "general") as CompanyId
     const companies = interested.map(
       (id) => SELECTABLE_COMPANIES.find((company) => company.id === id)?.short ?? id.toUpperCase(),
     )
-    completeOnboarding(profile, interested, prim)
+    try {
+      await completeOnboarding(profile, interested, prim)
+    } catch (err) {
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : "Could not save your onboarding answers. Check your connection and try again.",
+      )
+      setSubmitting(false)
+      return
+    }
     void fetch("/api/email/welcome", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -361,9 +383,15 @@ export default function OnboardingPage() {
                 <Button variant="ghost" onClick={() => setStep(1)}>
                   Back
                 </Button>
-                <Button onClick={finish}>
-                  Start preparing <Icon name="ArrowRight" className="size-4" />
-                </Button>
+                <div className="flex flex-col items-end gap-2">
+                  {saveError ? (
+                    <p className="max-w-xs text-right text-sm text-destructive">{saveError}</p>
+                  ) : null}
+                  <Button onClick={finish} disabled={submitting}>
+                    {submitting ? "Saving..." : "Start preparing"}{" "}
+                    {!submitting ? <Icon name="ArrowRight" className="size-4" /> : null}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

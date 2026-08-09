@@ -124,6 +124,12 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
 
   if (!st) return null
 
+  // Recover users whose onboarding completed locally but never persisted
+  // onboarded=true (race on first signup). Profile + targets are enough signal.
+  const hasProfile = Boolean(prof?.name?.trim())
+  const hasTargets = (st.interested?.length ?? 0) > 0
+  const onboarded = st.onboarded || (hasProfile && hasTargets)
+
   const progress: AppState["progress"] = {}
   for (const row of cpRows ?? []) {
     progress[row.company_id] = {
@@ -161,7 +167,7 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
   }))
 
   return {
-    onboarded: st.onboarded,
+    onboarded,
     premium: st.premium,
     premiumUntil: st.premium_until ?? undefined,
     xp: st.xp,
@@ -205,33 +211,62 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
 // including the old failure mode where a stale client synced premium=false
 // and silently destroyed a paid entitlement.
 
+/** Build a user_state upsert payload. onboarded is a one-way ratchet: we only
+ *  include it when true so a stale DEFAULT_STATE hydrate can never reset a
+ *  user who already finished onboarding. */
+function userStatePayload(userId: string, s: AppState) {
+  return {
+    id: userId,
+    xp: s.xp,
+    streak_count: s.streak.count,
+    streak_last_active: s.streak.lastActive,
+    primary_company: s.primary,
+    interested: s.interested,
+    ...(s.onboarded ? { onboarded: true as const } : {}),
+    topic_stats: s.topicStats,
+    badges: s.badges,
+    coding_attempts: s.codingAttempts,
+  }
+}
+
 export async function ensureUserState(userId: string, s: AppState) {
   await safe("ensureUserState", async () => {
     const sb = createClient()
-    await sb.from("user_state").upsert({
-      id: userId,
-      xp: s.xp,
-      streak_count: s.streak.count,
-      streak_last_active: s.streak.lastActive,
-      primary_company: s.primary,
-      interested: s.interested,
-      onboarded: s.onboarded,
-      topic_stats: s.topicStats,
-      badges: s.badges,
-      coding_attempts: s.codingAttempts,
-    })
-    await sb.from("daily_challenges").upsert({
-      id: userId,
-      date: s.daily.date,
-      general: s.daily.general,
-      aptitude: s.daily.aptitude,
-      coding: s.daily.coding,
-    })
+    const { data: existing } = await sb
+      .from("user_state")
+      .select("id,onboarded")
+      .eq("id", userId)
+      .maybeSingle()
+
+    if (existing) {
+      // Row exists — patch non-onboarding fields only; never downgrade onboarded.
+      await sb.from("user_state").update(userStatePayload(userId, s)).eq("id", userId)
+    } else {
+      await sb.from("user_state").insert({
+        ...userStatePayload(userId, s),
+        onboarded: s.onboarded,
+      })
+    }
+
+    const { data: dailyExists } = await sb
+      .from("daily_challenges")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle()
+    if (!dailyExists) {
+      await sb.from("daily_challenges").insert({
+        id: userId,
+        date: s.daily.date,
+        general: s.daily.general,
+        aptitude: s.daily.aptitude,
+        coding: s.daily.coding,
+      })
+    }
   })
 }
 
 export function syncProfile(userId: string, p: Profile) {
-  void safe("syncProfile", () =>
+  return safe("syncProfile", () =>
     createClient()
       .from("profiles")
       .upsert({
@@ -257,28 +292,17 @@ export function syncReferral(userId: string, referredBy: string) {
 }
 
 export function syncUserState(userId: string, s: AppState) {
-  void safe("syncUserState", () =>
+  return safe("syncUserState", () =>
     createClient()
       .from("user_state")
-      .upsert({
-        id: userId,
-        xp: s.xp,
-        streak_count: s.streak.count,
-        streak_last_active: s.streak.lastActive,
-        primary_company: s.primary,
-        interested: s.interested,
-        onboarded: s.onboarded,
-        topic_stats: s.topicStats,
-        badges: s.badges,
-        coding_attempts: s.codingAttempts,
-      }),
+      .upsert(userStatePayload(userId, s)),
   )
 }
 
 export function syncCompanyProgress(userId: string, companyId: string, s: AppState) {
   const prog = s.progress[companyId]
-  if (!prog) return
-  void safe("syncCompanyProgress", () =>
+  if (!prog) return Promise.resolve()
+  return safe("syncCompanyProgress", () =>
     createClient()
       .from("company_progress")
       .upsert(
@@ -294,7 +318,7 @@ export function syncCompanyProgress(userId: string, companyId: string, s: AppSta
 }
 
 export function syncDaily(userId: string, s: AppState) {
-  void safe("syncDaily", () =>
+  return safe("syncDaily", () =>
     createClient()
       .from("daily_challenges")
       .upsert({
@@ -409,12 +433,67 @@ export function deleteOutcome(userId: string, id: string) {
   )
 }
 
-export function syncAll(userId: string, s: AppState) {
-  syncProfile(userId, s.profile)
-  syncUserState(userId, s)
-  syncDaily(userId, s)
-  for (const companyId of Object.keys(s.progress)) {
-    syncCompanyProgress(userId, companyId, s)
+export async function syncAll(userId: string, s: AppState) {
+  await syncProfile(userId, s.profile)
+  await syncUserState(userId, s)
+  await syncDaily(userId, s)
+  await Promise.all(
+    Object.keys(s.progress).map((companyId) => syncCompanyProgress(userId, companyId, s)),
+  )
+}
+
+/** Persist onboarding completion — throws on failure so the UI can retry. */
+export async function syncOnboardingComplete(userId: string, s: AppState): Promise<void> {
+  const sb = createClient()
+  const errors: string[] = []
+
+  const profileRes = await sb.from("profiles").upsert({
+    id: userId,
+    name: s.profile.name,
+    college: s.profile.college,
+    branch: s.profile.branch,
+    grad_year: s.profile.gradYear,
+    cgpa: s.profile.cgpa,
+    backlogs: s.profile.backlogs,
+  })
+  if (profileRes.error) errors.push(`profile: ${profileRes.error.message}`)
+
+  const stateRes = await sb.from("user_state").upsert({
+    ...userStatePayload(userId, s),
+    onboarded: true,
+  })
+  if (stateRes.error) errors.push(`user_state: ${stateRes.error.message}`)
+
+  const dailyRes = await sb.from("daily_challenges").upsert({
+    id: userId,
+    date: s.daily.date,
+    general: s.daily.general,
+    aptitude: s.daily.aptitude,
+    coding: s.daily.coding,
+  })
+  if (dailyRes.error) errors.push(`daily: ${dailyRes.error.message}`)
+
+  const progressResults = await Promise.all(
+    Object.keys(s.progress).map((companyId) => {
+      const prog = s.progress[companyId]
+      if (!prog) return Promise.resolve({ error: null })
+      return sb.from("company_progress").upsert(
+        {
+          user_id: userId,
+          company_id: companyId,
+          chapters: prog.chapters,
+          mock_scores: prog.mockScores,
+        },
+        { onConflict: "user_id,company_id" },
+      )
+    }),
+  )
+  for (const res of progressResults) {
+    if (res.error) errors.push(`progress: ${res.error.message}`)
+  }
+
+  if (errors.length > 0) {
+    throw new Error(`Onboarding sync failed: ${errors.join("; ")}`)
   }
 }
 

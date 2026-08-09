@@ -14,6 +14,7 @@ import {
   syncDaily,
   syncMistakeSchedule,
   syncOneMistake,
+  syncOnboardingComplete,
   syncOutcome,
   syncProfile,
   syncReferral,
@@ -190,7 +191,7 @@ interface StoreStateValue {
 }
 
 interface StoreActionsValue {
-  completeOnboarding: (p: Profile, interested: CompanyId[], primary: CompanyId) => void
+  completeOnboarding: (p: Profile, interested: CompanyId[], primary: CompanyId) => Promise<void>
   setPrimary: (id: CompanyId) => void
   addInterested: (id: CompanyId) => void
   removeInterested: (id: CompanyId) => void
@@ -253,32 +254,75 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     userCreatedAt: null,
   })
   const listenersRef = React.useRef(new Set<() => void>())
+  const skipPersistRef = React.useRef(false)
+
+  function readCachedState(): AppState | null {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
+      if (!raw) return null
+      const parsed = normalizeEntitlement({ ...DEFAULT_STATE, ...JSON.parse(raw) })
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        localStorage.setItem(STORAGE_KEY, raw)
+        localStorage.removeItem(LEGACY_STORAGE_KEY)
+      }
+      return parsed
+    } catch {
+      return null
+    }
+  }
 
   // ── hydrate: localStorage first (fast), then Supabase (authoritative) ──
   React.useEffect(() => {
     let cancelled = false
-    async function hydrate() {
-      // 1. Restore from localStorage immediately so UI doesn't flash blank.
-      let restoredFromCache = false
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
-        if (raw) {
-          if (cancelled) return
-          setState(normalizeEntitlement({ ...DEFAULT_STATE, ...JSON.parse(raw) }))
-          restoredFromCache = true
-          // Returning users can use the cached app immediately while Supabase
-          // refreshes in the background. This removes a full-network loader.
-          setHydrated(true)
-          if (!localStorage.getItem(STORAGE_KEY)) {
-            localStorage.setItem(STORAGE_KEY, raw)
-            localStorage.removeItem(LEGACY_STORAGE_KEY)
-          }
-        }
-      } catch {
-        /* ignore corrupt state */
-      }
 
-      // 2. Check Supabase session.
+    async function applyRemoteState(user: User) {
+      const [remoteResult, statusResult] = await Promise.allSettled([
+        withTimeout(loadUserState(user.id), HYDRATION_TIMEOUT_MS, "Supabase state"),
+        fetchWithTimeout("/api/premium/status", { cache: "no-store" }),
+      ])
+      if (cancelled) return
+
+      const remote = remoteResult.status === "fulfilled" ? remoteResult.value : null
+      if (remote) {
+        const normalized = normalizeEntitlement({ ...DEFAULT_STATE, ...remote })
+        // Repair DB rows for users whose onboarding flag was lost to a race.
+        if (normalized.onboarded) {
+          void syncUserState(user.id, normalized)
+        }
+        if (statusResult.status === "fulfilled" && statusResult.value.ok) {
+          try {
+            const entitlement = (await statusResult.value.json()) as {
+              premium: boolean
+              premiumUntil: string | null
+              source: "creator" | "purchase" | "free"
+            }
+            if (cancelled) return
+            setState({
+              ...normalized,
+              premium: entitlement.premium,
+              premiumUntil: entitlement.premiumUntil ?? undefined,
+              entitlementSource: entitlement.source,
+            })
+          } catch {
+            setState(normalized)
+          }
+        } else {
+          setState(normalized)
+        }
+      } else if (remoteResult.status === "fulfilled") {
+        // Brand-new user — seed rows without overwriting anything later.
+        await withTimeout(
+          ensureUserState(user.id, DEFAULT_STATE),
+          HYDRATION_TIMEOUT_MS,
+          "Supabase state initialization",
+        )
+      }
+    }
+
+    async function hydrate() {
+      const cachedState = readCachedState()
+
+      // 1. Check Supabase session before applying any cached routing state.
       const supabase = createClient()
       const user = await withTimeout<{ data: { user: User | null } }>(
         supabase.auth.getUser() as Promise<{ data: { user: User | null } }>,
@@ -291,57 +335,32 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       if (cancelled) return
 
       if (user) {
+        skipPersistRef.current = false
         setUserId(user.id)
         setUserCreatedAt(user.created_at ?? null)
         identifyAnalyticsUser(user.id)
-        // 3. Refresh state and entitlement concurrently; neither depends on the
-        // other and serializing them adds an avoidable network round trip.
-        try {
-          const [remoteResult, statusResult] = await Promise.allSettled([
-            withTimeout(loadUserState(user.id), HYDRATION_TIMEOUT_MS, "Supabase state"),
-            fetchWithTimeout("/api/premium/status", { cache: "no-store" }),
-          ])
-          if (cancelled) return
-          const remote = remoteResult.status === "fulfilled" ? remoteResult.value : null
-          if (remote) {
-            const normalized = normalizeEntitlement({ ...DEFAULT_STATE, ...remote })
-            if (statusResult.status === "fulfilled" && statusResult.value.ok) {
-              try {
-                const entitlement = (await statusResult.value.json()) as {
-                  premium: boolean
-                  premiumUntil: string | null
-                  source: "creator" | "purchase" | "free"
-                }
-                if (cancelled) return
-                setState({
-                  ...normalized,
-                  premium: entitlement.premium,
-                  premiumUntil: entitlement.premiumUntil ?? undefined,
-                  entitlementSource: entitlement.source,
-                })
-              } catch {
-                setState(normalized)
-              }
-            } else {
-              setState(normalized)
-            }
-          } else if (remoteResult.status === "fulfilled") {
-            await withTimeout(
-              ensureUserState(user.id, DEFAULT_STATE),
-              HYDRATION_TIMEOUT_MS,
-              "Supabase state initialization",
-            )
-          }
-        } catch {
-          /* offline — localStorage fallback stays */
+
+        // Fast path: cache already says onboarded — show UI immediately while
+        // Supabase refreshes in the background. Never fast-path when
+        // onboarded=false; that value is often stale (sign-out race).
+        const canFastPath = cachedState?.onboarded === true
+        if (canFastPath && cachedState) {
+          setState(cachedState)
+          setHydrated(true)
         }
+
+        try {
+          await applyRemoteState(user)
+        } catch {
+          if (!canFastPath && cachedState) setState(cachedState)
+        }
+
+        if (!canFastPath && !cancelled) setHydrated(true)
       } else {
         identifyAnalyticsUser(null)
+        if (cachedState) setState(cachedState)
+        if (!cancelled) setHydrated(true)
       }
-
-      // First-time users have no safe cached routing state, so they wait for
-      // the authoritative load. Returning users were already released above.
-      if (!cancelled && !restoredFromCache) setHydrated(true)
     }
 
     void hydrate()
@@ -350,10 +369,27 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const supabase = createClient()
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+    } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
       if (cancelled) return
-      setUserId(session?.user?.id ?? null)
+      const nextUserId = session?.user?.id ?? null
+      setUserId(nextUserId)
       setUserCreatedAt(session?.user?.created_at ?? null)
+
+      // After email signup (no full reload) or OAuth return, pull authoritative
+      // state so onboarded/profile/targets survive the next sign-out.
+      if (event === "SIGNED_IN" && session?.user) {
+        skipPersistRef.current = false
+        identifyAnalyticsUser(session.user.id)
+        try {
+          await applyRemoteState(session.user)
+        } catch {
+          /* offline */
+        }
+      }
+
+      if (event === "SIGNED_OUT") {
+        skipPersistRef.current = true
+      }
     })
     return () => {
       cancelled = true
@@ -374,8 +410,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   // ── persist to localStorage, debounced so rapid mutations don't thrash ──
   React.useEffect(() => {
-    if (!hydrated) return
+    if (!hydrated || skipPersistRef.current) return
     const id = setTimeout(() => {
+      if (skipPersistRef.current) return
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
       } catch {
@@ -433,24 +470,47 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   // ── Actions context — deps: [mutate] only, so this is STABLE after mount ──
   const actionsValue = React.useMemo<StoreActionsValue>(
     () => ({
-      completeOnboarding: (profile, interested, primary) =>
-        mutate(
-          (d) => {
-            d.profile = profile
-            d.interested = interested
-            d.primary = primary
-            d.onboarded = true
-            for (const id of interested) ensureProgress(d, id)
-            ensureProgress(d, "general")
-            track("onboarding_complete", { primary, interested_count: interested.length })
-          },
-          (uid, s) => {
-            syncProfile(uid, s.profile)
-            syncAll(uid, s)
-            const referredBy = consumePendingReferral(uid)
-            if (referredBy) syncReferral(uid, referredBy)
-          },
-        ),
+      completeOnboarding: async (profile, interested, primary) => {
+        let nextState!: AppState
+        mutate((d) => {
+          d.profile = profile
+          d.interested = interested
+          d.primary = primary
+          d.onboarded = true
+          for (const id of interested) ensureProgress(d, id)
+          ensureProgress(d, "general")
+          track("onboarding_complete", { primary, interested_count: interested.length })
+          nextState = d
+        })
+
+        let uid = uidRef.current
+        if (!uid) {
+          const {
+            data: { user },
+          } = await createClient().auth.getUser()
+          uid = user?.id ?? null
+        }
+
+        if (!uid) {
+          throw new Error("You must be signed in to complete onboarding.")
+        }
+
+        if (!nextState) {
+          throw new Error("Onboarding state was not saved. Please try again.")
+        }
+
+        try {
+          await syncOnboardingComplete(uid, nextState)
+        } catch (err) {
+          mutate((d) => {
+            d.onboarded = false
+          })
+          throw err
+        }
+
+        const referredBy = consumePendingReferral(uid)
+        if (referredBy) syncReferral(uid, referredBy)
+      },
 
       setPrimary: (id) =>
         mutate(
@@ -707,17 +767,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
 
       signOut: async () => {
+        skipPersistRef.current = true
         await createClient().auth.signOut()
         setState(DEFAULT_STATE)
         setUserId(null)
         try {
           localStorage.removeItem(STORAGE_KEY)
+          localStorage.removeItem(LEGACY_STORAGE_KEY)
         } catch {
           /* ignore */
         }
       },
 
       deleteAccount: async () => {
+        skipPersistRef.current = true
         // Server route erases the auth user + all rows with the service-role key.
         try {
           await fetch("/api/account/delete", { method: "POST" })
@@ -733,6 +796,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         setUserId(null)
         try {
           localStorage.removeItem(STORAGE_KEY)
+          localStorage.removeItem(LEGACY_STORAGE_KEY)
         } catch {
           /* ignore */
         }

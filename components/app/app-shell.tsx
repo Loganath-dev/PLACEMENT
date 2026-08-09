@@ -11,11 +11,14 @@ import { useStoreSelector } from "@/lib/store"
 export function AppShell({ children }: { children: React.ReactNode }) {
   const hydrated = useStoreSelector((store) => store.hydrated)
   const onboarded = useStoreSelector((store) => store.state.onboarded)
+  const userId = useStoreSelector((store) => store.userId)
   const router = useRouter()
 
   React.useEffect(() => {
-    if (hydrated && !onboarded) router.replace("/onboarding")
-  }, [hydrated, onboarded, router])
+    // Wait until Supabase hydration finishes (`userId` set) so `onboarded`
+    // reflects DB truth — not a stale localStorage entry from sign-out.
+    if (hydrated && !onboarded && userId) router.replace("/onboarding")
+  }, [hydrated, onboarded, userId, router])
 
   if (!hydrated) {
     return (
