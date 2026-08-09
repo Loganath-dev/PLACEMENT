@@ -53,7 +53,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
-  output: "standalone",
+  // output: "standalone" is required by @opennextjs/cloudflare but breaks Vercel.
+  // Enable it only during Cloudflare Pages builds (CF_PAGES is set automatically).
+  ...(process.env.CF_PAGES ? { output: "standalone" } : {}),
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }]
   },
