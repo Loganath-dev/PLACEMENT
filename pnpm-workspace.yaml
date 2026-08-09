@@ -3,4 +3,6 @@ packages: []
 allowBuilds:
   sharp: true
   unrs-resolver: true
+  esbuild: true
+  workerd: true
   msw: false
