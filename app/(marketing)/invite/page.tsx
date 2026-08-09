@@ -6,8 +6,8 @@ import { JsonLd } from "@/components/app/json-ld"
 import { SITE_NAME, SITE_URL } from "@/lib/content/blocks"
 
 export const metadata: Metadata = {
-  title: `You've been invited to ${SITE_NAME}`,
-  description: `A friend invited you to ${SITE_NAME} — free campus placement preparation for TCS, Infosys, Wipro, Accenture and more.`,
+  title: `Start preparing with ${SITE_NAME}`,
+  description: `Free campus placement preparation for TCS, Infosys, Wipro, Accenture and more on ${SITE_NAME}.`,
   robots: { index: false },
 }
 
@@ -27,13 +27,9 @@ const FEATURES = [
   { icon: "Code2", label: "Coding practice", detail: "DSA problems with in-browser code execution" },
 ]
 
-export default async function InvitePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ ref?: string }>
-}) {
-  const { ref } = await searchParams
-  const hasRef = Boolean(ref && ref.length > 0)
+export default async function InvitePage() {
+  const signupHref = "/auth/signup"
+  const loginHref = "/auth/login"
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 md:py-16">
@@ -46,12 +42,10 @@ export default async function InvitePage({
 
         <div>
           <h1 className="font-heading text-3xl font-bold leading-tight md:text-4xl">
-            {hasRef ? "Your friend wants you to get placed" : `Start preparing with ${SITE_NAME}`}
+            Start preparing with {SITE_NAME}
           </h1>
           <p className="mt-3 text-lg leading-relaxed text-muted-foreground">
-            {hasRef
-              ? `They shared their placement readiness score and thought you should track yours too. ${SITE_NAME} is free to start.`
-              : `Free campus placement prep for TCS, Infosys, Wipro, Accenture and more — with a real readiness score.`}
+            Free campus placement prep for TCS, Infosys, Wipro, Accenture and more — with a real readiness score.
           </p>
         </div>
 
@@ -77,13 +71,13 @@ export default async function InvitePage({
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                href={`/auth/signup${hasRef ? `?ref=${ref}` : ""}`}
+                href={signupHref}
                 className="inline-flex items-center gap-1.5 rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground hover:opacity-90"
               >
                 Start free <Icon name="ArrowRight" className="size-4" />
               </Link>
               <Link
-                href="/auth/login"
+                href={loginHref}
                 className="inline-flex items-center gap-1.5 rounded-full border border-border px-6 py-3 font-semibold hover:bg-muted/60"
               >
                 Sign in

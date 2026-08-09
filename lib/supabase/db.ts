@@ -4,6 +4,7 @@
 // Errors are logged but not thrown so the UI stays responsive offline.
 
 import { createClient } from "@/lib/supabase/client"
+
 import { logger } from "@/lib/logger"
 import type {
   AppState,
@@ -90,13 +91,16 @@ interface DriveOutcomeRow {
 
 const SYNC_ERROR_EVENT = "studybench:sync-error"
 
-async function safe(label: string, fn: () => PromiseLike<unknown> | unknown) {
+async function safe(label: string, fn: () => PromiseLike<unknown> | unknown): Promise<void> {
   try {
-    await fn()
+    const res = await fn()
+    if (res && typeof res === 'object' && 'error' in res && res.error) {
+      throw res.error
+    }
   } catch (err) {
     // Sync failures are usually transient (offline) so this is warn-level, not a
     // captured error — the UI's offline banner is driven by the event below.
-    logger.warn(`[supabase/db] ${label} failed`, { error: String(err) })
+    logger.warn(`[supabase/db] ${label} failed`, { error: err })
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent(SYNC_ERROR_EVENT, { detail: { label } }))
     }
@@ -115,6 +119,12 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
     sb.from("drive_outcomes").select("id,user_id,company_id,result,stage_reached,pri_at_drive,ts,notes").eq("user_id", userId).order("ts", { ascending: false }).limit(50),
   ])
 
+  for (const res of [profRes, stRes, cpRes, dailyRes, mistakesRes, outcomesRes]) {
+    if (res.error) {
+      console.error("[loadUserState] db query failed:", res.error)
+    }
+  }
+
   const prof = profRes.data as ProfileRow | null
   const st = stRes.data as UserStateRow | null
   const cpRows = (cpRes.data ?? []) as CompanyProgressRow[]
@@ -122,13 +132,20 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
   const mistakeRows = (mistakesRes.data ?? []) as MistakeRow[]
   const outcomeRows = (outcomesRes.data ?? []) as DriveOutcomeRow[]
 
-  if (!st) return null
-
-  // Recover users whose onboarding completed locally but never persisted
-  // onboarded=true (race on first signup). Profile + targets are enough signal.
-  const hasProfile = Boolean(prof?.name?.trim())
-  const hasTargets = (st.interested?.length ?? 0) > 0
-  const onboarded = st.onboarded || (hasProfile && hasTargets)
+  if (!st) {
+    if (!prof) return null
+    return {
+      onboarded: Boolean(prof.name || prof.grad_year),
+      profile: {
+        name: prof.name ?? "",
+        college: prof.college ?? "",
+        branch: prof.branch ?? "",
+        gradYear: prof.grad_year ?? "",
+        cgpa: prof.cgpa ?? "",
+        backlogs: prof.backlogs ?? "",
+      },
+    }
+  }
 
   const progress: AppState["progress"] = {}
   for (const row of cpRows ?? []) {
@@ -167,7 +184,7 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
   }))
 
   return {
-    onboarded,
+    onboarded: st.onboarded,
     premium: st.premium,
     premiumUntil: st.premium_until ?? undefined,
     xp: st.xp,
@@ -211,63 +228,39 @@ export async function loadUserState(userId: string): Promise<Partial<AppState> |
 // including the old failure mode where a stale client synced premium=false
 // and silently destroyed a paid entitlement.
 
-/** Build a user_state upsert payload. onboarded is a one-way ratchet: we only
- *  include it when true so a stale DEFAULT_STATE hydrate can never reset a
- *  user who already finished onboarding. */
-function userStatePayload(userId: string, s: AppState) {
-  return {
-    id: userId,
-    xp: s.xp,
-    streak_count: s.streak.count,
-    streak_last_active: s.streak.lastActive,
-    primary_company: s.primary,
-    interested: s.interested,
-    ...(s.onboarded ? { onboarded: true as const } : {}),
-    topic_stats: s.topicStats,
-    badges: s.badges,
-    coding_attempts: s.codingAttempts,
-  }
-}
-
 export async function ensureUserState(userId: string, s: AppState) {
   await safe("ensureUserState", async () => {
     const sb = createClient()
-    const { data: existing } = await sb
-      .from("user_state")
-      .select("id,onboarded")
-      .eq("id", userId)
-      .maybeSingle()
-
-    if (existing) {
-      // Row exists — patch non-onboarding fields only; never downgrade onboarded.
-      await sb.from("user_state").update(userStatePayload(userId, s)).eq("id", userId)
-    } else {
-      await sb.from("user_state").insert({
-        ...userStatePayload(userId, s),
-        onboarded: s.onboarded,
-      })
-    }
-
-    const { data: dailyExists } = await sb
-      .from("daily_challenges")
-      .select("id")
-      .eq("id", userId)
-      .maybeSingle()
-    if (!dailyExists) {
-      await sb.from("daily_challenges").insert({
-        id: userId,
-        date: s.daily.date,
-        general: s.daily.general,
-        aptitude: s.daily.aptitude,
-        coding: s.daily.coding,
-      })
-    }
+    await sb.from("user_state").upsert({
+      id: userId,
+      xp: s.xp,
+      streak_count: s.streak.count,
+      streak_last_active: s.streak.lastActive,
+      primary_company: s.primary,
+      interested: s.interested,
+      // ONE-WAY RATCHET: never write onboarded=false to the DB.
+      // If the user has completed onboarding, that fact lives in the DB and
+      // must never be overwritten by a client that hydrated from DEFAULT_STATE
+      // (e.g. new device, private browsing, cleared storage). We only include
+      // this field when it is true so the DB value is always preserved.
+      ...(s.onboarded ? { onboarded: true } : {}),
+      topic_stats: s.topicStats,
+      badges: s.badges,
+      coding_attempts: s.codingAttempts,
+    }).throwOnError()
+    await sb.from("daily_challenges").upsert({
+      id: userId,
+      date: s.daily.date,
+      general: s.daily.general,
+      aptitude: s.daily.aptitude,
+      coding: s.daily.coding,
+    }).throwOnError()
   })
 }
 
 export function syncProfile(userId: string, p: Profile) {
-  return safe("syncProfile", () =>
-    createClient()
+  return safe("syncProfile", () => {
+    return createClient()
       .from("profiles")
       .upsert({
         id: userId,
@@ -277,15 +270,28 @@ export function syncProfile(userId: string, p: Profile) {
         grad_year: p.gradYear,
         cgpa: p.cgpa,
         backlogs: p.backlogs,
-      }),
-  )
+      }).throwOnError()
+  })
 }
+
 
 export function syncUserState(userId: string, s: AppState) {
   return safe("syncUserState", () =>
     createClient()
       .from("user_state")
-      .upsert(userStatePayload(userId, s)),
+      .upsert({
+        id: userId,
+        xp: s.xp,
+        streak_count: s.streak.count,
+        streak_last_active: s.streak.lastActive,
+        primary_company: s.primary,
+        interested: s.interested,
+        // ONE-WAY RATCHET — same reasoning as ensureUserState above.
+        ...(s.onboarded ? { onboarded: true } : {}),
+        topic_stats: s.topicStats,
+        badges: s.badges,
+        coding_attempts: s.codingAttempts,
+      }),
   )
 }
 
@@ -326,7 +332,7 @@ export function syncDaily(userId: string, s: AppState) {
  * stays in sync even if the user closes the tab before a full syncAll() fires.
  */
 export function syncOneMistake(userId: string, m: Mistake) {
-  void safe("syncOneMistake", () =>
+  return safe("syncOneMistake", () =>
     createClient()
       .from("mistakes")
       .upsert(
@@ -357,7 +363,7 @@ export function syncOneMistake(userId: string, m: Mistake) {
  * schedule portable across devices.
  */
 export function syncMistakeSchedule(userId: string, m: Mistake) {
-  void safe("syncMistakeSchedule", () =>
+  return safe("syncMistakeSchedule", () =>
     createClient()
       .from("mistakes")
       .update({
@@ -375,7 +381,7 @@ export function syncMistakeSchedule(userId: string, m: Mistake) {
  * Delete a single mistake row. Called when the student clears one mistake.
  */
 export function deleteMistake(userId: string, questionId: string) {
-  void safe("deleteMistake", () =>
+  return safe("deleteMistake", () =>
     createClient()
       .from("mistakes")
       .delete()
@@ -388,7 +394,7 @@ export function deleteMistake(userId: string, questionId: string) {
  * Delete all mistakes for a user. Called on clearMistakes() and account reset.
  */
 export function deleteAllMistakes(userId: string) {
-  void safe("deleteAllMistakes", () =>
+  return safe("deleteAllMistakes", () =>
     createClient().from("mistakes").delete().eq("user_id", userId),
   )
 }
@@ -397,7 +403,7 @@ export function deleteAllMistakes(userId: string) {
 
 /** Upsert a single self-reported drive outcome (keyed by client-generated id). */
 export function syncOutcome(userId: string, o: DriveOutcome) {
-  void safe("syncOutcome", () =>
+  return safe("syncOutcome", () =>
     createClient()
       .from("drive_outcomes")
       .upsert(
@@ -418,73 +424,18 @@ export function syncOutcome(userId: string, o: DriveOutcome) {
 
 /** Delete one drive outcome the student removed. */
 export function deleteOutcome(userId: string, id: string) {
-  void safe("deleteOutcome", () =>
+  return safe("deleteOutcome", () =>
     createClient().from("drive_outcomes").delete().eq("user_id", userId).eq("id", id),
   )
 }
 
 export async function syncAll(userId: string, s: AppState) {
-  await syncProfile(userId, s.profile)
-  await syncUserState(userId, s)
-  await syncDaily(userId, s)
-  await Promise.all(
-    Object.keys(s.progress).map((companyId) => syncCompanyProgress(userId, companyId, s)),
-  )
-}
-
-/** Persist onboarding completion — throws on failure so the UI can retry. */
-export async function syncOnboardingComplete(userId: string, s: AppState): Promise<void> {
-  const sb = createClient()
-  const errors: string[] = []
-
-  const profileRes = await sb.from("profiles").upsert({
-    id: userId,
-    name: s.profile.name,
-    college: s.profile.college,
-    branch: s.profile.branch,
-    grad_year: s.profile.gradYear,
-    cgpa: s.profile.cgpa,
-    backlogs: s.profile.backlogs,
-  })
-  if (profileRes.error) errors.push(`profile: ${profileRes.error.message}`)
-
-  const stateRes = await sb.from("user_state").upsert({
-    ...userStatePayload(userId, s),
-    onboarded: true,
-  })
-  if (stateRes.error) errors.push(`user_state: ${stateRes.error.message}`)
-
-  const dailyRes = await sb.from("daily_challenges").upsert({
-    id: userId,
-    date: s.daily.date,
-    general: s.daily.general,
-    aptitude: s.daily.aptitude,
-    coding: s.daily.coding,
-  })
-  if (dailyRes.error) errors.push(`daily: ${dailyRes.error.message}`)
-
-  const progressResults = await Promise.all(
-    Object.keys(s.progress).map((companyId) => {
-      const prog = s.progress[companyId]
-      if (!prog) return Promise.resolve({ error: null })
-      return sb.from("company_progress").upsert(
-        {
-          user_id: userId,
-          company_id: companyId,
-          chapters: prog.chapters,
-          mock_scores: prog.mockScores,
-        },
-        { onConflict: "user_id,company_id" },
-      )
-    }),
-  )
-  for (const res of progressResults) {
-    if (res.error) errors.push(`progress: ${res.error.message}`)
-  }
-
-  if (errors.length > 0) {
-    throw new Error(`Onboarding sync failed: ${errors.join("; ")}`)
-  }
+  await Promise.all([
+    syncProfile(userId, s.profile),
+    syncUserState(userId, s),
+    syncDaily(userId, s),
+    ...Object.keys(s.progress).map((companyId) => syncCompanyProgress(userId, companyId, s)),
+  ])
 }
 
 // ─── question reports (admin review queue) ───────────────────────────────────
