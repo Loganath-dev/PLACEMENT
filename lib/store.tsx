@@ -17,7 +17,6 @@ import {
   syncOnboardingComplete,
   syncOutcome,
   syncProfile,
-  syncReferral,
   syncUserState,
 } from "@/lib/supabase/db"
 import type {
@@ -32,7 +31,6 @@ import type {
 import { levelFromXP, XP } from "@/lib/scoring"
 import { nextSchedule } from "@/lib/spaced-repetition"
 import { identifyAnalyticsUser, track } from "@/lib/analytics"
-import { consumePendingReferral } from "@/lib/referral"
 
 const MISTAKE_CAP = 60
 
@@ -507,9 +505,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           })
           throw err
         }
-
-        const referredBy = consumePendingReferral(uid)
-        if (referredBy) syncReferral(uid, referredBy)
       },
 
       setPrimary: (id) =>

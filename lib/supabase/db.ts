@@ -281,16 +281,6 @@ export function syncProfile(userId: string, p: Profile) {
   )
 }
 
-/** One-time attribution write. Safe to call repeatedly: the 0008 migration
- *  trigger makes referred_by immutable once set, so a second call is a no-op. */
-export function syncReferral(userId: string, referredBy: string) {
-  void safe("syncReferral", () =>
-    createClient()
-      .from("profiles")
-      .upsert({ id: userId, referred_by: referredBy }),
-  )
-}
-
 export function syncUserState(userId: string, s: AppState) {
   return safe("syncUserState", () =>
     createClient()
