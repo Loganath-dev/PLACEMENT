@@ -438,6 +438,19 @@ export async function syncAll(userId: string, s: AppState) {
   ])
 }
 
+/**
+ * Called once when a user completes onboarding. Persist profile, user_state
+ * and initial progress. Kept separate for clarity and potential future
+ * onboarding-specific side-effects.
+ */
+export async function syncOnboardingComplete(userId: string, s: AppState) {
+  // Ensure profile and user state are persisted, and all company progress rows
+  // are created. Reuse existing helpers.
+  await syncProfile(userId, s.profile)
+  await syncUserState(userId, s)
+  await Promise.all(Object.keys(s.progress).map((companyId) => syncCompanyProgress(userId, companyId, s)))
+}
+
 // ─── question reports (admin review queue) ───────────────────────────────────
 
 /** Persist a student's report of a problematic question (RLS-protected). */
