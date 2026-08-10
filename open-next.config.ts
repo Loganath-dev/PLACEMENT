@@ -4,5 +4,5 @@ const config = defineCloudflareConfig()
 
 export default {
   ...config,
-  buildCommand: "pnpm build:next",
+  buildCommand: "pnpm build",
 }
