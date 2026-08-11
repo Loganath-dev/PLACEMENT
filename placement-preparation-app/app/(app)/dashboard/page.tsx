@@ -104,8 +104,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <ReferralPromoCard />
-
       {/* Hero — greeting, readiness snapshot and the single highest-impact action */}
       <Card className="animate-in overflow-hidden border-primary/15 shadow-[0_28px_80px_-52px_oklch(0.25_0.12_260_/_55%)] duration-500 fade-in slide-in-from-bottom-2 motion-reduce:animate-none">
         <CardContent className="grid gap-6 p-5 sm:p-6 md:grid-cols-[minmax(0,15rem)_1fr] md:gap-8">
@@ -531,55 +529,4 @@ function StartNowButton({ href, label }: { href: string; label: string }) {
 }
 
 
-// ReferralPromoCard intentionally does NOT import isCreatorEmail or CREATOR_EMAILS.
-// Admin identity is determined by the store/session, not by shipping the email
-// allowlist in the JS bundle where any user could read it in DevTools.
-// The `isAdmin` boolean is derived from the Supabase user metadata which is
-// already present in the auth session — no extra network call needed.
-function ReferralPromoCard() {
-  const { userId } = useStoreState()
-  const [isAdmin, setIsAdmin] = React.useState<boolean | null>(null)
 
-  React.useEffect(() => {
-    if (!userId) return
-    // Fetch the session email and check it against the server-defined allowlist
-    // via a lightweight /api/account/me endpoint instead of shipping the list
-    // in the bundle. Falls back to showing the card if the check is inconclusive.
-    createClient()
-      .auth.getUser()
-      .then((response: { data: { user: { email?: string } | null } | null }) => {
-        const email = response.data?.user?.email ?? ""
-        // We only need to know if the user is an admin to suppress the promo card.
-        // The actual admin email list lives in lib/admin.ts (server-only).
-        // Here we derive a safe heuristic: if the user has an @gmail.com address
-        // that matches a pattern we control, we hide it. Full server-side check
-        // happens at the /admin/* route level via requireAdmin().
-        const knownAdminDomains = ["lnath6630@gmail.com", "studybench07@gmail.com"]
-        setIsAdmin(knownAdminDomains.includes(email.toLowerCase()))
-      })
-  }, [userId])
-
-  // Don't render until we know; hide for admin users to keep the dashboard clean.
-  if (isAdmin === null || isAdmin) return null
-
-  return (
-    <Card className="border-success/30 bg-success/5 shadow-sm">
-      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <div className="grid size-12 shrink-0 place-items-center rounded-full bg-success/15 text-[color:var(--success)]">
-            <Icon name="IndianRupee" className="size-6" />
-          </div>
-          <div>
-            <h3 className="font-heading text-lg font-semibold text-[color:var(--success)]">Want to earn money through StudyBench?</h3>
-            <p className="mt-1 text-sm text-muted-foreground">Join our affiliate program and earn a 10% commission for every friend who joins Premium.</p>
-          </div>
-        </div>
-        <Button asChild className="shrink-0 bg-[color:var(--success)] text-primary-foreground hover:bg-[color:var(--success)]/90">
-          <Link href="/referrals">
-            Start Earning <Icon name="ArrowRight" className="ml-2 size-4" />
-          </Link>
-        </Button>
-      </CardContent>
-    </Card>
-  )
-}
