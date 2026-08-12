@@ -1,7 +1,7 @@
 
 
 import Link from "next/link"
-import { SiteHeader, StartCta, ShareScoreCta, TrackedLink } from "@/components/app/landing-client"
+import { SiteHeader, StartCta, ShareScoreCta, TrackedLink } from "./landing-client"
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/app/icon"
