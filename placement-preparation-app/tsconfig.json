@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "next/server": ["./next/server.ts"]
     }
   },
   "include": [
