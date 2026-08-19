@@ -140,7 +140,6 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   async function handleSignOut() {
     onNavigate?.()
     await signOut()
-    router.push("/auth/login")
   }
 
   return (
